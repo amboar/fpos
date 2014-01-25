@@ -1,5 +1,5 @@
 Overview
---------
+========
 
 The relevant scripts are:
 
@@ -10,25 +10,25 @@ The relevant scripts are:
 * visualise.py: Displays collated transactions as graphs and tables
 
 Intermediate Representation
----------------------------
+===========================
 
 The intermediate representation and database format is CSV. The columns are:
 
 Required
-========
+--------
 
 1. Date, represented as dd/mm/yyyy
 2. Amount, negative for expenses, positive for income
 3. Description, a human decipherable annotation
 
 Optional
-========
+--------
 
 4. Category, describes the type of transaction from a finite set. Note that
     visualise.py requires this field.
 
 Workflow
---------
+========
 
 1. Export transaction data to Microsoft Excel CSV format, or the closes possible representation
 2. Use transform.py to convert the data into the intermediate representation
