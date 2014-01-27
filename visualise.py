@@ -32,6 +32,9 @@ from scipy import polyfit, polyval
 categories = [ "Cash", "Commitment", "Dining", "Education", "Entertainment",
 "Health", "Home", "Income", "Internal", "Shopping", "Transport", "Utilities" ]
 
+blacklist = ("Income", "Internal")
+whitelist = [x for x in categories if x not in blacklist]
+
 flexible = [ "Cash", "Dining", "Entertainment" ]
 fixed = [ x for x in categories if x not in flexible ]
 
@@ -143,8 +146,6 @@ def main():
     #  { "04/2013" : { "Cash" : -882.50, ... }, ... }
     summed = dict((m, sum_categories(v))
             for m, v in group_period(csv.reader(args.database)).items())
-    blacklist = ("Income", "Internal")
-    whitelist = [x for x in categories if x not in blacklist]
     n_categories = len(whitelist)
 
     # expenses: Looks like summed, but without blacklisted keys
@@ -332,7 +333,6 @@ def days_remaining():
     today = datetime.today()
     n_days = calendar.monthrange(today.year, today.month)[1]
     return (datetime(today.year, today.month, n_days) - today).days + 1
-
 
 if __name__ == "__main__":
     main()

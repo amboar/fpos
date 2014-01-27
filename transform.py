@@ -22,20 +22,26 @@ import sys
 
 transform_choices = [ "anz", "commbank", "stgeorge" ]
 
+def money(value):
+    return "{:.2f}".format(value)
+
+def _take_three(src):
+    def _gen():
+        for l in src:
+            yield [ l[0], money(float(l[1])), l[2] ]
+    return _gen()
+
 def transform_commbank(csv):
     # Commbank format:
     #
     # Date,Amount,Description,Balance
-    def _gen():
-        for l in csv:
-            yield l[:3]
-    return _gen()
+    return _take_three(csv)
 
 def transform_anz(csv):
     # Identity transform, ANZ's format meets IR:
     #
     # Date,Amount,Description
-    return csv
+    return _take_three(csv)
 
 def transform_stgeorge(csv):
     # St George Bank, first row is header
@@ -46,7 +52,7 @@ def transform_stgeorge(csv):
     next(csv)
     def _gen():
         for l in csv:
-            yield [l[0], (-1 * float(l[2])) if l[2] else l[3] , l[1]]
+            yield [l[0], money((-1.0 * float(l[2])) if l[2] else float(l[3])), l[1]]
     return _gen()
 
 def parse_args():
