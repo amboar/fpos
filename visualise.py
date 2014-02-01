@@ -47,11 +47,15 @@ datesort = lambda x : datetime.strptime(x, date_fmt).date()
 monthsort = lambda x : datetime.strptime(x, month_fmt).date()
 monthname = lambda x : datetime.strptime(x, month_fmt).strftime("%b")
 
-def group_period(reader, extract=extract_month):
-    d = defaultdict(list)
+def group_period(reader, extract=[extract_month]):
+    l = [ {} for e in extract ]
     for row in reader:
-        d[extract(row[0])].append(row)
-    return d
+        for i, e in enumerate(extract):
+            d = e(row[0])
+            if d not in l[i]:
+                l[i][d] = []
+            l[i][d].append(row)
+    return l
 
 def sum_categories(data):
     summed = dict((x, 0) for x in categories)
@@ -215,10 +219,8 @@ def graph_xy_categories(months, categorized, remaining):
         p.set_title(k)
         p.set_xticklabels(monthns, rotation=33)
 
-def graph_xy_weekly(database):
+def graph_xy_weekly(weekly):
     # Weekly XY plot with regression
-    database.seek(0)
-    weekly = group_period(csv.reader(database), extract=extract_week)
     w_summed = [(i, sum(float(r[1]) for r in weekly[w] if r[3] in whitelist))
             for i,w in enumerate(sorted(weekly.keys()))]
     w_xys = list(zip(*w_summed))
@@ -304,14 +306,16 @@ def main():
 
     # Core data, used across multiple plots
 
-    # summed: Looks like:
+    m_grouped, w_grouped = group_period(csv.reader(args.database),
+            extract=[extract_month, extract_week])
+
+    # m_summed: Looks like:
     #
     #  { "04/2013" : { "Cash" : -882.50, ... }, ... }
-    summed = dict((m, sum_categories(v))
-            for m, v in group_period(csv.reader(args.database)).items())
+    m_summed = dict((m, sum_categories(v)) for m, v in m_grouped.items())
 
-    # expenses: Looks like summed, but without blacklisted keys
-    expenses = ignore(summed, *blacklist)
+    # expenses: Looks like m_summed, but without blacklisted keys
+    expenses = ignore(m_summed, *blacklist)
 
     # months: A list, containing the sorted set of months from expenses
     months = sorted(expenses, key=monthsort)
@@ -331,7 +335,7 @@ def main():
     monthlies = category_sum_matrix(categorized)
 
     # m_income: Looks like summed, but contains only income
-    m_income = income(summed)
+    m_income = income(m_summed)
 
     # m_margin: Looks like:
     #
@@ -344,7 +348,7 @@ def main():
     graph_bar_margin(months, m_margin, remaining)
     graph_box_categories(months, categorized)
     graph_xy_categories(months, categorized, remaining)
-    graph_xy_weekly(args.database)
+    graph_xy_weekly(w_grouped)
     graph_bar_targets(months, monthlies, expenses, m_income, remaining, args.save)
 
 if __name__ == "__main__":

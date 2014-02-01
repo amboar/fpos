@@ -96,21 +96,34 @@ class WindowTest(unittest.TestCase):
 
 class VisualiseTest(unittest.TestCase):
     def test_group_period_empty(self):
-        self.assertEquals({}, visualise.group_period([]))
+        self.assertEquals({}, visualise.group_period([])[0])
 
     def test_group_period_extract_month(self):
         first = [ "01/01/2014", "-1.00", "Foo" ]
         second = [ "09/01/2014", "-2.00", "Bar" ]
         month = [ first, second ]
         expected = { "01/2014" : month }
-        self.assertEquals(expected, visualise.group_period(month, visualise.extract_month))
+        result = visualise.group_period(month, [ visualise.extract_month ])
+        self.assertEquals(1, len(result))
+        self.assertEquals(expected, result[0])
 
     def test_group_period_extract_week(self):
         first = [ "01/01/2014", "-1.00", "Foo" ]
         second = [ "09/01/2014", "-2.00", "Bar" ]
         week = [ first, second ]
         expected = { "00/2014" : [ first ], "01/2014" : [ second ] }
-        self.assertEquals(expected, visualise.group_period(week, visualise.extract_week))
+        result = visualise.group_period(week, [ visualise.extract_week ])
+        self.assertEquals(1, len(result))
+        self.assertEquals(expected, result[0])
+
+    def test_group_period_extract_both(self):
+        first = [ "01/01/2014", "-1.00", "Foo" ]
+        second = [ "02/01/2014", "-2.00", "Foo" ]
+        transactions = [ first, second ]
+        expected = [ { "01/2014" : [ first, second ] }, { "00/2014" : [ first, second ] } ]
+        result = visualise.group_period(transactions, [ visualise.extract_month, visualise.extract_week ])
+        self.assertEquals(2, len(result))
+        self.assertEquals(expected, result)
 
     def test_sum_categories_single_spend_multiple_categories(self):
         spent = -1.00
