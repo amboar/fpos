@@ -136,54 +136,13 @@ def mean_error(data, level=0.95):
     R = stats.norm.interval(level, loc=mean, scale=dscale)
     return R[1] - mean
 
-def main():
-    args = parse_args()
-
-    # Core data, used across multiple plots
-
-    # summed: Looks like:
-    #
-    #  { "04/2013" : { "Cash" : -882.50, ... }, ... }
-    summed = dict((m, sum_categories(v))
-            for m, v in group_period(csv.reader(args.database)).items())
-    n_categories = len(whitelist)
-
-    # expenses: Looks like summed, but without blacklisted keys
-    expenses = ignore(summed, *blacklist)
-
-    # months: A list, containing the sorted set of months from expenses
-    months = sorted(expenses, key=monthsort)
-
-    # categorized: Looks like:
-    #
-    #  { "Cash" : { "04/2013" : -882.50, ... }, ... }
-    categorized = invert(expenses, whitelist)
-
-    # monthlies: Looks like:
-    #
-    # [
-    #   [ -882.50, ... ], # Cash expenses per month
-    #   [ -832.82, ... ], # Commitment expenses per month
-    #   ...
-    # ]
-    monthlies = category_sum_matrix(categorized)
-    n_months = len(monthlies[0])
-
-    # m_income: Looks like summed, but contains only income
-    m_income = income(summed)
-
-    # m_margin: Looks like:
-    #
-    # { "04/2013" : 3905.07, ... }
-    m_margin = surplus(expenses, m_income)
-
-    remaining = days_remaining()
-
+def graph_stacked_bar_expenses(months, monthlies, expenses, m_income, m_margin, remaining):
     # Plot table/bar-graph of expenses
+    n_months = len(months)
     y_offset = np.array([0.0] * n_months)
     bar_width = 0.4
     cell_text = []
-    palette = colours(n_categories)
+    palette = colours(len(whitelist))
     # Add colours for metadata rows total, income and surplus
     plt.figure(1)
     for i, row in enumerate(monthlies):
@@ -204,7 +163,9 @@ def main():
     plt.xticks([])
     plt.title("Expenditures by Category per Month\n{} Days Remaining".format(remaining))
 
+def graph_bar_margin(months, m_margin, remaining):
     # Plot bar graph of margin
+    n_months = len(months)
     plt.figure(2)
     sorted_margins = [m_margin[k] for k in months]
     mbar = plt.bar(np.arange(n_months) + 0.3, sorted_margins, 0.4, align="center")
@@ -215,6 +176,7 @@ def main():
     plt.ylabel("Margin ($)")
     plt.title("Remaining Capital after Expenses\n{} Days Remaining".format(remaining))
 
+def graph_box_categories(months, categorized):
     # Plot box-and-whisker plot of categories
     plt.figure(3)
     cs = []
@@ -236,6 +198,7 @@ def main():
     plt.ylabel("Dollars ($)")
     plt.title("Box-plot of Expenses per Month\nSamples per category: {}".format(len(months) - 1))
 
+def graph_xy_categories(months, categorized, remaining):
     # XY plot of expenditure per category
     f, plts = plt.subplots(2, int(len(categorized) / 2), sharex=True)
     f.suptitle("XY Plot of Monthly Expenditure per Category\n{} Days Remaining".format(remaining))
@@ -252,9 +215,10 @@ def main():
         p.set_title(k)
         p.set_xticklabels(monthns, rotation=33)
 
+def graph_xy_weekly(database):
     # Weekly XY plot with regression
-    args.database.seek(0)
-    weekly = group_period(csv.reader(args.database), extract=extract_week)
+    database.seek(0)
+    weekly = group_period(csv.reader(database), extract=extract_week)
     w_summed = [(i, sum(float(r[1]) for r in weekly[w] if r[3] in whitelist))
             for i,w in enumerate(sorted(weekly.keys()))]
     w_xys = list(zip(*w_summed))
@@ -267,6 +231,7 @@ def main():
     plt.xlabel("Record Week (Arbitrary)")
     plt.ylabel("Expenditure ($)")
 
+def graph_bar_targets(months, monthlies, expenses, m_income, remaining, save):
     # Target bar-graph - Current spending per category against mean
     plt.figure(6)
     # Remove the current month from monthlies
@@ -287,7 +252,7 @@ def main():
     # Subtract fixed costs
     cash -= sum(v for k, v in ms.items() if k in fixed)
     # Subtract saving
-    cash -= -1 * args.save
+    cash -= -1 * save
     # Estimate budget: Multiple remaining by flexible ratios
     fs = copy.deepcopy(ms)
     fs.update(dict((k, rs[k] * cash) for k in flexible))
@@ -311,8 +276,8 @@ def main():
     plt.ylabel("Position Against Budget / Mean Expense ($)")
     title = "Position for {} ({} days remaining){}"\
             .format(months[-1], remaining,
-                    "" if 0 == args.save else
-                        "\nSaving ${}".format(money(args.save)))
+                    "" if 0 == save else
+                        "\nSaving ${}".format(money(save)))
     plt.title(title)
     plt.legend(("Mean Expenditure", "Budgeted", "Spent"))
     expense_list = [ curr_expenses[c] for c in whitelist ]
@@ -333,6 +298,54 @@ def days_remaining():
     today = datetime.today()
     n_days = calendar.monthrange(today.year, today.month)[1]
     return (datetime(today.year, today.month, n_days) - today).days + 1
+
+def main():
+    args = parse_args()
+
+    # Core data, used across multiple plots
+
+    # summed: Looks like:
+    #
+    #  { "04/2013" : { "Cash" : -882.50, ... }, ... }
+    summed = dict((m, sum_categories(v))
+            for m, v in group_period(csv.reader(args.database)).items())
+
+    # expenses: Looks like summed, but without blacklisted keys
+    expenses = ignore(summed, *blacklist)
+
+    # months: A list, containing the sorted set of months from expenses
+    months = sorted(expenses, key=monthsort)
+
+    # categorized: Looks like:
+    #
+    #  { "Cash" : { "04/2013" : -882.50, ... }, ... }
+    categorized = invert(expenses, whitelist)
+
+    # monthlies: Looks like:
+    #
+    # [
+    #   [ -882.50, ... ], # Cash expenses per month
+    #   [ -832.82, ... ], # Commitment expenses per month
+    #   ...
+    # ]
+    monthlies = category_sum_matrix(categorized)
+
+    # m_income: Looks like summed, but contains only income
+    m_income = income(summed)
+
+    # m_margin: Looks like:
+    #
+    # { "04/2013" : 3905.07, ... }
+    m_margin = surplus(expenses, m_income)
+
+    remaining = days_remaining()
+
+    graph_stacked_bar_expenses(months, monthlies, expenses, m_income, m_margin, remaining)
+    graph_bar_margin(months, m_margin, remaining)
+    graph_box_categories(months, categorized)
+    graph_xy_categories(months, categorized, remaining)
+    graph_xy_weekly(args.database)
+    graph_bar_targets(months, monthlies, expenses, m_income, remaining, args.save)
 
 if __name__ == "__main__":
     main()
