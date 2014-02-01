@@ -241,15 +241,15 @@ def main():
     f.suptitle("XY Plot of Monthly Expenditure per Category\n{} Days Remaining".format(remaining))
     monthr = np.arange(len(months))
     monthns = [ monthname(x) for x in months ]
-    for p, d in zip(itertools.chain(*plts), categorized.items()):
-        v = [ d[1][k] for k in months ]
+    for p, k in zip(itertools.chain(*plts), whitelist):
+        v = [ categorized[k][m] for m in months ]
         # Values
         p.plot(monthr, v, 'o-')
         # Linear regression
         a, b = polyfit(monthr, v, 1)
         l = polyval([a, b], monthr)
         p.plot(monthr, l, 'r.-')
-        p.set_title(d[0])
+        p.set_title(k)
         p.set_xticklabels(monthns, rotation=33)
 
     # Weekly XY plot with regression
