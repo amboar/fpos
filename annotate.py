@@ -19,9 +19,7 @@
 import argparse
 import csv
 import sys
-
-categories = [ "Cash", "Commitment", "Dining", "Education", "Entertainment",
-"Health", "Home", "Income", "Internal", "Shopping", "Transport", "Utilities" ]
+from core import categories
 
 def find_category(needle):
     candidates = []

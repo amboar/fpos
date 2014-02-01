@@ -26,20 +26,13 @@ import numpy as np
 from scipy import stats
 import matplotlib.pyplot as plt
 import math
-from collections import defaultdict
 from scipy import polyfit, polyval
-
-categories = [ "Cash", "Commitment", "Dining", "Education", "Entertainment",
-"Health", "Home", "Income", "Internal", "Shopping", "Transport", "Utilities" ]
+from core import categories, flexible, fixed
+from core import money
+from core import date_fmt, month_fmt
 
 blacklist = ("Income", "Internal")
 whitelist = [x for x in categories if x not in blacklist]
-
-flexible = [ "Cash", "Dining", "Entertainment" ]
-fixed = [ x for x in categories if x not in flexible ]
-
-date_fmt = "%d/%m/%Y"
-month_fmt = "%m/%Y"
 
 extract_month = lambda x: datetime.strptime(x, date_fmt).strftime("%m/%Y")
 extract_week = lambda x: datetime.strptime(x, date_fmt).strftime("%U/%Y")
@@ -124,9 +117,6 @@ def bar_label(plot, rects, margins):
         y = margins[i] + math.copysign(130, margins[i])
         text = '{}'.format(int(margins[i]))
         plot.text(x, y, text, ha='center', va='bottom')
-
-def money(value):
-    return "{:.2f}".format(value)
 
 def q1(boxprop):
     return boxprop.get_data()[1][2]

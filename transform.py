@@ -19,11 +19,9 @@
 import argparse
 import csv
 import sys
+from core import money
 
 transform_choices = [ "anz", "commbank", "stgeorge" ]
-
-def money(value):
-    return "{:.2f}".format(value)
 
 def _take_three(src):
     def _gen():

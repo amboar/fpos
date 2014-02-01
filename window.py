@@ -21,6 +21,7 @@ import csv
 import sys
 from datetime import datetime as dt
 from collections import defaultdict
+from core import date_fmt, month_fmt
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -31,9 +32,6 @@ def parse_args():
     parser.add_argument("--end", metavar="DATE", type=str)
     parser.add_argument("--length", type=int)
     return parser.parse_args()
-
-date_fmt = "%d/%m/%Y"
-month_fmt = "%m/%Y"
 
 def gen_span_oracle(start, end):
     o_true = lambda x: True

@@ -22,6 +22,7 @@ import datetime
 import hashlib
 import itertools
 import sys
+from core import date_fmt
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -45,7 +46,7 @@ def main():
         entries = dict((digest_entry(x), x)
                 for db in rcsvs for x in db if 3 <= len(x))
         ocsv = csv.writer(args.out)
-        datesort = lambda x: datetime.datetime.strptime(x[0], "%d/%m/%Y").date()
+        datesort = lambda x: datetime.datetime.strptime(x[0], date_fmt).date()
         costsort = lambda x: float(x[1])
         descsort = lambda x: x[2]
         for v in sorted(sorted(sorted(entries.values(), key=descsort), key=costsort), key=datesort):
