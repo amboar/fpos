@@ -109,7 +109,7 @@ class VisualiseTest(unittest.TestCase):
         first = [ "01/01/2014", "-1.00", "Foo" ]
         second = [ "09/01/2014", "-2.00", "Bar" ]
         week = [ first, second ]
-        expected = { "00" : [ first ], "01" : [ second ] }
+        expected = { "00/2014" : [ first ], "01/2014" : [ second ] }
         self.assertEquals(expected, visualise.group_period(week, visualise.extract_week))
 
     def test_sum_categories_single_spend_multiple_categories(self):

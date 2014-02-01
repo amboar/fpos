@@ -42,7 +42,7 @@ date_fmt = "%d/%m/%Y"
 month_fmt = "%m/%Y"
 
 extract_month = lambda x: datetime.strptime(x, date_fmt).strftime("%m/%Y")
-extract_week = lambda x: datetime.strptime(x, date_fmt).strftime("%U")
+extract_week = lambda x: datetime.strptime(x, date_fmt).strftime("%U/%Y")
 datesort = lambda x : datetime.strptime(x, date_fmt).date()
 monthsort = lambda x : datetime.strptime(x, month_fmt).date()
 monthname = lambda x : datetime.strptime(x, month_fmt).strftime("%b")
