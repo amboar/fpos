@@ -22,7 +22,6 @@ import sys
 
 categories = [ "Cash", "Commitment", "Dining", "Education", "Entertainment",
 "Health", "Home", "Income", "Internal", "Shopping", "Transport", "Utilities" ]
-learn = { }
 
 def find_category(needle):
     candidates = []
