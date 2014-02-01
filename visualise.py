@@ -286,8 +286,9 @@ def graph_bar_targets(months, monthlies, expenses, m_income, remaining, save):
     plt.subplots_adjust(left=0.15, bottom=0.2)
     plt.show()
 
-def days_remaining():
-    today = datetime.today()
+def days_remaining(today=None):
+    if not today:
+        today = datetime.today()
     n_days = calendar.monthrange(today.year, today.month)[1]
     return (datetime(today.year, today.month, n_days) - today).days + 1
 
@@ -332,7 +333,9 @@ def main():
     # { "04/2013" : 3905.07, ... }
     m_margin = surplus(expenses, m_income)
 
-    remaining = days_remaining()
+    # Grab the date of the most recent transaction in the database
+    last_transaction = datetime.strptime(m_grouped[months[-1]][-1][0], date_fmt)
+    remaining = days_remaining(last_transaction)
 
     graph_stacked_bar_expenses(months, monthlies, expenses, m_income, m_margin, remaining)
     graph_bar_margin(months, m_margin, remaining)
