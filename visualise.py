@@ -155,7 +155,7 @@ def graph_stacked_bar_expenses(months, monthlies, expenses, m_income, m_margin, 
     plt.ylabel("Dollars ($), spent < 0, earnt > 0")
     plt.subplots_adjust(left=0.15, bottom=0.3)
     plt.xticks([])
-    plt.title("Expenditures by Category per Month\n{} Days Remaining".format(remaining))
+    plt.title("Expenditures by Category per Month\n{} Day(s) Remaining in {}".format(remaining, months[-1]))
 
 def graph_bar_margin(months, m_margin, remaining):
     # Plot bar graph of margin
