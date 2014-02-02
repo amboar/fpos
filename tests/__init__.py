@@ -61,17 +61,17 @@ class TransformTest(unittest.TestCase):
     def test_transform_commbank(self):
         commbank = [ [ "01/01/2014", "1.0", "Positive", "1.0" ],
                 [ "01/01/2014", "-1.0", "Negative", "0.0" ] ]
-        self.assertEquals(self.expected, list(transform.transform_commbank(commbank)))
+        self.assertEquals(self.expected, list(transform.transform("commbank", commbank)))
 
     def test_transform_anz(self):
         anz = self.expected
-        self.assertEquals(self.expected, list(transform.transform_anz(anz)))
+        self.assertEquals(self.expected, list(transform.transform("anz", anz)))
 
     def test_transform_stgeorge(self):
         stgeorge = iter([ [ "Date", "Description", "Debit", "Credit", "Balance" ],
                 [ "01/01/2014", "Positive", None, "1.0", "1.0" ],
                 [ "01/01/2014", "Negative", "1.0", None, "0.0" ] ])
-        self.assertEquals(self.expected, list(transform.transform_stgeorge(stgeorge)))
+        self.assertEquals(self.expected, list(transform.transform("stgeorge", stgeorge)))
 
 class WindowTest(unittest.TestCase):
     def test_gen_span_oracle_date_in_default(self):

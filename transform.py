@@ -60,14 +60,14 @@ def parse_args():
     parser.add_argument("--output", metavar="FILE", type=argparse.FileType('w'), default=sys.stdout)
     return parser.parse_args()
 
+def transform(form, source):
+    assert form in transform_choices
+    return globals()["transform_{}".format(form)](source)
+
 def main():
     args = parse_args()
     try:
-        assert args.form in transform_choices
-        source = globals()["transform_{}".format(args.form)](csv.reader(args.input))
-        sink = csv.writer(args.output)
-        for row in source:
-            sink.writerow(row)
+        csv.writer(args.output).writerows(transform(args.form, csv.reader(args.input)))
     finally:
         args.input.close()
         args.output.close()
