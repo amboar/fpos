@@ -38,19 +38,22 @@ def digest_entry(entry):
         s.update(str(element).encode("UTF-8"))
     return s.hexdigest()
 
-def main():
-    args = parse_args()
-    try:
-        readables = itertools.chain(args.updates, (args.database,))
-        rcsvs = (csv.reader(x) for x in readables)
+def combine(sources):
+    def _gen():
         entries = dict((digest_entry(x), x)
-                for db in rcsvs for x in db if 3 <= len(x))
-        ocsv = csv.writer(args.out)
+                for db in sources for x in db if 3 <= len(x))
         datesort = lambda x: datetime.datetime.strptime(x[0], date_fmt).date()
         costsort = lambda x: float(x[1])
         descsort = lambda x: x[2]
         for v in sorted(sorted(sorted(entries.values(), key=descsort), key=costsort), key=datesort):
-            ocsv.writerow(v)
+            yield v
+    return _gen()
+
+def main():
+    args = parse_args()
+    try:
+        readables = itertools.chain(args.updates, (args.database,))
+        csv.writer(args.out).writerows(combine(csv.reader(x) for x in readables))
     finally:
         args.database.close()
         for e in args.updates:

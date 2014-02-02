@@ -23,6 +23,7 @@ import unittest
 import visualise
 from visualise import money
 import window
+import combine
 
 class AnnotateTest(unittest.TestCase):
     def test_find_category_no_match(self):
@@ -247,3 +248,54 @@ class VisualiseTest(unittest.TestCase):
 
     def test_money_one_and_a_bit(self):
         self.assertEquals("-1.00", visualise.money(-1.001))
+
+class CombineTest(unittest.TestCase):
+    def test_combine_one_empty(self):
+        self.assertEquals([], list(combine.combine([ [] ])))
+
+    def test_combine_invalid_ir(self):
+        # Missing the (required) description
+        sources = [ [ [ "01/01/2014", -1.00 ] ] ]
+        self.assertEquals([], list(combine.combine(sources)))
+
+    def test_combine_3tuple(self):
+        sources = [ [ [ "01/01/2014", -1.00, "Description" ] ] ]
+        expected = sources[0]
+        self.assertEquals(expected, list(combine.combine(sources)))
+
+    def test_combine_4tuple(self):
+        sources = [ [ [ "01/01/2014", -1.00, "Description", "Cash" ] ] ]
+        expected = sources[0]
+        self.assertEquals(expected, list(combine.combine(sources)))
+
+    def test_combine_two_first_empty(self):
+        sources = [ [],
+                    [ [ "01/01/2014", -1.00, "Description" ] ] ]
+        expected = sources[1]
+        self.assertEquals(expected, list(combine.combine(sources)))
+
+    def test_combine_two_distinct(self):
+        sources = [ [ [ "01/01/2014", -1.00, "Description" ] ],
+                    [ [ "02/01/2014", -1.00, "Description" ] ] ]
+        expected = [ sources[0][0], sources[1][0] ]
+        self.assertEquals(expected, list(combine.combine(sources)))
+
+    def test_combine_two_equal(self):
+        sources = [ [ [ "01/01/2014", -1.00, "Description" ] ],
+                    [ [ "01/01/2014", -1.00, "Description" ] ] ]
+        expected = sources[0]
+        self.assertEquals(expected, list(combine.combine(sources)))
+
+    def test_combine_two_superset(self):
+        sources = [ [ [ "01/01/2014", -1.00, "Description" ],
+                      [ "02/01/2014", -1.00, "Description" ] ],
+                    [ [ "02/01/2014", -1.00, "Description" ] ] ]
+        expected = [ sources[0][0], sources[1][0] ]
+        self.assertEquals(expected, list(combine.combine(sources)))
+
+    def test_combine_prefer_last(self):
+        sources = [ [ [ "01/01/2014", -1.00, "Description" ],
+                      [ "02/01/2014", -1.00, "Description" ] ],
+                    [ [ "02/01/2014", -1.00, "Description", "Cash" ] ] ]
+        expected = [ sources[0][0], sources[1][0] ]
+        self.assertEquals(expected, list(combine.combine(sources)))
