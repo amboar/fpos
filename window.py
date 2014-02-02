@@ -44,15 +44,20 @@ def gen_span_oracle(start, end):
         oracle["end"] = lambda x: x < dt.strptime(end, month_fmt)
     return lambda x: oracle["start"](x) and oracle["end"](x)
 
+def window(start, end, source):
+    in_span = gen_span_oracle(start, end)
+    def _gen():
+        for e in source:
+            if in_span(dt.strptime(e[0], date_fmt)):
+                yield e
+    return _gen()
+
 def main():
     args = parse_args();
-    start = args.start
-    end = args.end
-    in_span = gen_span_oracle(start, end)
     try:
         r = csv.reader(args.source)
         w = csv.writer(args.sink)
-        w.writerows(e for e in r if in_span(dt.strptime(e[0], date_fmt)))
+        w.writerows(window(args.start, args.end, r))
     finally:
         args.sink.close()
 

@@ -94,6 +94,30 @@ class WindowTest(unittest.TestCase):
         d = dt.strptime("01/01/2014", window.date_fmt)
         self.assertFalse(window.gen_span_oracle("02/2014", None)(d))
 
+    def test_unbounded_start_unbounded_end(self):
+        ir =  [ [ "01/01/2014", "-1.00", "Description" ],
+                [ "01/02/2014", "-1.00", "Description" ] ]
+        self.assertEquals(ir, list(window.window(None, None, ir)))
+
+    def test_bounded_start_unbounded_end(self):
+        ir =  [ [ "01/01/2014", "-1.00", "Description" ],
+                [ "01/02/2014", "-1.00", "Description" ] ]
+        expected = [ ir[1] ]
+        self.assertEquals(expected, list(window.window("02/2014", None, ir)))
+
+    def test_unbounded_start_bounded_end(self):
+        ir =  [ [ "01/01/2014", "-1.00", "Description" ],
+                [ "01/02/2014", "-1.00", "Description" ] ]
+        expected = [ ir[0] ]
+        self.assertEquals(expected, list(window.window(None, "02/2014", ir)))
+
+    def test_bounded_start_bounded_end(self):
+        ir =  [ [ "31/12/2013", "-1.00", "Description" ],
+                [ "31/01/2014", "-1.00", "Description" ],
+                [ "01/02/2014", "-1.00", "Description" ] ]
+        expected = [ ir[1] ]
+        self.assertEquals(expected, list(window.window("01/2014", "02/2014", ir)))
+
 class VisualiseTest(unittest.TestCase):
     def test_group_period_empty(self):
         self.assertEquals({}, visualise.group_period([])[0])
