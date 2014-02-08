@@ -195,11 +195,12 @@ def graph_box_categories(months, categorized):
 def graph_xy_categories(months, categorized, remaining):
     # XY plot of expenditure per category
     f, plts = plt.subplots(2, int(len(categorized) / 2), sharex=True)
-    f.suptitle("XY Plot of Monthly Expenditure per Category\n{} Days Remaining".format(remaining))
-    monthr = np.arange(len(months))
-    monthns = [ monthname(x) for x in months ]
+    f.suptitle("XY Plot of Monthly Expenditure per Category")
+    complete = months[:-1]
+    monthr = np.arange(len(complete))
+    monthns = [ monthname(x) for x in complete ]
     for p, k in zip(itertools.chain(*plts), whitelist):
-        v = [ categorized[k][m] for m in months ]
+        v = [ categorized[k][m] for m in complete ]
         # Values
         p.plot(monthr, v, 'o-')
         # Linear regression
