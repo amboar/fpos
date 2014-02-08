@@ -105,11 +105,18 @@ def surplus(expenses, income):
 def colours(n):
     return plt.cm.BuPu(np.linspace(0, 1.0, n))
 
+
 def parse_args():
+    graph_choices = [ "stacked_bar_expenses", "bar_margin", "box_categories",
+            "xy_categories", "xy_weekly", "bar_targets" ]
     parser = argparse.ArgumentParser()
     parser.add_argument("database", metavar="FILE", type=argparse.FileType('r'))
     parser.add_argument("--save", type=float, default=0)
+    parser.add_argument("--graph", choices=graph_choices)
     return parser.parse_args()
+
+def should_graph(name, graph):
+    return None is name or name == graph
 
 def bar_label(plot, rects, margins):
     for i, rect in enumerate(rects):
@@ -285,7 +292,6 @@ def graph_bar_targets(months, monthlies, expenses, m_income, remaining, save):
             colLabels=[x[:3] for x in whitelist],
             loc="bottom")
     plt.subplots_adjust(left=0.15, bottom=0.2)
-    plt.show()
 
 def days_remaining(today=None):
     if not today:
@@ -338,12 +344,19 @@ def main():
     last_transaction = datetime.strptime(m_grouped[months[-1]][-1][0], date_fmt)
     remaining = days_remaining(last_transaction)
 
-    graph_stacked_bar_expenses(months, monthlies, expenses, m_income, m_margin, remaining)
-    graph_bar_margin(months, m_margin, remaining)
-    graph_box_categories(months, categorized)
-    graph_xy_categories(months, categorized, remaining)
-    graph_xy_weekly(w_grouped)
-    graph_bar_targets(months, monthlies, expenses, m_income, remaining, args.save)
+    if (should_graph(args.graph, "stacked_bar_expenses")):
+        graph_stacked_bar_expenses(months, monthlies, expenses, m_income, m_margin, remaining)
+    if (should_graph(args.graph, "bar_margin")):
+        graph_bar_margin(months, m_margin, remaining)
+    if (should_graph(args.graph, "box_categories")):
+        graph_box_categories(months, categorized)
+    if (should_graph(args.graph, "xy_categories")):
+        graph_xy_categories(months, categorized, remaining)
+    if (should_graph(args.graph, "xy_weekly")):
+        graph_xy_weekly(w_grouped)
+    if (should_graph(args.graph, "bar_targets")):
+        graph_bar_targets(months, monthlies, expenses, m_income, remaining, args.save)
+    plt.show()
 
 if __name__ == "__main__":
     main()
