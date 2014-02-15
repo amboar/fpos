@@ -162,6 +162,7 @@ def graph_stacked_bar_expenses(months, monthlies, expenses, m_income, m_margin, 
     plt.ylabel("Dollars ($), spent < 0, earnt > 0")
     plt.subplots_adjust(left=0.15, bottom=0.3)
     plt.xticks([])
+    plt.xlim([0, n_months])
     plt.title("Expenditures by Category per Month\n{} Day(s) Remaining in {}".format(remaining, months[-1]))
 
 def graph_bar_margin(months, m_margin, remaining):
@@ -175,6 +176,7 @@ def graph_bar_margin(months, m_margin, remaining):
     plt.axhline(0, color="black")
     plt.xlabel("Months")
     plt.ylabel("Margin ($)")
+    plt.xlim([0, len(months)])
     plt.title("Remaining Capital after Expenses\n{} Days Remaining".format(remaining))
 
 def graph_box_categories(months, categorized):
