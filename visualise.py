@@ -246,7 +246,8 @@ def graph_bar_targets(months, monthlies, expenses, m_income, remaining, save):
     # Calculate mean monthly expenditure
     # s = -1 * np.mean([m_income[m] - m_margin[m] for m in months[:-1]])
     # Calculate mean monthly income
-    cash = -1 * np.mean([m_income[m] for m in months[:-1]])
+    mean_income = np.mean([m_income[m] for m in months[:-1]])
+    cash = -1 * mean_income
     # Calculate category ratios
     rs = dict((k, v / cash) for k, v in ms.items())
     # Subtract fixed costs
@@ -274,10 +275,10 @@ def graph_bar_targets(months, monthlies, expenses, m_income, remaining, save):
     plt.axhline(0, color="black")
     plt.xticks([])
     plt.ylabel("Position Against Budget / Mean Expense ($)")
+    save_text = ( "\nSaving \${} from \${}"
+            .format(money(save), money(mean_income)) )
     title = "Position for {} ({} days remaining){}"\
-            .format(months[-1], remaining,
-                    "" if 0 == save else
-                        "\nSaving ${}".format(money(save)))
+            .format(months[-1], remaining, "" if 0 == save else save_text)
     plt.title(title)
     plt.legend(("Mean Expenditure", "Budgeted", "Spent"))
     expense_list = [ curr_expenses[c] for c in whitelist ]
