@@ -238,15 +238,12 @@ def graph_bar_targets(months, monthlies, expenses, m_income, remaining, save):
     plt.figure(6)
     # Remove the current month from monthlies
     prev_monthlies = [ e[:-1] for e in monthlies ]
-    # mean_prev_monthlies = np.mean(prev_monthlies, keepdims=True)
-    mean_prev_monthlies = np.mean(prev_monthlies, axis=1)
     # Calculate the means for each category of each complete month
+    mean_prev_monthlies = np.mean(prev_monthlies, axis=1)
     error_prev_monthlies = [ mean_error(e) for e in prev_monthlies ]
     curr_expenses = expenses[months[-1]]
 
     ms = dict(zip(whitelist, mean_prev_monthlies))
-    # Calculate mean monthly expenditure
-    # s = -1 * np.mean([m_income[m] - m_margin[m] for m in months[:-1]])
     # Calculate mean monthly income
     mean_income = np.mean([m_income[m] for m in months[:-1]])
     cash = -1 * mean_income
