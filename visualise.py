@@ -137,7 +137,10 @@ def mean_error(data, level=0.95):
     R = stats.norm.interval(level, loc=mean, scale=dscale)
     return R[1] - mean
 
-def graph_stacked_bar_expenses(months, monthlies, expenses, m_income, m_margin, remaining):
+def graph_stacked_bar_expenses(months, monthlies, expenses, m_income, remaining):
+    # Looks like:
+    # { "04/2013" : 3905.07, ... }
+    m_margin = surplus(expenses, m_income)
     # Plot table/bar-graph of expenses
     n_months = len(months)
     y_offset = np.array([0.0] * n_months)
@@ -165,7 +168,10 @@ def graph_stacked_bar_expenses(months, monthlies, expenses, m_income, m_margin, 
     plt.xlim([0, n_months])
     plt.title("Expenditures by Category per Month\n{} Day(s) Remaining in {}".format(remaining, months[-1]))
 
-def graph_bar_margin(months, m_margin, remaining):
+def graph_bar_margin(months, m_income, expenses, remaining):
+    # Looks like:
+    # { "04/2013" : 3905.07, ... }
+    m_margin = surplus(expenses, m_income)
     # Plot bar graph of margin
     n_months = len(months)
     plt.figure(2)
@@ -335,19 +341,15 @@ def main():
     # m_income: Looks like summed, but contains only income
     m_income = income(m_summed)
 
-    # m_margin: Looks like:
-    #
-    # { "04/2013" : 3905.07, ... }
-    m_margin = surplus(expenses, m_income)
 
     # Grab the date of the most recent transaction in the database
     last_transaction = datetime.strptime(m_grouped[months[-1]][-1][0], date_fmt)
     remaining = days_remaining(last_transaction)
 
     if (should_graph(args.graph, "stacked_bar_expenses")):
-        graph_stacked_bar_expenses(months, monthlies, expenses, m_income, m_margin, remaining)
+        graph_stacked_bar_expenses(months, monthlies, expenses, m_income, remaining)
     if (should_graph(args.graph, "bar_margin")):
-        graph_bar_margin(months, m_margin, remaining)
+        graph_bar_margin(months, m_income, expenses, remaining)
     if (should_graph(args.graph, "box_categories")):
         graph_box_categories(months, categorized)
     if (should_graph(args.graph, "xy_categories")):
