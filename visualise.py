@@ -173,17 +173,21 @@ def graph_bar_margin(months, m_income, expenses, remaining):
     # { "04/2013" : 3905.07, ... }
     m_margin = surplus(expenses, m_income)
     # Plot bar graph of margin
+    f, plts = plt.subplots(1, 1)
+    _graph_bar_margin(plts, months, m_margin)
+    f.suptitle("Remaining Capital after Expenses\n{} Days Remaining".format(remaining))
+
+def _graph_bar_margin(plot, months, m_margin):
     n_months = len(months)
-    plt.figure(2)
     sorted_margins = [m_margin[k] for k in months]
-    mbar = plt.bar(np.arange(n_months) + 0.3, sorted_margins, 0.4, align="center")
-    bar_label(plt, mbar, sorted_margins)
-    plt.xticks(np.arange(n_months) + 0.3, months)
-    plt.axhline(0, color="black")
-    plt.xlabel("Months")
-    plt.ylabel("Margin ($)")
-    plt.xlim([0, len(months)])
-    plt.title("Remaining Capital after Expenses\n{} Days Remaining".format(remaining))
+    mbar = plot.bar(np.arange(n_months), sorted_margins, 0.6, align="center")
+    bar_label(plot, mbar, sorted_margins)
+    plot.axhline(0, color="black")
+    plot.set_xlabel("Months")
+    plot.set_ylabel("Margin ($)")
+    plot.set_xlim([-1, len(months)])
+    plot.set_xticks(np.arange(n_months))
+    plot.set_xticklabels(months, rotation=30)
 
 def graph_box_categories(months, categorized):
     # Plot box-and-whisker plot of categories
