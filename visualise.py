@@ -168,16 +168,17 @@ def graph_stacked_bar_expenses(months, monthlies, expenses, m_income, remaining)
     plt.xlim([0, n_months])
     plt.title("Expenditures by Category per Month\n{} Day(s) Remaining in {}".format(remaining, months[-1]))
 
-def graph_bar_margin(months, m_income, expenses, remaining):
+def graph_bar_margin(months, m_income, expenses, remaining, save=0):
     # Looks like:
     # { "04/2013" : 3905.07, ... }
     m_margin = surplus(expenses, m_income)
     # Plot bar graph of margin
-    f, plts = plt.subplots(1, 1)
-    _graph_bar_margin(plts, months, m_margin)
+    f, plts = plt.subplots(1, 2)
+    _graph_bar_margin_previous(plts[0], months[:-1], m_margin)
+    _graph_bar_margin_current(plts[1], months, m_income, expenses, save)
     f.suptitle("Remaining Capital after Expenses\n{} Days Remaining".format(remaining))
 
-def _graph_bar_margin(plot, months, m_margin):
+def _graph_bar_margin_previous(plot, months, m_margin):
     n_months = len(months)
     sorted_margins = [m_margin[k] for k in months]
     mbar = plot.bar(np.arange(n_months), sorted_margins, 0.6, align="center")
@@ -189,6 +190,30 @@ def _graph_bar_margin(plot, months, m_margin):
     plot.set_xlim([-1, len(months)])
     plot.set_xticks(np.arange(n_months))
     plot.set_xticklabels(months, rotation=30)
+    plot.grid(axis="y")
+
+def _graph_bar_margin_current(plot, months, m_income, expenses, save):
+    c_month = months[-1]
+    c_expenses = sum(expenses[c_month].values())
+    c_income = m_income[c_month]
+    margin = c_income + c_expenses
+    mean_income = np.mean(list(m_income[m] for m in months[:-1]))
+    title = "Current Margins"
+    colors = [ "blue", "green" ]
+    xlabels = [ "Margin", "Projected Margin" ]
+    ys = [ margin, mean_income + c_expenses ]
+    if 0 < save:
+        title += " and Targets"
+        ys = [ ys[0], c_income + c_expenses - save, ys[1], mean_income + c_expenses - save ]
+        xlabels = [ xlabels[0], "Target", xlabels[1], "Projected Target" ]
+        colors = [ colors[0] ] * 2 + [colors[1] ] * 2
+    cbar = plot.bar(np.arange(len(ys)), ys, 0.6, align="center", color=colors)
+    bar_label(plot, cbar, ys)
+    plot.axhline(0, color="black")
+    plot.set_title(title)
+    plot.set_xticks(np.arange(len(ys)))
+    plot.set_xticklabels(xlabels, rotation=15)
+    plot.set_xlabel(c_month)
     plot.grid(axis="y")
 
 def graph_box_categories(months, categorized):
@@ -355,7 +380,7 @@ def main():
     if (should_graph(args.graph, "stacked_bar_expenses")):
         graph_stacked_bar_expenses(months, monthlies, expenses, m_income, remaining)
     if (should_graph(args.graph, "bar_margin")):
-        graph_bar_margin(months, m_income, expenses, remaining)
+        graph_bar_margin(months, m_income, expenses, remaining, args.save)
     if (should_graph(args.graph, "box_categories")):
         graph_box_categories(months, categorized)
     if (should_graph(args.graph, "xy_categories")):
