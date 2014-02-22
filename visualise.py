@@ -183,11 +183,13 @@ def _graph_bar_margin(plot, months, m_margin):
     mbar = plot.bar(np.arange(n_months), sorted_margins, 0.6, align="center")
     bar_label(plot, mbar, sorted_margins)
     plot.axhline(0, color="black")
+    plot.set_title("Previous Margins")
     plot.set_xlabel("Months")
     plot.set_ylabel("Margin ($)")
     plot.set_xlim([-1, len(months)])
     plot.set_xticks(np.arange(n_months))
     plot.set_xticklabels(months, rotation=30)
+    plot.grid(axis="y")
 
 def graph_box_categories(months, categorized):
     # Plot box-and-whisker plot of categories
