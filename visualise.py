@@ -166,6 +166,7 @@ def graph_stacked_bar_expenses(months, monthlies, expenses, m_income, remaining)
     plt.subplots_adjust(left=0.15, bottom=0.3)
     plt.xticks([])
     plt.xlim([0, n_months])
+    plt.grid(axis="y")
     plt.title("Expenditures by Category per Month\n{} Day(s) Remaining in {}".format(remaining, months[-1]))
 
 def graph_bar_margin(months, m_income, expenses, remaining, save=0):
@@ -236,6 +237,7 @@ def graph_box_categories(months, categorized):
     plt.subplots_adjust(left=0.15, bottom=0.2)
     plt.xticks([])
     plt.ylabel("Dollars ($)")
+    plt.grid(axis="y")
     plt.title("Box-plot of Expenses per Month\nSamples per category: {}".format(len(months) - 1))
 
 def graph_xy_categories(months, categorized, remaining):
@@ -254,7 +256,9 @@ def graph_xy_categories(months, categorized, remaining):
         l = polyval([a, b], monthr)
         p.plot(monthr, l, 'r.-')
         p.set_title(k)
+        p.set_xticks(range(len(monthns)))
         p.set_xticklabels(monthns, rotation=33)
+        p.grid(axis="y")
 
 def graph_xy_weekly(weekly):
     # Weekly XY plot with regression
@@ -269,6 +273,7 @@ def graph_xy_weekly(weekly):
     plt.title("XY Plot of Weekly Expenditure")
     plt.xlabel("Record Week (Arbitrary)")
     plt.ylabel("Expenditure ($)")
+    plt.grid(axis="both")
 
 def graph_bar_targets(months, monthlies, expenses, m_income, remaining, save):
     # Target bar-graph - Current spending per category against mean
@@ -329,6 +334,7 @@ def graph_bar_targets(months, monthlies, expenses, m_income, remaining, save):
             colLabels=[x[:3] for x in whitelist],
             loc="bottom")
     plt.subplots_adjust(left=0.15, bottom=0.2)
+    plt.grid(axis="y")
 
 def days_remaining(today=None):
     if not today:
