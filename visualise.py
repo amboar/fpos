@@ -122,7 +122,7 @@ def bar_label(plot, rects, margins):
     for i, rect in enumerate(rects):
         x = rect.get_x() + rect.get_width()/2.
         y = margins[i] + math.copysign(130, margins[i])
-        text = '{}'.format(int(margins[i]))
+        text = '\${}'.format(int(margins[i]))
         plot.text(x, y, text, ha='center', va='bottom')
 
 def q1(boxprop):
