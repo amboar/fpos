@@ -174,9 +174,10 @@ def graph_bar_margin(months, m_income, expenses, remaining, save=0):
     # { "04/2013" : 3905.07, ... }
     m_margin = surplus(expenses, m_income)
     # Plot bar graph of margin
-    f, plts = plt.subplots(1, 2)
-    _graph_bar_margin_previous(plts[0], months[:-1], m_margin)
-    _graph_bar_margin_current(plts[1], months, m_income, expenses, save)
+    f = plt.figure(2)
+    _graph_bar_margin_previous(plt.subplot(121), months[:-1], m_margin)
+    _graph_bar_margin_current(plt.subplot(222), months, m_income, expenses, save)
+    _graph_bar_margin_spending(plt.subplot(224), months, m_income, expenses, save, remaining)
     f.suptitle("Remaining Capital after Expenses\n{} Days Remaining".format(remaining))
 
 def _graph_bar_margin_previous(plot, months, m_margin):
@@ -201,21 +202,50 @@ def _graph_bar_margin_current(plot, months, m_income, expenses, save):
     mean_income = np.mean(list(m_income[m] for m in months[:-1]))
     title = "Current Margins"
     colors = [ "blue", "green" ]
-    xlabels = [ "Margin", "Projected Margin" ]
+    xlabels = [ "Margin", "Prj Margin" ]
     ys = [ margin, mean_income + c_expenses ]
     if 0 < save:
         title += " and Targets"
         ys = [ ys[0], c_income + c_expenses - save, ys[1], mean_income + c_expenses - save ]
-        xlabels = [ xlabels[0], "Target", xlabels[1], "Projected Target" ]
+        xlabels = [ xlabels[0], "Target", xlabels[1], "Prj Target" ]
         colors = [ colors[0] ] * 2 + [colors[1] ] * 2
-    cbar = plot.bar(np.arange(len(ys)), ys, 0.6, align="center", color=colors)
-    bar_label(plot, cbar, ys)
-    plot.axhline(0, color="black")
+    plot.barh(np.arange(len(ys)), ys, 0.6, align="center", color=colors)
+    plot.axvline(0, color="black")
+    lims = [-1, len(ys)]
+    plot.set_ylim(lims)
     plot.set_title(title)
-    plot.set_xticks(np.arange(len(ys)))
-    plot.set_xticklabels(xlabels, rotation=15)
-    plot.set_xlabel(c_month)
-    plot.grid(axis="y")
+    plot.set_yticks(np.arange(len(ys)))
+    plot.set_yticklabels(xlabels, rotation=15)
+    plot.grid(axis="x")
+    ax2 = plot.twinx()
+    ax2.set_ylim(lims)
+    ax2.set_yticks(np.arange(len(ys)))
+    ax2.set_yticklabels([ "\${}".format(money(x)) for x in ys])
+
+def _graph_bar_margin_spending(plot, months, m_income, expenses, save, remaining):
+    mean_income = np.mean(list(m_income[m] for m in months[:-1]))
+    c_month = months[-1]
+    c_expenses = sum(expenses[c_month].values())
+    c_income = m_income[c_month]
+    c_margin = c_income + c_expenses
+    p_margin = mean_income + c_expenses
+    e_per_day = max(0, (c_margin - save) / remaining)
+    p_per_day = (p_margin - save) / remaining
+    e_per_week = max(0, e_per_day * 7)
+    p_per_week = p_per_day * 7
+    ys = [ e_per_day, p_per_day, e_per_week, p_per_week ]
+    plot.barh(range(len(ys)), ys, 0.6, align="center", color="bgbg")
+    plot.axvline(0, color="black")
+    lims = [-1, len(ys)]
+    plot.set_ylim(lims)
+    plot.set_yticks(np.arange(len(ys)))
+    plot.set_yticklabels(["Per Day", "Prj Per Day", "Per Week", "Prj Per Week"], rotation=15)
+    plot.grid(axis="x")
+    plot.set_title("Forecast Spending")
+    ax2 = plot.twinx()
+    ax2.set_ylim(lims)
+    ax2.set_yticks(np.arange(len(ys)))
+    ax2.set_yticklabels([ "\${}".format(money(x)) for x in ys])
 
 def graph_box_categories(months, categorized):
     # Plot box-and-whisker plot of categories
