@@ -201,14 +201,14 @@ def _graph_bar_margin_current(plot, months, m_income, expenses, save):
     margin = c_income + c_expenses
     mean_income = np.mean(list(m_income[m] for m in months[:-1]))
     title = "Current Margins"
-    colors = [ "blue", "green" ]
-    xlabels = [ "Margin", "Prj Margin" ]
-    ys = [ margin, mean_income + c_expenses ]
+    colors = [ "blue", ] * 2 + [ "green", ] * 2
+    xlabels = [ "Earnt", "Margin", "Prj", "Prj Margin" ]
+    ys = [ c_income, margin, mean_income, mean_income + c_expenses ]
     if 0 < save:
         title += " and Targets"
-        ys = [ ys[0], c_income + c_expenses - save, ys[1], mean_income + c_expenses - save ]
-        xlabels = [ xlabels[0], "Target", xlabels[1], "Prj Target" ]
-        colors = [ colors[0] ] * 2 + [colors[1] ] * 2
+        ys = [ ys[0], ys[1], c_income + c_expenses - save, ys[2], ys[3], mean_income + c_expenses - save ]
+        xlabels = [ xlabels[0], xlabels[1], "Target", xlabels[2], xlabels[3], "Prj Target" ]
+        colors = [ colors[0] ] * 3 + [colors[1] ] * 3
     plot.barh(np.arange(len(ys)), ys, 0.6, align="center", color=colors)
     plot.axvline(0, color="black")
     lims = [-1, len(ys)]
