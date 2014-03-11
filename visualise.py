@@ -239,9 +239,9 @@ def _graph_bar_margin_spending(plot, months, m_income, expenses, save, remaining
     lims = [-1, len(ys)]
     plot.set_ylim(lims)
     plot.set_yticks(np.arange(len(ys)))
-    plot.set_yticklabels(["Per Day", "Prj Per Day", "Per Week", "Prj Per Week"], rotation=15)
+    plot.set_yticklabels(["Per Day", "Per Day Prj", "Per Week", "Per Week Prj"], rotation=15)
     plot.grid(axis="x")
-    plot.set_title("Forecast Spending")
+    plot.set_title("Spending Targets")
     ax2 = plot.twinx()
     ax2.set_ylim(lims)
     ax2.set_yticks(np.arange(len(ys)))
