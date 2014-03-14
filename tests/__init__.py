@@ -136,7 +136,7 @@ class VisualiseTest(unittest.TestCase):
         first = [ "01/01/2014", "-1.00", "Foo" ]
         second = [ "09/01/2014", "-2.00", "Bar" ]
         week = [ first, second ]
-        expected = { "00/2014" : [ first ], "01/2014" : [ second ] }
+        expected = { "2014:00" : [ first ], "2014:01" : [ second ] }
         result = visualise.group_period(week, [ visualise.extract_week ])
         self.assertEquals(1, len(result))
         self.assertEquals(expected, result[0])
@@ -145,7 +145,7 @@ class VisualiseTest(unittest.TestCase):
         first = [ "01/01/2014", "-1.00", "Foo" ]
         second = [ "02/01/2014", "-2.00", "Foo" ]
         transactions = [ first, second ]
-        expected = [ { "01/2014" : [ first, second ] }, { "00/2014" : [ first, second ] } ]
+        expected = [ { "01/2014" : [ first, second ] }, { "2014:00" : [ first, second ] } ]
         result = visualise.group_period(transactions, [ visualise.extract_month, visualise.extract_week ])
         self.assertEquals(2, len(result))
         self.assertEquals(expected, result)
