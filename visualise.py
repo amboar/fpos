@@ -118,11 +118,15 @@ def parse_args():
 def should_graph(name, graph):
     return None is name or name == graph
 
-def bar_label(plot, rects, margins):
+def bar_label(plot, rects, values, oriented="v", offset=130):
     for i, rect in enumerate(rects):
-        x = rect.get_x() + rect.get_width()/2.
-        y = margins[i] + math.copysign(130, margins[i])
-        text = '\${}'.format(int(margins[i]))
+        if oriented == "v":
+            x = rect.get_x() + rect.get_width()/2.
+            y = values[i] + math.copysign(offset, values[i])
+        else:
+            x = values[i] + math.copysign(offset, values[i])
+            y = rect.get_y() + rect.get_height()/3.
+        text = '\${}'.format(int(values[i]))
         plot.text(x, y, text, ha='center', va='bottom')
 
 def q1(boxprop):
@@ -200,27 +204,28 @@ def _graph_bar_margin_current(plot, months, m_income, expenses, save):
     c_income = m_income[c_month]
     margin = c_income + c_expenses
     mean_income = np.mean(list(m_income[m] for m in months[:-1]))
-    title = "Current Margins"
-    colors = [ "blue", ] * 2 + [ "green", ] * 2
-    xlabels = [ "Earnt", "Margin", "Prj", "Prj Margin" ]
-    ys = [ c_income, margin, mean_income, mean_income + c_expenses ]
+    title = "Earnings and Margins"
+    ylabels = [ "Income", "Margin" ]
+    earnt = [ c_income, margin ]
+    projected = [ mean_income, mean_income + c_expenses ]
     if 0 < save:
         title += " and Targets"
-        ys = [ ys[0], ys[1], c_income + c_expenses - save, ys[2], ys[3], mean_income + c_expenses - save ]
-        xlabels = [ xlabels[0], xlabels[1], "Target", xlabels[2], xlabels[3], "Prj Target" ]
-        colors = [ colors[0] ] * 3 + [colors[1] ] * 3
-    plot.barh(np.arange(len(ys)), ys, 0.6, align="center", color=colors)
+        earnt.append(c_income + c_expenses - save)
+        projected.append(mean_income + c_expenses - save)
+        ylabels.append("Target")
+    b_height = 0.4
+    be = plot.barh(np.arange(len(earnt)) + 0.1, earnt, b_height, color="b")
+    bar_label(plot, be, earnt, oriented="h", offset=500)
+    bm = plot.barh(np.arange(len(projected)) + b_height + 0.1, projected, b_height, color="g")
+    bar_label(plot, bm, projected, oriented="h", offset=500)
     plot.axvline(0, color="black")
-    lims = [-1, len(ys)]
+    lims = [ 0, len(earnt)]
     plot.set_ylim(lims)
     plot.set_title(title)
-    plot.set_yticks(np.arange(len(ys)))
-    plot.set_yticklabels(xlabels, rotation=15)
+    plot.set_yticks(np.arange(len(earnt)) + 0.5)
+    plot.set_yticklabels(ylabels, rotation=15)
     plot.grid(axis="x")
-    ax2 = plot.twinx()
-    ax2.set_ylim(lims)
-    ax2.set_yticks(np.arange(len(ys)))
-    ax2.set_yticklabels([ "\${}".format(money(x)) for x in ys])
+    plot.legend((be, bm), ("Earnt", "Projected"))
 
 def _graph_bar_margin_spending(plot, months, m_income, expenses, save, remaining):
     mean_income = np.mean(list(m_income[m] for m in months[:-1]))
@@ -233,19 +238,22 @@ def _graph_bar_margin_spending(plot, months, m_income, expenses, save, remaining
     p_per_day = (p_margin - save) / remaining
     e_per_week = max(0, e_per_day * 7)
     p_per_week = p_per_day * 7
-    ys = [ e_per_day, p_per_day, e_per_week, p_per_week ]
-    plot.barh(range(len(ys)), ys, 0.6, align="center", color="bgbg")
+    yes = [ e_per_day, e_per_week ]
+    yps = [ p_per_day, p_per_week ]
+    b1 = plot.barh(np.arange(len(yes)) + 0.1, yes, 0.4, color="b")
+    bar_label(plot, b1, yes, oriented="h", offset=100)
+    b2 = plot.barh(np.arange(len(yps)) + 0.5, yps, 0.4, color="g")
+    bar_label(plot, b2, yps, oriented="h", offset=100)
     plot.axvline(0, color="black")
-    lims = [-1, len(ys)]
+    mlen = max(len(x) for x in (yes, yps))
+    lims = [ 0, mlen ]
     plot.set_ylim(lims)
-    plot.set_yticks(np.arange(len(ys)))
-    plot.set_yticklabels(["Per Day", "Per Day Prj", "Per Week", "Per Week Prj"], rotation=15)
+    plot.set_yticks(np.arange(mlen))
+    plot.set_yticklabels(( "Per Day", "Per Week" ), rotation=15)
+    plot.set_yticks(np.arange(mlen) + 0.5)
     plot.grid(axis="x")
-    plot.set_title("Spending Targets")
-    ax2 = plot.twinx()
-    ax2.set_ylim(lims)
-    ax2.set_yticks(np.arange(len(ys)))
-    ax2.set_yticklabels([ "\${}".format(money(x)) for x in ys])
+    plot.set_title("Spending Targets for Earnt and Projected Income")
+    plot.legend(( b1, b2 ), ( "Earnt", "Projected"), loc="lower right")
 
 def graph_box_categories(months, categorized):
     # Plot box-and-whisker plot of categories
