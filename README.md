@@ -32,6 +32,7 @@ Workflow
 Dependencies
 ============
 
+0. Python 3
 1. Numpy
 2. Scipy
 3. Matplotlib
