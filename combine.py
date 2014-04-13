@@ -24,13 +24,20 @@ import itertools
 import sys
 from core import date_fmt
 
-def parse_args():
-    parser = argparse.ArgumentParser()
+def name():
+    return __name__.split(".")[-1]
+
+def parse_args(parser=None):
+    wasNone = parser is None
+    if wasNone:
+        parser = argparse.ArgumentParser()
     parser.add_argument("database", metavar="FILE", type=argparse.FileType('r'))
     parser.add_argument("updates", metavar="FILE", type=argparse.FileType('r'), nargs='*')
     parser.add_argument('--out', metavar="FILE", type=argparse.FileType('w'),
             default=sys.stdout)
-    return parser.parse_args()
+    if wasNone:
+        return parser.parse_args()
+    return None
 
 def digest_entry(entry):
     s = hashlib.sha1()
@@ -49,8 +56,9 @@ def combine(sources):
             yield v
     return _gen()
 
-def main():
-    args = parse_args()
+def main(args=None):
+    if args is None:
+        args = parse_args()
     try:
         readables = itertools.chain(args.updates, (args.database,))
         csv.writer(args.out).writerows(combine(csv.reader(x) for x in readables))

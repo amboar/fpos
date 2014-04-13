@@ -105,15 +105,21 @@ def surplus(expenses, income):
 def colours(n):
     return plt.cm.BuPu(np.linspace(0, 1.0, n))
 
+def name():
+    return __name__.split(".")[-1]
 
-def parse_args():
+def parse_args(parser=None):
+    wasNone = parser is None
+    if wasNone:
+        parser = argparse.ArgumentParser()
     graph_choices = [ "stacked_bar_expenses", "bar_margin", "box_categories",
             "xy_categories", "xy_weekly", "bar_targets" ]
-    parser = argparse.ArgumentParser()
     parser.add_argument("database", metavar="FILE", type=argparse.FileType('r'))
     parser.add_argument("--save", type=float, default=0)
     parser.add_argument("--graph", choices=graph_choices)
-    return parser.parse_args()
+    if wasNone:
+        return parser.parse_args()
+    return None
 
 def should_graph(name, graph):
     return None is name or name == graph
@@ -380,8 +386,9 @@ def days_remaining(today=None):
     n_days = calendar.monthrange(today.year, today.month)[1]
     return (datetime(today.year, today.month, n_days) - today).days + 1
 
-def main():
-    args = parse_args()
+def main(args=None):
+    if args is None:
+        args = parse_args()
 
     # Core data, used across multiple plots
 

@@ -23,15 +23,22 @@ from datetime import datetime as dt
 from collections import defaultdict
 from core import date_fmt, month_fmt
 
-def parse_args():
-    parser = argparse.ArgumentParser()
+def name():
+    return __name__.split(".")[-1]
+
+def parse_args(parser=None):
+    wasNone = parser is None
+    if wasNone:
+        parser = argparse.ArgumentParser()
     parser.add_argument("source", metavar="FILE", type=argparse.FileType('r'))
     parser.add_argument("--sink", metavar="FILE", type=argparse.FileType('w'),
             default=sys.stdout)
     parser.add_argument("--start", metavar="DATE", type=str)
     parser.add_argument("--end", metavar="DATE", type=str)
     parser.add_argument("--length", type=int)
-    return parser.parse_args()
+    if wasNone:
+        return parser.parse_args()
+    return None
 
 def gen_span_oracle(start, end):
     o_true = lambda x: True
@@ -52,8 +59,9 @@ def window(start, end, source):
                 yield e
     return _gen()
 
-def main():
-    args = parse_args();
+def main(args=None):
+    if args is None:
+        args = parse_args()
     try:
         r = csv.reader(args.source)
         w = csv.writer(args.sink)

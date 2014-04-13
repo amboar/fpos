@@ -52,16 +52,24 @@ def categorize(description, learnt):
             print("Couldn't determine category from {}".format(raw))
     return learnt[description]
 
-def parse_args():
-    parser = argparse.ArgumentParser()
+def name():
+    return __name__.split(".")[-1]
+
+def parse_args(parser=None):
+    wasNone = parser is None
+    if wasNone:
+        parser = argparse.ArgumentParser()
     parser.add_argument('ins', metavar="FILE", type=argparse.FileType('r'), nargs='*')
     parser.add_argument('--out', metavar="FILE", type=argparse.FileType('w'),
             default=sys.stdout)
-    return parser.parse_args()
+    if wasNone:
+        return parser.parse_args()
+    return None
 
-def main():
+def main(args=None):
+    if args is None:
+        args = parse_args()
     learnt = {}
-    args = parse_args()
     try:
         for istream in args.ins:
             try:

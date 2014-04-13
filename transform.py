@@ -53,19 +53,27 @@ def transform_stgeorge(csv):
             yield [l[0], money((-1.0 * float(l[2])) if l[2] else float(l[3])), l[1]]
     return _gen()
 
-def parse_args():
-    parser = argparse.ArgumentParser()
+def name():
+    return __name__.split(".")[-1]
+
+def parse_args(parser=None):
+    wasNone = parser is None
+    if wasNone:
+        parser = argparse.ArgumentParser()
     parser.add_argument("form", metavar="FORM", choices=transform_choices)
     parser.add_argument("--input", metavar="FILE", type=argparse.FileType('r'), default=sys.stdin)
     parser.add_argument("--output", metavar="FILE", type=argparse.FileType('w'), default=sys.stdout)
-    return parser.parse_args()
+    if wasNone:
+        return parser.parse_args()
+    return None
 
 def transform(form, source):
     assert form in transform_choices
     return globals()["transform_{}".format(form)](source)
 
-def main():
-    args = parse_args()
+def main(args=None):
+    if args is None:
+        args = parse_args()
     try:
         csv.writer(args.output).writerows(transform(args.form, csv.reader(args.input)))
     finally:
