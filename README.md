@@ -8,26 +8,27 @@ The categories are based on those used by the Australian Tax Office on their
 [MoneySmart website][1]. These scripts were hacked together out of laziness
 when the author got fed up with manually entering his data into the site.
 
-The relevant scripts are:
+The relevant commands are:
 
-* transform.py: Converts each bank's CSV export document into an intermediate
+* `fpos transform': Converts each bank's CSV export document into an intermediate
     representation (IR) suitable for further processing
-* combine.py: Merges multiple IR documents into one time-ordered document
-* annotate.py: Annotates an IR document with transaction types.
-* visualise.py: Displays collated transactions as graphs and tables
+* `fpos combine': Merges multiple IR documents into one time-ordered document
+* `fpos annotate': Annotates an IR document with transaction types.
+* `fpos visualise': Displays collated transactions as graphs and tables
+* `fpos window': Output document transactions between given dates
 
-Example renderings from visualise.py can be found in the examples directory.
+Example renderings from `fpos visualise' can be found in the examples directory.
 
 Workflow
 ========
 
 1. Export transaction data to Microsoft Excel CSV format, or the closest
    possible representation
-2. Use transform.py to convert the data into the intermediate representation
-3. Use combine.py to update an existing database with the newly acquired
+2. Use transform to convert the data into the intermediate representation
+3. Use combine to update an existing database with the newly acquired
    transaction information from 2.
-4. Use annotate.py to tag transactions with a relevant type
-5. Use visualise.py to understand expenditure.
+4. Use annotate to tag transactions with a relevant type
+5. Use visualise to understand expenditure.
 
 Dependencies
 ============
@@ -47,12 +48,11 @@ The intermediate representation and database format is CSV. The columns are:
 3. Description, a human decipherable annotation
 4. Category, describes the type of transaction from a finite set.
 
-Note that transform.py must output IR with at least the first three columns.
-combine.py will use data in the first three columns but will not strip the
-fourth if present. annotate.py learns from rows containing the category to
-guess at the category for rows lacking it and as such the document output by
-annotate.py will have all four columns. visualise.py requires all four fields
-to function.
+Note that transform must output IR with at least the first three columns.
+combine will use data in the first three columns but will not strip the fourth
+if present. annotate learns from rows containing the category to guess at the
+category for rows lacking it and as such the document output by annotate will
+have all four columns. visualise requires all four fields to function.
 
 Example IR Document
 -------------------
