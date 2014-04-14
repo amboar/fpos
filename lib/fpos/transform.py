@@ -19,7 +19,7 @@
 import argparse
 import csv
 import sys
-from core import money
+from .core import money
 
 transform_choices = [ "anz", "commbank", "stgeorge" ]
 

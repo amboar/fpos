@@ -19,7 +19,7 @@
 import argparse
 import csv
 import sys
-from core import categories
+from .core import categories
 
 def find_category(needle):
     candidates = []

@@ -22,7 +22,7 @@ import datetime
 import hashlib
 import itertools
 import sys
-from core import date_fmt
+from .core import date_fmt
 
 def name():
     return __name__.split(".")[-1]

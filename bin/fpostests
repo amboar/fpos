@@ -1,5 +1,10 @@
 #!/usr/bin/python3
 
+import os
+import sys
+if os.path.exists(os.path.join(os.path.dirname(__file__), '..', '.git')):
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'lib'))
+
 import unittest
 import tests
 

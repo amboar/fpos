@@ -27,9 +27,9 @@ from scipy import stats
 import matplotlib.pyplot as plt
 import math
 from scipy import polyfit, polyval
-from core import categories, flexible, fixed
-from core import money
-from core import date_fmt, month_fmt
+from .core import categories, flexible, fixed
+from .core import money
+from .core import date_fmt, month_fmt
 
 blacklist = ("Income", "Internal")
 whitelist = [x for x in categories if x not in blacklist]

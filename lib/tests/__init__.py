@@ -16,14 +16,11 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import annotate
 from datetime import datetime as dt
-import transform
 import unittest
-import visualise
-from visualise import money
-import window
-import combine
+from fpos import annotate, combine, transform, visualise, window
+
+money = visualise.money
 
 class AnnotateTest(unittest.TestCase):
     def test_find_category_no_match(self):

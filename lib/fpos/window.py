@@ -21,7 +21,7 @@ import csv
 import sys
 from datetime import datetime as dt
 from collections import defaultdict
-from core import date_fmt, month_fmt
+from .core import date_fmt, month_fmt
 
 def name():
     return __name__.split(".")[-1]

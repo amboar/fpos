@@ -16,11 +16,13 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import argparse
-import os.path as p
+import os
 import sys
-sys.path.append(p.join(p.dirname(__file__), '..'))
-import annotate, combine, transform, visualise, window
+if os.path.exists(os.path.join(os.path.dirname(__file__), '..', '.git')):
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'lib'))
+
+import argparse
+from fpos import annotate, combine, transform, visualise, window
 
 _commands = (annotate, combine, transform, visualise, window)
 
