@@ -31,11 +31,14 @@ def parse_args():
     subparser = parser.add_subparsers(dest="command")
     for cmd in _commands:
         cmd.parse_args(subparser.add_parser(cmd.name()))
-    return parser.parse_args()
+    return parser.parse_args(), parser
 
 def main():
-    args = parse_args()
-    dict((cmd.name(), cmd.main) for cmd in _commands)[args.command](args)
+    args, parser = parse_args()
+    if None is args.command:
+        parser.print_help()
+    else:
+        dict((cmd.name(), cmd.main) for cmd in _commands)[args.command](args)
 
 if __name__ == "__main__":
     main()
