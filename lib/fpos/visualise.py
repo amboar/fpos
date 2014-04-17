@@ -345,15 +345,15 @@ def graph_bar_targets(months, monthlies, expenses, m_income, remaining, save):
     budget = [ abs(fs[k]) for k in whitelist ]
 
     r_whitelist = np.arange(len(whitelist))
-    plt.bar(r_whitelist + 0.1,
+    b1 = plt.bar(r_whitelist + 0.1,
             budget,
             [ 0.6 ] * len(r_whitelist),
             alpha=0.4)
-    plt.bar(r_whitelist + 0.1,
+    b2 = plt.bar(r_whitelist + 0.1,
             [ abs(curr_expenses[k]) for k in whitelist ],
             [ 0.6 ] * len(r_whitelist),
             color='r', alpha=0.6)
-    plt.bar(r_whitelist + 0.8,
+    b3 = plt.bar(r_whitelist + 0.8,
             [ abs(v) for v in mean_prev_monthlies ],
             [ 0.1 ] * len(r_whitelist),
             yerr=error_prev_monthlies, color='k', alpha=0.6)
@@ -365,7 +365,6 @@ def graph_bar_targets(months, monthlies, expenses, m_income, remaining, save):
     title = "Position for {} ({} days remaining){}"\
             .format(months[-1], remaining, "" if 0 == save else save_text)
     plt.title(title)
-    plt.legend(("Mean Expenditure", "Budgeted", "Spent"))
     expense_list = [ curr_expenses[c] for c in whitelist ]
     cell_text = []
     cell_text.append([money(abs(b) - abs(x)) for b, x in zip(budget, expense_list)])
@@ -378,6 +377,7 @@ def graph_bar_targets(months, monthlies, expenses, m_income, remaining, save):
             colLabels=[x[:3] for x in whitelist],
             loc="bottom")
     plt.subplots_adjust(left=0.15, bottom=0.2)
+    plt.legend(( b1, b2, b3 ), ( "Budget", "Spent", "Mean Expenditure" ))
     plt.grid(axis="y")
 
 def days_remaining(today=None):
