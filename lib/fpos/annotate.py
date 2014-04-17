@@ -41,15 +41,30 @@ def resolve_category(needle):
     except ValueError:
         return find_category(needle)
 
-def categorize(description, learnt):
-    print("\n{!s}".format(categories))
-    print("Description: {!s}".format(description))
-    while not description in learnt:
+def categorize(date, description, learnt):
+    need = True
+    while need:
+        print("{!s}: {!s}".format(date, description))
+        guess = learnt[description] if description in learnt else None
+        if guess is None:
+            print("Category [?]:", end=' ', flush=True)
+        else:
+            print("Category [{!s}]:".format(guess), end=' ', flush=True)
         raw = sys.stdin.readline().strip()
-        try:
-            learnt[description] = resolve_category(raw)
-        except ValueError:
-            print("Couldn't determine category from {}".format(raw))
+        if "" == raw:
+            need = None is guess
+            if not need:
+                assert description in learnt
+        elif "?" == raw:
+            print()
+            print(*categories, sep='\n')
+            print()
+        else:
+            try:
+                learnt[description] = resolve_category(raw)
+                need = False
+            except ValueError:
+                print("Couldn't determine category from {}".format(raw))
     return learnt[description]
 
 def name():
@@ -92,8 +107,9 @@ def main(args=None):
                     if 0 == len(output):
                         # Haven't yet determined the category, require user input
                         output.extend(entry)
-                        output.append(categorize(entry[2], learnt))
+                        output.append(categorize(entry[0], entry[2], learnt))
                     w.writerow(output)
+                    print()
             finally:
                 istream.close()
     finally:
