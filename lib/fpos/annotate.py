@@ -74,9 +74,8 @@ def parse_args(parser=None):
     wasNone = parser is None
     if wasNone:
         parser = argparse.ArgumentParser()
-    parser.add_argument('ins', metavar="FILE", type=argparse.FileType('r'), nargs='*')
-    parser.add_argument('--out', metavar="FILE", type=argparse.FileType('w'),
-            default=sys.stdout)
+    parser.add_argument('infile', metavar="INPUT", type=argparse.FileType('r'))
+    parser.add_argument('outfile', metavar="OUTPUT", type=argparse.FileType('w'))
     if wasNone:
         return parser.parse_args()
     return None
@@ -86,34 +85,31 @@ def main(args=None):
         args = parse_args()
     learnt = {}
     try:
-        for istream in args.ins:
-            try:
-                r = csv.reader(istream, dialect='excel')
-                w = csv.writer(args.out, dialect='excel')
-                for entry in r:
-                    if 0 == len(entry):
-                        # Skip empty lines
-                        continue
-                    output = []
-                    if 4 == len(entry):
-                        # Fourth column is category, check that it's known
-                        try:
-                            learnt[entry[2]] = resolve_category(entry[3])
-                            output.extend(entry)
-                        except ValueError:
-                            # Category isn't known, output remains empty to
-                            # trigger user input
-                            pass
-                    if 0 == len(output):
-                        # Haven't yet determined the category, require user input
-                        output.extend(entry)
-                        output.append(categorize(entry[0], entry[2], learnt))
-                    w.writerow(output)
-                    print()
-            finally:
-                istream.close()
+        r = csv.reader(args.infile, dialect='excel')
+        w = csv.writer(args.outfile, dialect='excel')
+        for entry in r:
+            if 0 == len(entry):
+                # Skip empty lines
+                continue
+            output = []
+            if 4 == len(entry):
+                # Fourth column is category, check that it's known
+                try:
+                    learnt[entry[2]] = resolve_category(entry[3])
+                    output.extend(entry)
+                except ValueError:
+                    # Category isn't known, output remains empty to
+                    # trigger user input
+                    pass
+            if 0 == len(output):
+                # Haven't yet determined the category, require user input
+                output.extend(entry)
+                output.append(categorize(entry[0], entry[2], learnt))
+            w.writerow(output)
+            print()
     finally:
-        args.out.close()
+        args.infile.close()
+        args.outfile.close()
 
 if __name__ == "__main__":
     main()
