@@ -13,6 +13,7 @@
 #
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+import importlib
 
 categories = [ "Cash", "Commitment", "Dining", "Education", "Entertainment",
 "Health", "Home", "Income", "Internal", "Shopping", "Transport", "Utilities" ]
@@ -25,3 +26,10 @@ month_fmt = "%m/%Y"
 
 def money(value):
     return "{:.2f}".format(value)
+
+def global_module(env, module, package=None, name=None):
+    env[module if name is None else name] = importlib.import_module(module, package)
+
+def global_symbol(env, module, symbol, package=None, name=None):
+    p = importlib.import_module(module, package)
+    env[symbol if name is None else name] = getattr(p, symbol)

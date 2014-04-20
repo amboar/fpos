@@ -16,17 +16,12 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import argparse
 import copy
 import csv
 import calendar
 from datetime import datetime
 import itertools
-import numpy as np
-from scipy import stats
-import matplotlib.pyplot as plt
 import math
-from scipy import polyfit, polyval
 from .core import categories, flexible, fixed
 from .core import money
 from .core import date_fmt, month_fmt
@@ -109,6 +104,7 @@ def name():
     return __name__.split(".")[-1]
 
 def parse_args(parser=None):
+    import argparse
     wasNone = parser is None
     if wasNone:
         parser = argparse.ArgumentParser()
@@ -387,6 +383,12 @@ def days_remaining(today=None):
     return (datetime(today.year, today.month, n_days) - today).days + 1
 
 def main(args=None):
+    from .core import global_module, global_symbol
+    global_symbol(globals(), "scipy", "polyfit")
+    global_symbol(globals(), "scipy", "polyval")
+    global_module(globals(), "scipy.stats", name="stats")
+    global_module(globals(), "matplotlib.pyplot", name="plt")
+    global_module(globals(), "numpy", name="np")
     if args is None:
         args = parse_args()
 
