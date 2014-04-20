@@ -20,6 +20,7 @@ import argparse
 import csv
 import sys
 from .core import categories
+from .core import money
 
 def find_category(needle):
     candidates = []
@@ -41,10 +42,16 @@ def resolve_category(needle):
     except ValueError:
         return find_category(needle)
 
-def categorize(date, description, learnt):
+def categorize(date, amount, description, learnt=None):
+    if learnt is None:
+        learnt = {}
     need = True
     while need:
-        print("{!s}: {!s}".format(date, description))
+        fmtargs = ("Spent" if 0 > float(amount) else "Earnt",
+                money(abs(float(amount))),
+                date,
+                description)
+        print("{} ${!s} on {!s}: {!s}".format(*fmtargs))
         guess = learnt[description] if description in learnt else None
         if guess is None:
             print("Category [?]:", end=' ', flush=True)
@@ -104,7 +111,7 @@ def main(args=None):
             if 0 == len(output):
                 # Haven't yet determined the category, require user input
                 output.extend(entry)
-                output.append(categorize(entry[0], entry[2], learnt))
+                output.append(categorize(*entry, learnt=learnt))
             w.writerow(output)
             print()
     finally:
