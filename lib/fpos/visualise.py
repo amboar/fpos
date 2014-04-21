@@ -113,6 +113,7 @@ def parse_args(parser=None):
     parser.add_argument("database", metavar="FILE", type=argparse.FileType('r'))
     parser.add_argument("--save", type=float, default=0)
     parser.add_argument("--graph", choices=graph_choices)
+    parser.add_argument("--current-date", default=False, action="store_true")
     if wasNone:
         return parser.parse_args()
     return None
@@ -376,9 +377,7 @@ def graph_bar_targets(months, monthlies, expenses, m_income, remaining, save):
     plt.legend(( b1, b2, b3 ), ( "Budget", "Spent", "Mean Expenditure" ))
     plt.grid(axis="y")
 
-def days_remaining(today=None):
-    if not today:
-        today = datetime.today()
+def days_remaining(today):
     n_days = calendar.monthrange(today.year, today.month)[1]
     return (datetime(today.year, today.month, n_days) - today).days + 1
 
@@ -428,6 +427,8 @@ def main(args=None):
 
     # Grab the date of the most recent transaction in the database
     last_transaction = datetime.strptime(m_grouped[months[-1]][-1][0], date_fmt)
+    if args.current_date:
+        last_transaction = datetime.today()
     remaining = days_remaining(last_transaction)
 
     if (should_graph(args.graph, "stacked_bar_expenses")):
