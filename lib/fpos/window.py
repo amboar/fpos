@@ -18,7 +18,6 @@
 
 import argparse
 import csv
-import sys
 from datetime import datetime as dt
 from collections import defaultdict
 from .core import date_fmt, month_fmt
@@ -30,9 +29,8 @@ def parse_args(parser=None):
     wasNone = parser is None
     if wasNone:
         parser = argparse.ArgumentParser()
-    parser.add_argument("source", metavar="FILE", type=argparse.FileType('r'))
-    parser.add_argument("--sink", metavar="FILE", type=argparse.FileType('w'),
-            default=sys.stdout)
+    parser.add_argument("infile", metavar="INPUT", type=argparse.FileType('r'))
+    parser.add_argument("outfile", metavar="OUTPUT", type=argparse.FileType('w'))
     parser.add_argument("--start", metavar="DATE", type=str)
     parser.add_argument("--end", metavar="DATE", type=str)
     parser.add_argument("--length", type=int)
@@ -63,11 +61,11 @@ def main(args=None):
     if args is None:
         args = parse_args()
     try:
-        r = csv.reader(args.source)
-        w = csv.writer(args.sink)
+        r = csv.reader(args.infile)
+        w = csv.writer(args.outfile)
         w.writerows(window(args.start, args.end, r))
     finally:
-        args.sink.close()
+        args.outfile.close()
 
 if __name__ == "__main__":
     main()
