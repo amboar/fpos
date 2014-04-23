@@ -61,8 +61,8 @@ def parse_args(parser=None):
     if wasNone:
         parser = argparse.ArgumentParser()
     parser.add_argument("form", metavar="FORM", choices=transform_choices)
-    parser.add_argument("--input", metavar="FILE", type=argparse.FileType('r'), default=sys.stdin)
-    parser.add_argument("--output", metavar="FILE", type=argparse.FileType('w'), default=sys.stdout)
+    parser.add_argument("infile", metavar="INPUT", type=argparse.FileType('r'), default=sys.stdin)
+    parser.add_argument("outfile", metavar="OUTPUT", type=argparse.FileType('w'), default=sys.stdout)
     if wasNone:
         return parser.parse_args()
     return None
@@ -75,10 +75,10 @@ def main(args=None):
     if args is None:
         args = parse_args()
     try:
-        csv.writer(args.output).writerows(transform(args.form, csv.reader(args.input)))
+        csv.writer(args.outfile).writerows(transform(args.form, csv.reader(args.infile)))
     finally:
-        args.input.close()
-        args.output.close()
+        args.infile.close()
+        args.outfile.close()
 
 if __name__ == "__main__":
     main()
