@@ -1,6 +1,15 @@
 #!/usr/bin/python3
 
+from __future__ import print_function
 from distutils.core import setup
+import sys
+
+v = sys.version_info
+if v < (3,):
+    msg = "FAIL: fpos requires Python 3.x, but setup.py was run using {}.{}.{}"
+    print(msg.format(v.major, v.minor, v.micro))
+    print("NOTE: Installation failed. Run setup.py using python3")
+    sys.exit(1)
 
 setup(name='fpos',
         version='0.1',
