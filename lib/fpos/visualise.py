@@ -177,6 +177,10 @@ def graph_stacked_bar_expenses(months, monthlies, expenses, m_income, remaining)
     plt.title("Expenditures by Category per Month\n{} Day(s) Remaining in {}".format(remaining, months[-1]))
 
 def graph_bar_margin(months, m_income, expenses, remaining, save=0):
+    if 1 == len(months):
+        # Need more than one month's data
+        print("Cannot display bar_margin, not enough data")
+        return
     # Looks like:
     # { "04/2013" : 3905.07, ... }
     m_margin = surplus(expenses, m_income)
@@ -259,6 +263,10 @@ def _graph_bar_margin_spending(plot, months, m_income, expenses, save, remaining
     plot.legend(( b1, b2 ), ( "Earnt", "Projected"), loc="lower right")
 
 def graph_box_categories(months, categorized):
+    if 1 == len(months):
+        # Need more than one month's data
+        print("Cannot display box_categories, not enough data")
+        return
     # Plot box-and-whisker plot of categories
     plt.figure(3)
     cs = []
@@ -282,6 +290,10 @@ def graph_box_categories(months, categorized):
     plt.title("Box-plot of Expenses per Month\nSamples per category: {}".format(len(months) - 1))
 
 def graph_xy_categories(months, categorized, remaining):
+    if 1 == len(months):
+        # Need more than one month's data
+        print("Cannot display xy_categories, not enough data")
+        return
     # XY plot of expenditure per category
     f, plts = plt.subplots(2, int(len(categorized) / 2), sharex=True)
     f.suptitle("XY Plot of Monthly Expenditure per Category")
@@ -317,6 +329,10 @@ def graph_xy_weekly(weekly):
     plt.grid(axis="both")
 
 def graph_bar_targets(months, monthlies, expenses, m_income, remaining, save):
+    if 1 == len(months):
+        # Need more than one month's data
+        print("Cannot display bar_targets, not enough data")
+        return
     # Target bar-graph - Current spending per category against mean
     plt.figure(6)
     # Remove the current month from monthlies
