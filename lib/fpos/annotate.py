@@ -42,16 +42,17 @@ def resolve_category(needle):
     except ValueError:
         return find_category(needle)
 
-def categorize(date, amount, description, learnt=None):
+def categorize(date, amount, description, learnt=None, confirm=False):
     if learnt is None:
         learnt = {}
     need = True
+    category = None
+    fmtargs = ("Spent" if 0 > float(amount) else "Earnt",
+            money(abs(float(amount))),
+            date,
+            description)
+    print("{} ${!s} on {!s}: {!s}".format(*fmtargs))
     while need:
-        fmtargs = ("Spent" if 0 > float(amount) else "Earnt",
-                money(abs(float(amount))),
-                date,
-                description)
-        print("{} ${!s} on {!s}: {!s}".format(*fmtargs))
         guess = learnt[description] if description in learnt else None
         if guess is None:
             print("Category [?]:", end=' ', flush=True)
@@ -68,11 +69,18 @@ def categorize(date, amount, description, learnt=None):
             print()
         else:
             try:
-                learnt[description] = resolve_category(raw)
+                category = resolve_category(raw)
                 need = False
             except ValueError:
                 print("Couldn't determine category from {}".format(raw))
-    return learnt[description]
+        if not need and confirm:
+            assert category is not None
+            print("Confirm {} [y/N]:".format(category), end=' ', flush=True)
+            confirmation = sys.stdin.readline().strip()
+            need = "y" != confirmation.lower()
+    if category is not None:
+        learnt[description] = category
+    return category
 
 def name():
     return __name__.split(".")[-1]
@@ -83,6 +91,7 @@ def parse_args(parser=None):
         parser = argparse.ArgumentParser()
     parser.add_argument('infile', metavar="INPUT", type=argparse.FileType('r'))
     parser.add_argument('outfile', metavar="OUTPUT", type=argparse.FileType('w'))
+    parser.add_argument('--confirm', default=False, action="store_true")
     if wasNone:
         return parser.parse_args()
     return None
@@ -111,7 +120,7 @@ def main(args=None):
             if 0 == len(output):
                 # Haven't yet determined the category, require user input
                 output.extend(entry)
-                output.append(categorize(*entry, learnt=learnt))
+                output.append(categorize(*entry, learnt=learnt, confirm=args.confirm))
             w.writerow(output)
             print()
     finally:
