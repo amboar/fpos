@@ -54,11 +54,8 @@ def categorize(date, amount, description, learnt=None, confirm=False):
     print("{} ${!s} on {!s}: {!s}".format(*fmtargs))
     while need:
         guess = learnt[description] if description in learnt else None
-        if guess is None:
-            print("Category [?]:", end=' ', flush=True)
-        else:
-            print("Category [{!s}]:".format(guess), end=' ', flush=True)
-        raw = sys.stdin.readline().strip()
+        prompt = "Category [{!s}]: ".format("?" if guess is None else guess)
+        raw = input(prompt).strip()
         if "" == raw:
             need = None is guess
             if not need:
@@ -75,8 +72,7 @@ def categorize(date, amount, description, learnt=None, confirm=False):
                 print("Couldn't determine category from {}".format(raw))
         if not need and confirm:
             assert category is not None
-            print("Confirm {} [y/N]:".format(category), end=' ', flush=True)
-            confirmation = sys.stdin.readline().strip()
+            confirmation = input("Confirm {} [y/N]: ".format(category)).strip()
             need = "y" != confirmation.lower()
     if category is not None:
         learnt[description] = category
