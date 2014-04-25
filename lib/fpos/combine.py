@@ -27,17 +27,14 @@ from .core import date_fmt
 def name():
     return __name__.split(".")[-1]
 
-def parse_args(parser=None):
-    wasNone = parser is None
-    if wasNone:
-        parser = argparse.ArgumentParser()
+def parse_args(subparser=None):
+    parser_init = subparser.add_parser if subparser else argparse.ArgumentParser
+    parser = parser_init(name())
     parser.add_argument("database", metavar="DATABASE", type=argparse.FileType('r'))
     parser.add_argument("updates", metavar="FILE", type=argparse.FileType('r'), nargs='*')
     parser.add_argument('--out', metavar="FILE", type=argparse.FileType('w'),
             default=sys.stdout)
-    if wasNone:
-        return parser.parse_args()
-    return None
+    return None if subparser else parser.parse_args()
 
 def digest_entry(entry):
     s = hashlib.sha1()

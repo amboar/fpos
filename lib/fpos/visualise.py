@@ -103,20 +103,17 @@ def colours(n):
 def name():
     return __name__.split(".")[-1]
 
-def parse_args(parser=None):
+def parse_args(subparser=None):
     import argparse
-    wasNone = parser is None
-    if wasNone:
-        parser = argparse.ArgumentParser()
+    parser_init = subparser.add_parser if subparser else argparse.ArgumentParser
+    parser = parser_init(name())
     graph_choices = [ "stacked_bar_expenses", "bar_margin", "box_categories",
             "xy_categories", "xy_weekly", "bar_targets" ]
     parser.add_argument("database", metavar="FILE", type=argparse.FileType('r'))
     parser.add_argument("--save", type=float, default=0)
     parser.add_argument("--graph", choices=graph_choices)
     parser.add_argument("--current-date", default=False, action="store_true")
-    if wasNone:
-        return parser.parse_args()
-    return None
+    return None if subparser else parser.parse_args()
 
 def should_graph(name, graph):
     return None is name or name == graph

@@ -28,10 +28,9 @@ from .core import money
 def name():
     return __name__.split('.')[-1]
 
-def parse_args(parser=None):
-    wasNone = parser is None
-    if wasNone:
-        parser = argparse.ArgumentParser()
+def parse_args(subparser=None):
+    parser_init = subparser.add_parser if subparser else argparse.ArgumentParser
+    parser = parser_init(name())
     aa = parser.add_argument
     aa("--cash-mean", default=60, type=float)
     aa("--cash-stdev", default=10, type=float)
@@ -72,9 +71,7 @@ def parse_args(parser=None):
     aa("--start", default="01/2014")
     aa("--end", default="04/2014")
     aa("--no-annotate", default=True, dest="annotate", action="store_false")
-    if wasNone:
-        return parser.parse_args()
-    return None
+    return None if subparser else parser.parse_args()
 
 def gen_days(days, period, stdev):
     rand = random.Random()

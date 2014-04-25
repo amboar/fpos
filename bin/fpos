@@ -30,7 +30,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     subparser = parser.add_subparsers(dest="command")
     for cmd in _commands:
-        cmd.parse_args(subparser.add_parser(cmd.name()))
+        cmd.parse_args(subparser)
     return parser.parse_args(), parser
 
 def main():

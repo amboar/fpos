@@ -25,18 +25,15 @@ from .core import date_fmt, month_fmt
 def name():
     return __name__.split(".")[-1]
 
-def parse_args(parser=None):
-    wasNone = parser is None
-    if wasNone:
-        parser = argparse.ArgumentParser()
+def parse_args(subparser=None):
+    parser_init = subparser.add_parser if subparser else argparse.ArgumentParser
+    parser = parser_init(name())
     parser.add_argument("infile", metavar="INPUT", type=argparse.FileType('r'))
     parser.add_argument("outfile", metavar="OUTPUT", type=argparse.FileType('w'))
     parser.add_argument("--start", metavar="DATE", type=str)
     parser.add_argument("--end", metavar="DATE", type=str)
     parser.add_argument("--length", type=int)
-    if wasNone:
-        return parser.parse_args()
-    return None
+    return None if subparser else parser.parse_args()
 
 def gen_span_oracle(start, end):
     o_true = lambda x: True

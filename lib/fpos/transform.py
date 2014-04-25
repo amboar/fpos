@@ -56,16 +56,13 @@ def transform_stgeorge(csv):
 def name():
     return __name__.split(".")[-1]
 
-def parse_args(parser=None):
-    wasNone = parser is None
-    if wasNone:
-        parser = argparse.ArgumentParser()
+def parse_args(subparser=None):
+    parser_init = subparser.add_parser if subparser else argparse.ArgumentParser
+    parser = parser_init(name())
     parser.add_argument("form", metavar="FORM", choices=transform_choices)
     parser.add_argument("infile", metavar="INPUT", type=argparse.FileType('r'), default=sys.stdin)
     parser.add_argument("outfile", metavar="OUTPUT", type=argparse.FileType('w'), default=sys.stdout)
-    if wasNone:
-        return parser.parse_args()
-    return None
+    return None if subparser else parser.parse_args()
 
 def transform(form, source):
     assert form in transform_choices

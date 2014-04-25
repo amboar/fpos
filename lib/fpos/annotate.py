@@ -82,16 +82,13 @@ def categorize(date, amount, description, learnt=None, confirm=False):
 def name():
     return __name__.split(".")[-1]
 
-def parse_args(parser=None):
-    wasNone = parser is None
-    if wasNone:
-        parser = argparse.ArgumentParser()
+def parse_args(subparser=None):
+    parser_init = subparser.add_parser if subparser else argparse.ArgumentParser
+    parser = parser_init(name())
     parser.add_argument('infile', metavar="INPUT", type=argparse.FileType('r'))
     parser.add_argument('outfile', metavar="OUTPUT", type=argparse.FileType('w'))
     parser.add_argument('--confirm', default=False, action="store_true")
-    if wasNone:
-        return parser.parse_args()
-    return None
+    return None if subparser else parser.parse_args()
 
 def main(args=None):
     if args is None:
