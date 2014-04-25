@@ -78,16 +78,16 @@ def parse_args(parser=None):
     return None
 
 def gen_days(days, period, stdev):
-    day = 0
     rand = random.Random()
+    day = rand.gauss(period, stdev)
     while day < days:
-        day += rand.gauss(period, stdev)
         yield day
+        day += rand.gauss(period, stdev)
 
 def create_document(args):
     start = datetime.strptime(args.start, month_fmt)
     end = datetime.strptime(args.end, month_fmt)
-    days = (end - start).days + 1
+    days = (end - start).days
     rand = random.Random()
     document = []
     for cat in (c for c in categories if "Internal" != c):
