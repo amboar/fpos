@@ -71,8 +71,7 @@ def parse_args(parser=None):
     aa("--utilities-period", default=14)
     aa("--start", default="01/2014")
     aa("--end", default="04/2014")
-    aa("--annotate", dest="annotate", action="store_true")
-    aa("--no-annotate", dest="annotate", action="store_false")
+    aa("--no-annotate", default=True, dest="annotate", action="store_false")
     if wasNone:
         return parser.parse_args()
     return None
