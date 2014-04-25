@@ -31,7 +31,7 @@ def parse_args(parser=None):
     wasNone = parser is None
     if wasNone:
         parser = argparse.ArgumentParser()
-    parser.add_argument("database", metavar="FILE", type=argparse.FileType('r'))
+    parser.add_argument("database", metavar="DATABASE", type=argparse.FileType('r'))
     parser.add_argument("updates", metavar="FILE", type=argparse.FileType('r'), nargs='*')
     parser.add_argument('--out', metavar="FILE", type=argparse.FileType('w'),
             default=sys.stdout)
