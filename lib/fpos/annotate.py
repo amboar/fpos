@@ -58,6 +58,7 @@ def categorize(date, amount, description, learnt=None, confirm=False):
         raw = input(prompt).strip()
         if "" == raw:
             need = None is guess
+            category = guess
             if not need:
                 assert description in learnt
         elif "?" == raw:
