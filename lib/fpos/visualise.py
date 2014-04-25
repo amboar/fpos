@@ -328,7 +328,7 @@ def graph_xy_weekly(weekly):
     plt.ylabel("Expenditure ($)")
     plt.grid(axis="both")
 
-def graph_bar_targets(months, monthlies, expenses, m_income, remaining, save):
+def graph_bar_targets(months, monthlies, expenses, m_income, remaining, want_save):
     if 1 == len(months):
         # Need more than one month's data
         print("Cannot display bar_targets, not enough data")
@@ -345,13 +345,14 @@ def graph_bar_targets(months, monthlies, expenses, m_income, remaining, save):
     ms = dict(zip(whitelist, mean_prev_monthlies))
     # Calculate mean monthly income
     mean_income = np.mean([m_income[m] for m in months[:-1]])
-    cash = -1 * mean_income
+    cash = mean_income
     # Calculate category ratios
-    rs = dict((k, v / cash) for k, v in ms.items())
+    rs = dict((k, abs(v) / cash) for k, v in ms.items())
     # Subtract fixed costs
-    cash -= sum(v for k, v in ms.items() if k in fixed)
+    cash -= abs(sum(v for k, v in ms.items() if k in fixed))
     # Subtract saving
-    cash -= -1 * save
+    can_save = min(cash, want_save)
+    cash -= can_save
     # Estimate budget: Multiple remaining by flexible ratios
     fs = copy.deepcopy(ms)
     fs.update(dict((k, rs[k] * cash) for k in flexible))
@@ -373,10 +374,10 @@ def graph_bar_targets(months, monthlies, expenses, m_income, remaining, save):
     plt.axhline(0, color="black")
     plt.xticks([])
     plt.ylabel("Position Against Budget / Mean Expense ($)")
-    save_text = ( "\nSaving \${} from \${}"
-            .format(money(save), money(mean_income)) )
-    title = "Position for {} ({} days remaining){}"\
-            .format(months[-1], remaining, "" if 0 == save else save_text)
+    save_text = ( "\nSaving \${}"
+            .format(money(can_save), money(mean_income)) )
+    title = "Position for {} with {} days remaining{}\nBased on estimated income of ${}"\
+            .format(months[-1], remaining, "" if 0 == want_save else save_text, money(mean_income))
     plt.title(title)
     expense_list = [ curr_expenses[c] for c in whitelist ]
     cell_text = []
