@@ -24,16 +24,31 @@ import itertools
 import sys
 from .core import date_fmt
 
+cmd_description = \
+        """Merges multiple IR documents into one time-ordered IR document. This
+        is useful in a couple of scenarios, such as visualising spending across
+        multiple accounts, or updating an existing transaction database with
+        new transactions. In the latter case, the first file provided as an
+        argument is treaded as the transaction database and all further files
+        are treated as updates. The transaction database is expected (but is
+        not required) to be an IR document which has all contained transactions
+        annotated with spending categories; these categories take precedence
+        over any annotated transactions in the update IR documents"""
+cmd_help = \
+        """Combines multiple IR documents into one time-ordered IR document"""
+
 def name():
     return __name__.split(".")[-1]
 
 def parse_args(subparser=None):
     parser_init = subparser.add_parser if subparser else argparse.ArgumentParser
-    parser = parser_init(name())
-    parser.add_argument("database", metavar="DATABASE", type=argparse.FileType('r'))
-    parser.add_argument("updates", metavar="FILE", type=argparse.FileType('r'), nargs='*')
+    parser = parser_init(name(), description=cmd_description, help=cmd_help)
+    parser.add_argument("database", metavar="DATABASE", type=argparse.FileType('r'),
+            help="An IR document which may or may not contain annotated transactions")
+    parser.add_argument("updates", metavar="FILE", type=argparse.FileType('r'), nargs='*',
+            help="An IR document to merge with DATABASE")
     parser.add_argument('--out', metavar="FILE", type=argparse.FileType('w'),
-            default=sys.stdout)
+            default=sys.stdout, help="The destination for the merged document. Defaults to stdout")
     return None if subparser else parser.parse_args()
 
 def digest_entry(entry):

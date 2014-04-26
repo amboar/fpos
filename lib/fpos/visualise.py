@@ -26,6 +26,19 @@ from .core import categories, flexible, fixed
 from .core import money
 from .core import date_fmt, month_fmt
 
+cmd_description = \
+        """Displays a number of graphs from an annotated IR document. The graphs include:
+        
+        stacked_bar_expenses: Total expenditure each month,
+        bar_margin: Real and projected surplus or loss,
+        box_categories: Box-plot describing spending per month in each category,
+        xy_categories: Per-category XY-plots of expenditure,
+        xy_weekly: XY-plot of total weekly expenditure,
+        bar_targets: A budget derived from mean expenditure per category"""
+cmd_help = \
+        """Display spending as graphs of various forms using the category
+        annotations added to the IR by the annotate subcommand"""
+
 blacklist = ("Income", "Internal")
 whitelist = [x for x in categories if x not in blacklist]
 
@@ -106,13 +119,17 @@ def name():
 def parse_args(subparser=None):
     import argparse
     parser_init = subparser.add_parser if subparser else argparse.ArgumentParser
-    parser = parser_init(name())
+    parser = parser_init(name(), description=cmd_description, help=cmd_help)
     graph_choices = [ "stacked_bar_expenses", "bar_margin", "box_categories",
             "xy_categories", "xy_weekly", "bar_targets" ]
-    parser.add_argument("database", metavar="FILE", type=argparse.FileType('r'))
-    parser.add_argument("--save", type=float, default=0)
-    parser.add_argument("--graph", choices=graph_choices)
-    parser.add_argument("--current-date", default=False, action="store_true")
+    parser.add_argument("database", metavar="FILE", type=argparse.FileType('r'),
+            help="The IR document of which to draw graphs")
+    parser.add_argument("--save", type=float, default=0,
+            help="Adjust the budget to try save the provided amount")
+    parser.add_argument("--graph", choices=graph_choices,
+            help="Display a single graph rather than all")
+    parser.add_argument("--current-date", default=False, action="store_true",
+            help="Draw graphs based on the current date rather than the date of the last transaction")
     return None if subparser else parser.parse_args()
 
 def should_graph(name, graph):

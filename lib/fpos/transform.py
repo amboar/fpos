@@ -22,6 +22,15 @@ import sys
 from .core import money
 
 transform_choices = [ "anz", "commbank", "stgeorge" ]
+cmd_description = \
+        """Not all bank CSV exports are equal. fpos defines an intermediate
+        representation (IR) which each of the tools expect as input to eventually
+        generate spending graphs. The job of the transform subcommand is to
+        take each bank's CSV transaction schema and convert it to fpos' IR.
+        Typically transform is the first command used in the fpos chain."""
+cmd_help = \
+        """Transform a transaction CSV document into fpos intermediate
+        representation"""
 
 def _take_three(src):
     def _gen():
@@ -58,10 +67,13 @@ def name():
 
 def parse_args(subparser=None):
     parser_init = subparser.add_parser if subparser else argparse.ArgumentParser
-    parser = parser_init(name())
-    parser.add_argument("form", metavar="FORM", choices=transform_choices)
-    parser.add_argument("infile", metavar="INPUT", type=argparse.FileType('r'), default=sys.stdin)
-    parser.add_argument("outfile", metavar="OUTPUT", type=argparse.FileType('w'), default=sys.stdout)
+    parser = parser_init(name(), description=cmd_description, help=cmd_help)
+    parser.add_argument("form", metavar="FORM", choices=transform_choices,
+            help="The CSV schema used by the input file, named after associated banks")
+    parser.add_argument("infile", metavar="INPUT", type=argparse.FileType('r'), default=sys.stdin,
+            help="The source file whose contents should be transformed to fpos IR")
+    parser.add_argument("outfile", metavar="OUTPUT", type=argparse.FileType('w'), default=sys.stdout,
+            help="The destination file to which the IR will be written")
     return None if subparser else parser.parse_args()
 
 def transform(form, source):

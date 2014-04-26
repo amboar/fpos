@@ -22,6 +22,15 @@ import sys
 from .core import categories
 from .core import money
 
+cmd_description = \
+        """Annotates transactions in an IR document with category information.
+        The output IR is intended for the visualise subcommand. Any
+        transactions that are already categorised as used as training to make
+        suggestions for those which are not annotated."""
+cmd_help = \
+        """Associate categories with transactions, so that visualise can graph
+        spending"""
+
 def find_category(needle):
     candidates = []
     for element in categories:
@@ -84,10 +93,13 @@ def name():
 
 def parse_args(subparser=None):
     parser_init = subparser.add_parser if subparser else argparse.ArgumentParser
-    parser = parser_init(name())
-    parser.add_argument('infile', metavar="INPUT", type=argparse.FileType('r'))
-    parser.add_argument('outfile', metavar="OUTPUT", type=argparse.FileType('w'))
-    parser.add_argument('--confirm', default=False, action="store_true")
+    parser = parser_init(name(), description=cmd_description, help=cmd_help)
+    parser.add_argument('infile', metavar="INPUT", type=argparse.FileType('r'),
+            help="The IR document containing un-categorised transactions")
+    parser.add_argument('outfile', metavar="OUTPUT", type=argparse.FileType('w'),
+            help="The IR document to which to write annotated transactions")
+    parser.add_argument('--confirm', default=False, action="store_true",
+            help="Prompt for confirmation after each entry has been annotated with a category")
     return None if subparser else parser.parse_args()
 
 def main(args=None):

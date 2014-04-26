@@ -25,12 +25,15 @@ from .core import categories
 from .core import date_fmt, month_fmt
 from .core import money
 
+cmd_description = \
+        """Generate fake transaction data in a date range, for testing purposes"""
+
 def name():
     return __name__.split('.')[-1]
 
 def parse_args(subparser=None):
     parser_init = subparser.add_parser if subparser else argparse.ArgumentParser
-    parser = parser_init(name())
+    parser = parser_init(name(), description=cmd_description, help=cmd_description)
     aa = parser.add_argument
     aa("--cash-mean", default=60, type=float)
     aa("--cash-stdev", default=10, type=float)

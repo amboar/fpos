@@ -22,17 +22,32 @@ from datetime import datetime as dt
 from collections import defaultdict
 from .core import date_fmt, month_fmt
 
+cmd_description = \
+        """Outputs an IR document containing only transactions inside a
+        specified date range. The range is specified through the --start and
+        --end options, and takes a date specification of the form "mm/yyyy".
+        The date range is half open to the right, that is, the --start value is
+        inclusive and the --end value is exclusive. Neither option need be
+        specified, in which case there is no bound"""
+
+cmd_help = \
+        """Output transactions between specified months from a given IR document"""
+
 def name():
     return __name__.split(".")[-1]
 
 def parse_args(subparser=None):
     parser_init = subparser.add_parser if subparser else argparse.ArgumentParser
-    parser = parser_init(name())
-    parser.add_argument("infile", metavar="INPUT", type=argparse.FileType('r'))
-    parser.add_argument("outfile", metavar="OUTPUT", type=argparse.FileType('w'))
-    parser.add_argument("--start", metavar="DATE", type=str)
-    parser.add_argument("--end", metavar="DATE", type=str)
-    parser.add_argument("--length", type=int)
+    parser = parser_init(name(), description=cmd_description, help=cmd_help)
+    parser.add_argument("infile", metavar="INPUT", type=argparse.FileType('r'),
+            help="The document to window")
+    parser.add_argument("outfile", metavar="OUTPUT", type=argparse.FileType('w'),
+            help="The file to write the windowed transactions")
+    parser.add_argument("--start", metavar="DATE", type=str,
+            help="The start month and year, in the form 'mm/yyyy'")
+    parser.add_argument("--end", metavar="DATE", type=str,
+            help="The end month and year (exclusive), in the form 'mm/yyyy'")
+    # parser.add_argument("--length", type=int)
     return None if subparser else parser.parse_args()
 
 def gen_span_oracle(start, end):
