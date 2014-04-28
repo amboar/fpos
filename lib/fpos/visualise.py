@@ -256,7 +256,7 @@ def _graph_bar_margin_spending(plot, months, m_income, expenses, save, remaining
     c_margin = c_income + c_expenses
     p_margin = mean_income + c_expenses
     e_per_day = max(0, (c_margin - save) / remaining)
-    p_per_day = (p_margin - save) / remaining
+    p_per_day = max(0, (p_margin - save) / remaining)
     e_per_week = max(0, e_per_day * 7)
     p_per_week = p_per_day * 7
     yes = [ e_per_day, e_per_week ]
