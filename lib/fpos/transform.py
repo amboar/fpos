@@ -21,7 +21,7 @@ import csv
 import sys
 from .core import money
 
-transform_choices = [ "anz", "commbank", "stgeorge" ]
+transform_choices = sorted([ "anz", "commbank", "stgeorge" ])
 cmd_description = \
         """Not all bank CSV exports are equal. fpos defines an intermediate
         representation (IR) which each of the tools expect as input to eventually
@@ -59,7 +59,7 @@ def transform_stgeorge(csv):
     next(csv)
     def _gen():
         for l in csv:
-            yield [l[0], money((-1.0 * float(l[2])) if l[2] else float(l[3])), l[1]]
+            yield [ l[0], money((-1.0 * float(l[2])) if l[2] else float(l[3])), l[1] ]
     return _gen()
 
 def name():
