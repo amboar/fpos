@@ -71,6 +71,11 @@ class TransformTest(unittest.TestCase):
                 [ "01/01/2014", "Negative", "1.0", None, "0.0" ] ])
         self.assertEquals(self.expected, list(transform.transform("stgeorge", stgeorge)))
 
+    def test_transform_nab(self):
+        nab = iter([ [ "01-Jan-14", "1.00", "1", None, None, "Positive", "1.00", None ],
+            [ "01-Jan-14", "-1.00", "2", None, None, "Negative", "0.00", None ] ])
+        self.assertEquals(self.expected, list(transform.transform("nab", nab)))
+
 class WindowTest(unittest.TestCase):
     def test_gen_span_oracle_date_in_default(self):
         d = dt.strptime("01/01/2014", window.date_fmt)

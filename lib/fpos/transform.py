@@ -19,9 +19,11 @@
 import argparse
 import csv
 import sys
+from datetime import datetime
 from .core import money
+from .core import date_fmt
 
-transform_choices = sorted([ "anz", "commbank", "stgeorge" ])
+transform_choices = sorted([ "anz", "commbank", "stgeorge", "nab" ])
 cmd_description = \
         """Not all bank CSV exports are equal. fpos defines an intermediate
         representation (IR) which each of the tools expect as input to eventually
@@ -60,6 +62,21 @@ def transform_stgeorge(csv):
     def _gen():
         for l in csv:
             yield [ l[0], money((-1.0 * float(l[2])) if l[2] else float(l[3])), l[1] ]
+    return _gen()
+
+_nab_date_fmt = "%d-%b-%y"
+
+def transform_nab(csv):
+    # NAB format:
+    #
+    # Date, Amount, Ref #,, Description, Merchant, Remaining Balance
+    # 28-Apr-14,-64.67,071644731756,,CREDIT CARD PURCHASE,BP CRAFERS 9125 CRAFERS,-169.28,
+    def _gen():
+        for l in csv:
+            ir_date = datetime.strptime(l[0], _nab_date_fmt).strftime(date_fmt)
+            ir_amount = money(float(l[1]))
+            ir_description = " ".join(e for e in l[4:6] if (e is not None and "" != e ))
+            yield [ ir_date, ir_amount, ir_description ]
     return _gen()
 
 def name():
