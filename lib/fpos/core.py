@@ -39,7 +39,9 @@ def lcs(a, b):
     assert isinstance(b, str)
     la = len(a)
     lb = len(b)
-    lookup = [ [ 0 ] * (lb + 1) ] * (la + 1)
+    lookup = []
+    for i in range(la + 1):
+        lookup.append([ 0 ] * (lb + 1))
     for ia in range(la - 1, -1, -1):
         for ib in range(lb - 1, -1, -1):
             if a[ia] == b[ib]:

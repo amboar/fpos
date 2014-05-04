@@ -18,9 +18,9 @@
 
 import argparse
 import csv
-import sys
 from .core import categories
 from .core import money
+from .core import lcs
 
 cmd_description = \
         """Annotates transactions in an IR document with category information.
@@ -31,62 +31,108 @@ cmd_help = \
         """Associate categories with transactions, so that visualise can graph
         spending"""
 
-def find_category(needle):
-    candidates = []
-    for element in categories:
-        if needle.lower() in element.lower():
-            candidates.append(element)
-    n = len(candidates)
-    if 0 == n:
-        raise ValueError("Couldn't match {!s} with any categories".format(needle))
-    elif 1 == n:
-        return candidates[0]
-    else:
-        raise ValueError("%s matched multiple candidates: {!s}".format(candidates))
+class _TaggedList(object):
+    def __init__(self, tag):
+        self.tag = tag
+        self.members = []
 
-def resolve_category(needle):
-    try:
-        index = int(needle)
-        return categories[index]
-    except ValueError:
-        return find_category(needle)
+class _LcsTagger(object):
+    def __init__(self, threshold=0.75):
+        self._groups = []
+        self._lookup = {}
+        self._threshold = threshold
 
-def categorize(date, amount, description, learnt=None, confirm=False):
-    if learnt is None:
-        learnt = {}
-    need = True
-    category = None
-    fmtargs = ("Spent" if 0 > float(amount) else "Earnt",
-            money(abs(float(amount))),
-            date,
-            description)
-    print("{} ${!s} on {!s}: {!s}".format(*fmtargs))
-    while need:
-        guess = learnt[description] if description in learnt else None
-        prompt = "Category [{!s}]: ".format("?" if guess is None else guess)
-        raw = input(prompt).strip()
-        if "" == raw:
-            need = None is guess
-            category = guess
-            if not need:
-                assert description in learnt
-        elif "?" == raw:
-            print()
-            print(*categories, sep='\n')
-            print()
+    @staticmethod
+    def normal_lcs(a, b):
+        return ( 2 * lcs(a, b) / ( len(a) + len(b) ) )
+
+    def classify(self, text, tag=None):
+        for e in self._groups:
+            # Just test the first member element of e, as all the members'
+            # normalised LCS is greater than the threshold
+            nlcs = self.normal_lcs(text, e.members[0])
+            if nlcs >= self._threshold:
+                e.members.append(text)
+                return e.tag
+        tl = _TaggedList(tag)
+        tl.members.append(text)
+        if tl.tag is None:
+            self._lookup[text] = tl
+        self._groups.append(tl)
+        return tl.tag
+
+    def need_tag_for(self, text):
+        return text in self._lookup
+
+    def tag(self, text, tag):
+        self._lookup[text].tag = tag
+        del self._lookup[text]
+
+class _Tagger(object):
+    def __init__(self, fuzzer=None):
+        self._learnt = {}
+        self._fuzzer = fuzzer if fuzzer else _LcsTagger()
+
+    @staticmethod
+    def find_category(needle, haystack):
+        candidates = []
+        for element in haystack:
+            if needle.lower() in element.lower():
+                candidates.append(element)
+        n = len(candidates)
+        if 0 == n:
+            raise ValueError("Couldn't match {!s} with any categories".format(needle))
+        elif 1 == n:
+            return candidates[0]
         else:
-            try:
-                category = resolve_category(raw)
-                need = False
-            except ValueError:
-                print("Couldn't determine category from {}".format(raw))
-        if not need and confirm:
-            assert category is not None
-            confirmation = input("Confirm {} [y/N]: ".format(category)).strip()
-            need = "y" != confirmation.lower()
-    if category is not None:
-        learnt[description] = category
-    return category
+            raise ValueError("%s matched multiple candidates: {!s}".format(candidates))
+
+    @staticmethod
+    def resolve_category(needle):
+        try:
+            index = int(needle)
+            return categories[index]
+        except ValueError:
+            return _Tagger.find_category(needle, categories)
+
+    def categorize(self, date, amount, description, confirm=False):
+        need = True
+        category = None
+        fmtargs = ("Spent" if 0 > float(amount) else "Earnt",
+                money(abs(float(amount))),
+                date,
+                description)
+        print("{} ${!s} on {!s}: {!s}".format(*fmtargs))
+        while need:
+            guess = None
+            if description in self._learnt:
+                guess = self._learnt[description]
+            if guess is None:
+                guess = self._fuzzer.classify(description)
+            prompt = "Category [{!s}]: ".format("?" if guess is None else guess)
+            raw = input(prompt).strip()
+            if "" == raw:
+                need = None is guess
+                category = guess
+            elif "?" == raw:
+                print()
+                print(*categories, sep='\n')
+                print()
+            else:
+                try:
+                    category = self.resolve_category(raw)
+                    need = False
+                except ValueError:
+                    print("Couldn't determine category from {}".format(raw))
+            if not need and confirm:
+                assert category is not None
+                confirmation = input("Confirm {} [y/N]: ".format(category)).strip()
+                need = "y" != confirmation.lower()
+        if category is not None:
+            self._learnt[description] = category
+            if self._fuzzer.need_tag_for(description):
+                self._fuzzer.tag(description, category)
+        return category
 
 def name():
     return __name__.split(".")[-1]
@@ -109,6 +155,8 @@ def main(args=None):
     try:
         r = csv.reader(args.infile, dialect='excel')
         w = csv.writer(args.outfile, dialect='excel')
+        f = _LcsTagger()
+        t = _Tagger(f)
         for entry in r:
             if 0 == len(entry):
                 # Skip empty lines
@@ -117,7 +165,8 @@ def main(args=None):
             if 4 == len(entry):
                 # Fourth column is category, check that it's known
                 try:
-                    learnt[entry[2]] = resolve_category(entry[3])
+                    t.resolve_category(entry[3])
+                    f.classify(entry[2], entry[3])
                     output.extend(entry)
                 except ValueError:
                     # Category isn't known, output remains empty to
@@ -126,7 +175,7 @@ def main(args=None):
             if 0 == len(output):
                 # Haven't yet determined the category, require user input
                 output.extend(entry)
-                output.append(categorize(*entry, learnt=learnt, confirm=args.confirm))
+                output.append(t.categorize(*entry, confirm=args.confirm))
             w.writerow(output)
             print()
     finally:

@@ -20,6 +20,7 @@ from datetime import datetime as dt
 import unittest
 from fpos import annotate, combine, core, transform, visualise, window
 
+_LcsTagger = annotate._LcsTagger
 money = visualise.money
 
 class AnnotateTest(unittest.TestCase):
@@ -27,19 +28,19 @@ class AnnotateTest(unittest.TestCase):
         invalid = "foo"
         self.assertTrue(invalid not in annotate.categories)
         with self.assertRaises(ValueError):
-            annotate.find_category(invalid)
+            annotate._Tagger.find_category(invalid, annotate.categories)
 
     def test_find_category_multiple_matches(self):
         self.assertTrue(set(["Income", "Internal"]).issubset(annotate.categories))
         prefix = "In"
         with self.assertRaises(ValueError):
-            annotate.find_category(prefix)
+            annotate._Tagger.find_category(prefix, annotate.categories)
 
     def test_find_category_single_match(self):
         test = "Income"
         self.assertTrue(test in annotate.categories)
         needle = "inc"
-        self.assertEquals(test, annotate.find_category(needle))
+        self.assertEquals(test, annotate._Tagger.find_category(needle, annotate.categories))
 
     def test_category_list(self):
         expected = set([ "Cash", "Commitment", "Dining", "Education", "Entertainment",
@@ -47,10 +48,40 @@ class AnnotateTest(unittest.TestCase):
         self.assertEquals(expected, set(annotate.categories))
 
     def test_resolve_category_index(self):
-        self.assertEquals(annotate.categories[0], annotate.resolve_category(0))
+        self.assertEquals(annotate.categories[0], annotate._Tagger.resolve_category(0))
 
     def test_resolve_category_needle(self):
-        self.assertEquals(annotate.categories[0], annotate.resolve_category(annotate.categories[0]))
+        self.assertEquals(annotate.categories[0], annotate._Tagger.resolve_category(annotate.categories[0]))
+
+class LcsTaggerTest(unittest.TestCase):
+    def test_lcs_match_none(self):
+        tagger = _LcsTagger()
+        self.assertEquals(None, tagger.classify("foo"))
+
+    def test_lcs_match_one_exact(self):
+        tagger = _LcsTagger()
+        text = "foo"
+        tag = "bar"
+        self.assertEquals(None, tagger.classify(text))
+        self.assertTrue(tagger.need_tag_for(text))
+        tagger.tag(text, tag)
+        self.assertEquals(tag, tagger.classify(text))
+
+    def test_lcs_match_one_fuzzy(self):
+        tagger = _LcsTagger()
+        a_text = "foo0"
+        b_text = "foo1"
+        tag = "bar"
+        tagger.classify(a_text, tag)
+        self.assertEquals(tag, tagger.classify(b_text))
+
+    def test_lcs_miss_one(self):
+        tagger = _LcsTagger()
+        a_text = "aaaa"
+        b_text = "bbaa"
+        tag = "bar"
+        tagger.classify(a_text, tag)
+        self.assertEquals(None, tagger.classify(b_text))
 
 class TransformTest(unittest.TestCase):
     expected = [ [ "01/01/2014", "1.00", "Positive" ],
