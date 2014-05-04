@@ -18,7 +18,7 @@
 
 from datetime import datetime as dt
 import unittest
-from fpos import annotate, combine, transform, visualise, window
+from fpos import annotate, combine, core, transform, visualise, window
 
 money = visualise.money
 
@@ -301,3 +301,34 @@ class CombineTest(unittest.TestCase):
                     [ [ "02/01/2014", -1.00, "Description", "Cash" ] ] ]
         expected = [ sources[0][0], sources[1][0] ]
         self.assertEquals(expected, list(combine.combine(sources)))
+
+class CoreTest(unittest.TestCase):
+    def test_lcs_empty(self):
+        self.assertEquals(0, core.lcs("", ""))
+
+    def test_lcs_a_empty(self):
+        self.assertEquals(0, core.lcs("", "a"))
+
+    def test_lcs_b_empty(self):
+        self.assertEquals(0, core.lcs("a", ""))
+
+    def test_lcs_equal_single(self):
+        self.assertEquals(1, core.lcs("a", "a"))
+
+    def test_lcs_different_single(self):
+        self.assertEquals(0, core.lcs("a", "b"))
+
+    def test_lcs_equal_double(self):
+        self.assertEquals(2, core.lcs("ab", "ab"))
+
+    def test_lcs_different_double(self):
+        self.assertEquals(1, core.lcs("ab", "ba"))
+
+    def test_lcs_different_lengths_a_short(self):
+        self.assertEquals(1, core.lcs("abc", "dcba"))
+
+    def test_lcs_different_lengths_b_short(self):
+        self.assertEquals(1, core.lcs("dcba", "abc"))
+
+    def test_lcs_similar(self):
+        self.assertEquals(1, core.lcs("abbb", "aaaa"))
