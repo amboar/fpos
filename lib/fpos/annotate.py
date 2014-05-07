@@ -71,7 +71,7 @@ class _LcsTagger(object):
 class _Tagger(object):
     def __init__(self, fuzzer=None):
         self._learnt = {}
-        self._fuzzer = fuzzer if fuzzer else _LcsTagger()
+        self._fuzzer = fuzzer
 
     @staticmethod
     def find_category(needle, haystack):
@@ -107,7 +107,7 @@ class _Tagger(object):
             guess = None
             if description in self._learnt:
                 guess = self._learnt[description]
-            if guess is None:
+            if guess is None and self._fuzzer:
                 guess = self._fuzzer.classify(description)
             prompt = "Category [{!s}]: ".format("?" if guess is None else guess)
             raw = input(prompt).strip()
@@ -146,6 +146,8 @@ def parse_args(subparser=None):
             help="The IR document to which to write annotated transactions")
     parser.add_argument('--confirm', default=False, action="store_true",
             help="Prompt for confirmation after each entry has been annotated with a category")
+    parser.add_argument('--fuzzy', default=False, action="store_true",
+            help="Do fuzzy matching of descriptions to help classification")
     return None if subparser else parser.parse_args()
 
 def main(args=None):
@@ -155,6 +157,9 @@ def main(args=None):
     try:
         r = csv.reader(args.infile, dialect='excel')
         w = csv.writer(args.outfile, dialect='excel')
+        # The fuzzy matcher is always created, but only used against the
+        # classified entries if --fuzzy is specified. Otherwise, it's only used
+        # against entries that aren't explicitly classified.
         f = _LcsTagger()
         t = _Tagger(f)
         for entry in r:
@@ -166,7 +171,8 @@ def main(args=None):
                 # Fourth column is category, check that it's known
                 try:
                     t.resolve_category(entry[3])
-                    f.classify(entry[2], entry[3])
+                    if args.fuzzy:
+                        f.classify(entry[2], entry[3])
                     output.extend(entry)
                 except ValueError:
                     # Category isn't known, output remains empty to
