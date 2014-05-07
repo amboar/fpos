@@ -153,7 +153,6 @@ def parse_args(subparser=None):
 def main(args=None):
     if args is None:
         args = parse_args()
-    learnt = {}
     try:
         r = csv.reader(args.infile, dialect='excel')
         w = csv.writer(args.outfile, dialect='excel')
