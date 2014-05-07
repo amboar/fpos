@@ -182,8 +182,8 @@ def main(args=None):
                 # Haven't yet determined the category, require user input
                 output.extend(entry)
                 output.append(t.categorize(*entry, confirm=args.confirm))
+                print()
             w.writerow(output)
-            print()
     finally:
         args.infile.close()
         args.outfile.close()
