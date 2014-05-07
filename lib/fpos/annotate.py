@@ -34,6 +34,7 @@ cmd_help = \
 class _TaggedList(object):
     def __init__(self, tag):
         self.tag = tag
+        self.length = 0
         self.members = []
 
 class _LcsTagger(object):
@@ -43,16 +44,23 @@ class _LcsTagger(object):
         self._threshold = threshold
 
     @staticmethod
-    def normal_lcs(a, b):
-        return ( 2 * lcs(a, b) / ( len(a) + len(b) ) )
+    def fuzzy_match(a, b, t):
+        la = len(a)
+        lb = len(b)
+        r = la / lb if lb > la else lb / la
+        if t <= r:
+            return t <= ( 2 * lcs(a, b) / ( la + lb ) )
+        else:
+            return False
 
     def classify(self, text, tag=None):
-        for e in self._groups:
+        for i, e in enumerate(self._groups):
             # Just test the first member element of e, as all the members'
             # normalised LCS is greater than the threshold
-            nlcs = self.normal_lcs(text, e.members[0])
-            if nlcs >= self._threshold:
+            if self.fuzzy_match(text, e.members[0], self._threshold):
                 e.members.append(text)
+                e.length += 1
+                self._groups = sorted(self._groups, key=lambda x: x.length, reverse=True)
                 return e.tag
         tl = _TaggedList(tag)
         tl.members.append(text)
