@@ -18,6 +18,7 @@
 
 import argparse
 import csv
+import math
 from .core import categories
 from .core import money
 from .core import lcs
@@ -35,6 +36,7 @@ class _TaggedList(object):
     def __init__(self, tag):
         self.tag = tag
         self.length = 0
+        self.count = 0
         self.members = []
 
 class _LcsTagger(object):
@@ -54,16 +56,21 @@ class _LcsTagger(object):
             return False
 
     def classify(self, text, tag=None):
-        for i, e in enumerate(self._groups):
+        for e in self._groups:
             # Just test the first member element of e, as all the members'
             # normalised LCS is greater than the threshold
-            if self.fuzzy_match(text, e.members[0], self._threshold):
+            ml = e.length
+            lb = int(ml * self._threshold)
+            ub = int(math.ceil(ml * (1.0 / self._threshold)))
+            contained = ml >= lb and ml <= ub
+            if contained and self.fuzzy_match(text, e.members[0], self._threshold):
                 e.members.append(text)
-                e.length += 1
-                self._groups = sorted(self._groups, key=lambda x: x.length, reverse=True)
+                e.count += 1
+                self._groups = sorted(self._groups, key=lambda x: x.count, reverse=True)
                 return e.tag
         tl = _TaggedList(tag)
         tl.members.append(text)
+        tl.length = len(text)
         if tl.tag is None:
             self._lookup[text] = tl
         self._groups.append(tl)
