@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
 from __future__ import print_function
-from distutils.core import setup
+from distutils.core import setup, Extension
 import sys
 
 v = sys.version_info
@@ -11,6 +11,7 @@ if v < (3,):
     print("NOTE: Installation failed. Run setup.py using python3")
     sys.exit(1)
 
+lcs = Extension('lcs', sources = ['ext/lcs.c'])
 setup(name='fpos',
         version='0.1',
         description='Financial Position',
@@ -20,5 +21,6 @@ setup(name='fpos',
         packages=['fpos'],
         package_dir={'' : 'lib'},
         scripts=['bin/fpos'],
+        ext_modules = [lcs],
         license='GPLv3')
 

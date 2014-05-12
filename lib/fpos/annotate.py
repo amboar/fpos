@@ -18,10 +18,10 @@
 
 import argparse
 import csv
+from lcs import lcs
 import math
 from .core import categories
 from .core import money
-from .core import lcs
 
 cmd_description = \
         """Annotates transactions in an IR document with category information.
