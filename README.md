@@ -130,6 +130,15 @@ combine` to reduce the calls necessary.
 Dependencies
 ============
 
+Build-time
+----------
+
+0. Python 3
+1. C Compiler (GCC / Clang)
+
+Run-time
+--------
+
 0. Python 3
 1. Numpy
 2. Scipy
