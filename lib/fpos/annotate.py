@@ -32,56 +32,106 @@ cmd_help = \
         """Associate categories with transactions, so that visualise can graph
         spending"""
 
+def normal_lcs(a, b, la=None, lb=None):
+    if not la:
+        la = len(a)
+    if not lb:
+        lb = len(b)
+    return 2 * lcs(a, b) / ( la + lb )
+
+def fuzzy_match(a, b, t):
+    la = len(a)
+    lb = len(b)
+    r = la / lb if lb > la else lb / la
+    if t <= r:
+        return t <= normal_lcs(a, b, la, lb)
+    else:
+        return False
+
+class _ThresholdGroup(object):
+    def __init__(self, threshold, key, tag=None):
+        self.threshold = threshold
+        self.key = key
+        self.count = 1
+        self.tagged = {}
+        if tag:
+            self.tag(key, tag)
+
+    def guess(self, text):
+        if fuzzy_match(self.key, text, self.threshold):
+            if len(self.tagged) > 0:
+                t = max(((v.score(text), k) for k, v in self.tagged.items()), key=lambda x: x[0])
+                return t[1]
+        return None
+
+    def tag(self, text, tag):
+        if tag not in self.tagged:
+            self.tagged[tag] = _TaggedList(text, tag)
+        else:
+            tl = self.tagged[tag]
+            tl.add(text)
+            self.count += 1
+
 class _TaggedList(object):
-    def __init__(self, tag):
+    def __init__(self, key, tag=None, debug=False):
+        self.key = key
         self.tag = tag
-        self.length = 0
-        self.count = 0
-        self.members = []
+        self._score = 0
+        self._sum = 0
+        self._count = 1
+        self.debug = debug
+        if self.debug:
+            self.members = [ key ]
+
+    def score(self, text, member=None):
+        if not member:
+            member = self.key
+        return normal_lcs(member, text) * self._score
+
+    def add(self, text):
+        self._sum += normal_lcs(text, self.key)
+        self._count += 1
+        self._score = self._sum / self._count
+        if self.debug:
+            self.members.append(text)
 
 class _LcsTagger(object):
     def __init__(self, threshold=0.75):
         self._groups = []
-        self._lookup = {}
+        self._pending = None
         self._threshold = threshold
 
-    @staticmethod
-    def fuzzy_match(a, b, t):
-        la = len(a)
-        lb = len(b)
-        r = la / lb if lb > la else lb / la
-        if t <= r:
-            return t <= ( 2 * lcs(a, b) / ( la + lb ) )
-        else:
-            return False
+    def _sort(self):
+        self._groups.sort(key=lambda x: x.count, reverse=True)
+
+    def _find_group_guess(self, text):
+        for group in self._groups:
+            guess = group.guess(text)
+            if guess:
+                return group, guess
+        return None, None
 
     def classify(self, text, tag=None):
-        for e in self._groups:
-            # Just test the first member element of e, as all the members'
-            # normalised LCS is greater than the threshold
-            ml = e.length
-            lb = int(ml * self._threshold)
-            ub = int(math.ceil(ml * (1.0 / self._threshold)))
-            contained = ml >= lb and ml <= ub
-            if contained and self.fuzzy_match(text, e.members[0], self._threshold):
-                e.members.append(text)
-                e.count += 1
-                self._groups = sorted(self._groups, key=lambda x: x.count, reverse=True)
-                return e.tag
-        tl = _TaggedList(tag)
-        tl.members.append(text)
-        tl.length = len(text)
-        if tl.tag is None:
-            self._lookup[text] = tl
-        self._groups.append(tl)
-        return tl.tag
+        group, guess = self._find_group_guess(text)
+        if guess:
+            if tag:
+                group.tag(text, tag)
+                self._sort()
+            else :
+                self._pending = (text, group)
+            return guess
+        tg = _ThresholdGroup(self._threshold, text, tag)
+        self._groups.append(tg)
+        return None
 
-    def need_tag_for(self, text):
-        return text in self._lookup
+    def pending(self):
+        return self._pending is not None
 
-    def tag(self, text, tag):
-        self._lookup[text].tag = tag
-        del self._lookup[text]
+    def tag(self, tag):
+        if self._pending:
+            self._pending[1].tag(self._pending[0], tag)
+            self._pending = None
+            self._sort()
 
 class _Tagger(object):
     def __init__(self, fuzzer=None):
@@ -145,8 +195,8 @@ class _Tagger(object):
                 need = "y" != confirmation.lower()
         if category is not None:
             self._learnt[description] = category
-            if self._fuzzer.need_tag_for(description):
-                self._fuzzer.tag(description, category)
+            if self._fuzzer.pending():
+                self._fuzzer.tag(category)
         return category
 
 def name():
