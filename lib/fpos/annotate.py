@@ -122,6 +122,7 @@ class _LcsTagger(object):
             return guess
         tg = _ThresholdGroup(self._threshold, text, tag)
         self._groups.append(tg)
+        self._pending = (text, tg)
         return None
 
     def pending(self):

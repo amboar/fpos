@@ -63,8 +63,8 @@ class LcsTaggerTest(unittest.TestCase):
         text = "foo"
         tag = "bar"
         self.assertEquals(None, tagger.classify(text))
-        self.assertTrue(tagger.need_tag_for(text))
-        tagger.tag(text, tag)
+        self.assertTrue(tagger.pending())
+        tagger.tag(tag)
         self.assertEquals(tag, tagger.classify(text))
 
     def test_lcs_match_one_fuzzy(self):
