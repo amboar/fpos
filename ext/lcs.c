@@ -8,12 +8,12 @@ static inline int rmindex(int r, int i, int j) {
 }
 
 static int16_t
-lcs(const char *a, const char *b) {
+lcs(const char const * a, const char const * b) {
     const int la = strlen(a);
     const int lap1 = la + 1;
     const int lb = strlen(b);
     const int lbp1 = lb + 1;
-    int16_t * const lookup = calloc(lap1 * lbp1, sizeof(int16_t));
+    int16_t * const lookup = calloc(lbp1 * 2, sizeof(uint16_t));
     if (!lookup) {
         return -1;
     }
@@ -21,12 +21,12 @@ lcs(const char *a, const char *b) {
     for (ia = la - 1; ia >= 0; ia--) {
         for (ib = lb - 1; ib >= 0; ib--) {
             if (a[ia] == b[ib]) {
-                lookup[rmindex(lbp1, ia, ib)] =
-                    1 + lookup[rmindex(lbp1, ia + 1, ib + 1)];
+                lookup[rmindex(lbp1, ia & 1, ib)] =
+                    1 + lookup[rmindex(lbp1, (ia + 1) & 1, ib + 1)];
             } else {
-                int16_t ap1b = lookup[rmindex(lbp1, ia + 1, ib)];
-                int16_t abp1 = lookup[rmindex(lbp1, ia, ib + 1)];
-                lookup[rmindex(lbp1, ia, ib)] = (ap1b > abp1) ? ap1b : abp1;
+                const int16_t ap1b = lookup[rmindex(lbp1, (ia + 1) & 1, ib)];
+                const int16_t abp1 = lookup[rmindex(lbp1, ia & 1, ib + 1)];
+                lookup[rmindex(lbp1, ia & 1, ib)] = (ap1b > abp1) ? ap1b : abp1;
             }
         }
     }
