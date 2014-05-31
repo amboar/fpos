@@ -360,18 +360,17 @@ def graph_bar_targets(months, monthlies, expenses, m_income, remaining, want_sav
     # Calculate mean monthly income
     mean_income = np.mean([m_income[m] for m in months[:-1]])
     cash = mean_income
-    # Calculate category ratios
-    rs = dict((k, abs(v) / cash) for k, v in ms.items())
     # Subtract fixed costs
     cash -= abs(sum(v for k, v in ms.items() if k in fixed))
     # Subtract saving
     can_save = min(cash, want_save)
     cash -= can_save
+    # Calculate flexible average sum
+    fas = sum(ms[k] for k in flexible)
     # Estimate budget: Multiple remaining by flexible ratios
     fs = copy.deepcopy(ms)
-    fs.update(dict((k, rs[k] * cash) for k in flexible))
+    fs.update(dict((k, abs(ms[k] / fas) * cash) for k in flexible))
     budget = [ abs(fs[k]) for k in whitelist ]
-
     r_whitelist = np.arange(len(whitelist))
     b1 = plt.bar(r_whitelist + 0.1,
             budget,
