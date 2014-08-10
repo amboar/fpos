@@ -34,23 +34,33 @@ cmd_help = \
         """Transform a transaction CSV document into fpos intermediate
         representation"""
 
-def _take_three(src):
+def _take_three_anz(src):
     def _gen():
         for l in src:
             yield [ l[0], money(float(l[1])), l[2] ]
+    return _gen()
+
+def _take_three_commbank(src):
+    def _gen():
+        for l in src:
+            # At some point Commbank started putting spaces before the sign.
+            # Not sure what motivated the change, but remove the space if it's
+            # present so float() can interpret the string.
+            amount = float(l[1].replace(" ", ""))
+            yield [ l[0], money(amount), l[2] ]
     return _gen()
 
 def transform_commbank(csv):
     # Commbank format:
     #
     # Date,Amount,Description,Balance
-    return _take_three(csv)
+    return _take_three_commbank(csv)
 
 def transform_anz(csv):
     # Identity transform, ANZ's format meets IR:
     #
     # Date,Amount,Description
-    return _take_three(csv)
+    return _take_three_anz(csv)
 
 def transform_stgeorge(csv):
     # St George Bank, first row is header
