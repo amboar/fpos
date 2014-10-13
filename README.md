@@ -144,6 +144,19 @@ Run-time
 2. Scipy
 3. Matplotlib
 
+Installation
+============
+
+Install python 3 and dependencies, eg with apt-get
+	apt-get install python3 libpy-blah blah
+
+Then build and install
+python3.4 ./setup.py build
+sudo python3.4 ./setup.py install
+
+On OSX manually linking fpos to $PATH is required
+sudo ln -s /opt/local/Library/Frameworks/Python.framework/Versions/3.4/bin/fpos /opt/local/bin/fpos
+
 Intermediate Representation
 ===========================
 
