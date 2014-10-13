@@ -8,7 +8,7 @@ static inline int rmindex(int r, int i, int j) {
 }
 
 static int16_t
-lcs(const char const * a, const char const * b) {
+lcs(const char * const a, const char * const b) {
     const int la = strlen(a);
     const int lap1 = la + 1;
     const int lb = strlen(b);
