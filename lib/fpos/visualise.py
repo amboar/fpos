@@ -44,6 +44,7 @@ whitelist = [x for x in categories if x not in blacklist]
 
 extract_month = lambda x: datetime.strptime(x, date_fmt).strftime("%m/%Y")
 extract_week = lambda x: datetime.strptime(x, date_fmt).strftime("%Y:%U")
+extract_day = lambda x: x
 datesort = lambda x : datetime.strptime(x, date_fmt).date()
 monthsort = lambda x : datetime.strptime(x, month_fmt).date()
 monthname = lambda x : datetime.strptime(x, month_fmt).strftime("%b")
@@ -121,7 +122,7 @@ def parse_args(subparser=None):
     parser_init = subparser.add_parser if subparser else argparse.ArgumentParser
     parser = parser_init(name(), description=cmd_description, help=cmd_help)
     graph_choices = [ "stacked_bar_expenses", "bar_margin", "box_categories",
-            "xy_categories", "xy_weekly", "bar_targets" ]
+            "xy_categories", "xy_weekly", "bar_targets", "xy_progressive_mean" ]
     parser.add_argument("database", metavar="FILE", type=argparse.FileType('r'),
             help="The IR document of which to draw graphs")
     parser.add_argument("--save", type=float, default=0,
@@ -411,6 +412,91 @@ def days_remaining(today):
     n_days = calendar.monthrange(today.year, today.month)[1]
     return (datetime(today.year, today.month, n_days) - today).days + 1
 
+class ProgressiveMean(object):
+    def __init__(self, month):
+        self.values = {}
+        self.means = {}
+        self.accumulator = 0;
+        self.prev = None
+
+    def month_key(self, date):
+        return date.strftime("%m/%Y")
+
+    def maybe_init(self, key):
+        if key not in self.means:
+            self.means[key] = []
+            self.values[key] = []
+
+    def fill_to(self, date):
+        key = self.month_key(date)
+        self.maybe_init(key)
+        start = 1 if not self.prev else self.prev.day + 1
+        for d in range(start, date.day):
+            self.means[key].append(self.accumulator / d)
+            self.values[key].append(0)
+
+    def update(self, day, value):
+        assert(not self.prev or day > self.prev)
+        if (not self.prev or (day.year > self.prev.year) or (day.month > self.prev.month)):
+            self.prev = None
+            self.accumulator = 0
+        key = self.month_key(day)
+        self.maybe_init(key)
+        self.fill_to(day)
+        self.accumulator += value
+        self.values[key].append(value)
+        self.means[key].append(self.accumulator / day.day)
+        self.prev = day
+
+    def head(self):
+        return self.means[self.month_key(self.prev)]
+
+    def tail(self):
+        c = copy.deepcopy(self.means)
+        del c[self.month_key(self.prev)]
+        return c
+
+    def __str__(self):
+        ordered_keys = sorted(list(self.means.keys()))
+        m = [ str((k, [money(x) for x in self.means[k]])) for k in ordered_keys ]
+        v = [ str((k, [money(x) for x in self.values[k]])) for k in ordered_keys ]
+        s = []
+        for x in zip(v, m):
+            s.extend(x)
+        return "\n".join(s)
+
+def graph_xy_progressive_mean(months, dailies, m_income):
+    d_categories = dict((d, sum_categories(v)) for d, v in dailies.items())
+    d_expenses = ignore(d_categories, *blacklist)
+    d_spending = dict((d, sum(v.values())) for d, v in d_expenses.items())
+    pm = None
+    for k in sorted(d_spending.keys(), key=datesort):
+        if not pm:
+            pm = ProgressiveMean(datetime.strptime(k, date_fmt))
+        pm.update(datetime.strptime(k, date_fmt), d_spending[k])
+    plt.figure(7)
+    days_per_month = max(len(x) for x in pm.means.values())
+    xs = list(range(1, days_per_month + 1))
+    tail = pm.tail()
+    for ys in list(tail.values()):
+        plt.plot(xs[:len(ys)], ys, ls="None", marker="o", color="grey")
+    d_current = pm.head()
+    current_plt, = plt.plot(xs[:len(d_current)], d_current, ls="-", marker="o", color="red")
+    current_plt.set_label(months[-1])
+    n_tail_days = sum(len(x) for x in tail.values())
+    mean_spend = sum(sum(v) for v in tail.values()) / n_tail_days
+    mean_plt, = plt.plot(xs, [ mean_spend ] * days_per_month)
+    mean_plt.set_label("Typical daily spend")
+    mean_income = np.mean([m_income[m] for m in months[:-1]])
+    max_plt, = plt.plot(xs, [ -1 * mean_income / days_per_month ] * days_per_month)
+    max_plt.set_label("Maximum daily spend");
+    plt.legend(loc="lower right")
+    plt.title("Progressive Mean Daily Spend By Month")
+    plt.xlabel("Day in Month")
+    plt.ylabel("Progressive Mean Daily Spend")
+    plt.xlim([min(xs) - 1, max(xs) + 1])
+    plt.show()
+
 def main(args=None):
     from .core import global_module, global_symbol
     global_symbol(globals(), "scipy", "polyfit")
@@ -423,8 +509,8 @@ def main(args=None):
 
     # Core data, used across multiple plots
 
-    m_grouped, w_grouped = group_period(csv.reader(args.database),
-            extract=[extract_month, extract_week])
+    m_grouped, w_grouped, d_grouped = group_period(csv.reader(args.database),
+            extract=[extract_month, extract_week, extract_day])
 
     # m_summed: Looks like:
     #
@@ -473,6 +559,8 @@ def main(args=None):
         graph_xy_weekly(w_grouped)
     if (should_graph(args.graph, "bar_targets")):
         graph_bar_targets(months, monthlies, expenses, m_income, remaining, args.save)
+    if (should_graph(args.graph, "xy_progressive_mean")):
+        graph_xy_progressive_mean(months, d_grouped, m_income)
     plt.show()
 
 if __name__ == "__main__":
