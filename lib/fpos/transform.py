@@ -23,7 +23,7 @@ from datetime import datetime
 from .core import money
 from .core import date_fmt
 
-transform_choices = sorted([ "anz", "commbank", "stgeorge", "nab" ])
+transform_choices = sorted([ "anz", "commbank", "stgeorge", "nab", "bankwest" ])
 cmd_description = \
         """Not all bank CSV exports are equal. fpos defines an intermediate
         representation (IR) which each of the tools expect as input to eventually
@@ -87,6 +87,18 @@ def transform_nab(csv):
             ir_amount = money(float(l[1]))
             ir_description = " ".join(e for e in l[4:6] if (e is not None and "" != e ))
             yield [ ir_date, ir_amount, ir_description ]
+    return _gen()
+
+def transform_bankwest(csv):
+    # Bankwest format:
+    #
+    # BSB Number,Account Number,Transaction Date,Narration,Cheque,Debit,Credit,Balance,Transaction Type
+    # ,5229 8079 0109 8683,27/10/2014,"CALTRAIN TVM             SAN CARLOS   CA85450784297436040013768           5.25US",,6.00,,116.32,WDL
+    # Discard header
+    next(csv)
+    def _gen():
+        for l in csv:
+            yield [l[2], money((-1.0 * float(l[5])) if l[5] else float(l[6])), l[3][1:-1]]
     return _gen()
 
 def name():
