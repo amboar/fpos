@@ -76,8 +76,8 @@ class _TaggedList(object):
     def __init__(self, key, tag=None, debug=False):
         self.key = key
         self.tag = tag
-        self._score = 0
-        self._sum = 0
+        self._score = 1
+        self._sum = 1
         self._count = 1
         self.debug = debug
         if self.debug:
@@ -96,7 +96,7 @@ class _TaggedList(object):
             self.members.append(text)
 
 class _LcsTagger(object):
-    def __init__(self, threshold=0.75):
+    def __init__(self, threshold=0.85):
         self._groups = []
         self._pending = None
         self._threshold = threshold
