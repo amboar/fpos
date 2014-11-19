@@ -11,7 +11,24 @@ if v < (3,):
     print("NOTE: Installation failed. Run setup.py using python3")
     sys.exit(1)
 
-lcs = Extension('lcs', sources = ['ext/lcs.c'])
+pylcs = Extension('pylcs', sources = [
+    "ext/pylcs.c",
+    "ext/lcs.c" ])
+
+pystrgrp = Extension('pystrgrp',
+    include_dirs = ['ext'],
+    extra_compile_args = [ '-O2' ],
+    extra_link_args = [ ],
+    sources = [ "ext/ccan/talloc/talloc.c",
+        "ext/ccan/str/str.c",
+        "ext/ccan/str/debug.c",
+        "ext/ccan/list/list.c",
+        "ext/ccan/htable/htable.c",
+        "ext/ccan/hash/hash.c",
+        "ext/lcs.c",
+        "ext/pystrgrp.c",
+        "ext/strgrp.c" ])
+
 setup(name='fpos',
         version='0.1',
         description='Financial Position',
@@ -21,6 +38,5 @@ setup(name='fpos',
         packages=['fpos'],
         package_dir={'' : 'lib'},
         scripts=['bin/fpos'],
-        ext_modules = [lcs],
+        ext_modules = [pylcs, pystrgrp],
         license='GPLv3')
-

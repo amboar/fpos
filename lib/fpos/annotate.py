@@ -18,7 +18,7 @@
 
 import argparse
 import csv
-from lcs import lcs
+from pylcs import pylcs
 import math
 from .core import categories
 from .core import money
@@ -37,7 +37,7 @@ def normal_lcs(a, b, la=None, lb=None):
         la = len(a)
     if not lb:
         lb = len(b)
-    return 2 * lcs(a, b) / ( la + lb )
+    return 2 * pylcs(a, b) / ( la + lb )
 
 def fuzzy_match(a, b, t):
     la = len(a)
