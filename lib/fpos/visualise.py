@@ -19,12 +19,14 @@
 import copy
 import csv
 import calendar
-from datetime import datetime
+from datetime import datetime, timedelta
 import itertools
 import math
 from .core import categories, flexible, fixed
 from .core import money
 from .core import date_fmt, month_fmt
+import pystrgrp
+from .predict import forecast
 
 cmd_description = \
         """Displays a number of graphs from an annotated IR document. The graphs include:
@@ -49,15 +51,15 @@ datesort = lambda x : datetime.strptime(x, date_fmt).date()
 monthsort = lambda x : datetime.strptime(x, month_fmt).date()
 monthname = lambda x : datetime.strptime(x, month_fmt).strftime("%b")
 
-def group_period(reader, extract=[extract_month]):
-    l = [ {} for e in extract ]
-    for row in reader:
-        for i, e in enumerate(extract):
-            d = e(row[0])
-            if d not in l[i]:
-                l[i][d] = []
-            l[i][d].append(row)
-    return l
+def group_period(ctx, row, extract=None):
+    if not extract:
+        extract = [extract_month]
+    for i, e in enumerate(extract):
+        d = e(row[0])
+        if d not in ctx[i]:
+            ctx[i][d] = []
+        ctx[i][d].append(row)
+    return ctx
 
 def sum_categories(data):
     summed = dict((x, 0) for x in categories)
@@ -449,7 +451,7 @@ class ProgressiveMean(object):
         self.prev = day
 
     def head(self):
-        return self.means[self.month_key(self.prev)]
+        return self.means[self.month_key(self.prev)][:]
 
     def tail(self):
         c = copy.deepcopy(self.means)
@@ -465,7 +467,7 @@ class ProgressiveMean(object):
             s.extend(x)
         return "\n".join(s)
 
-def graph_xy_progressive_mean(months, dailies, m_income):
+def graph_xy_progressive_mean(months, dailies, m_income, groups, last):
     d_categories = dict((d, sum_categories(v)) for d, v in dailies.items())
     d_expenses = ignore(d_categories, *blacklist)
     d_spending = dict((d, sum(v.values())) for d, v in d_expenses.items())
@@ -481,7 +483,12 @@ def graph_xy_progressive_mean(months, dailies, m_income):
     for ys in list(tail.values()):
         plt.plot(xs[:len(ys)], ys, ls="None", marker="o", color="grey")
     d_current = pm.head()
-    current_plt, = plt.plot(xs[:len(d_current)], d_current, ls="-", marker="o", color="red")
+    for i, df in enumerate(forecast(groups, last, len(xs) - len(d_current))[0]):
+        pm.update(last + timedelta(1 + i), df)
+    d_forecast = pm.head()
+    dcl = len(d_current)
+    forecast_plt, = plt.plot(xs[dcl - 1:], d_forecast[dcl - 1:], ls="-", marker="o", color="orange")
+    current_plt, = plt.plot(xs[:dcl], d_current, ls="-", marker="o", color="red")
     current_plt.set_label(months[-1])
     n_tail_days = sum(len(x) for x in tail.values())
     mean_spend = sum(sum(v) for v in tail.values()) / n_tail_days
@@ -509,8 +516,12 @@ def main(args=None):
 
     # Core data, used across multiple plots
 
-    m_grouped, w_grouped, d_grouped = group_period(csv.reader(args.database),
-            extract=[extract_month, extract_week, extract_day])
+    grouper = pystrgrp.Strgrp()
+    extractors = [extract_month, extract_week, extract_day]
+    ctx = [ {} for e in extractors ]
+    for row in csv.reader(args.database):
+        grouper.add(row[2], row)
+        m_grouped, w_grouped, d_grouped = group_period(ctx, row, extractors)
 
     # m_summed: Looks like:
     #
@@ -560,7 +571,8 @@ def main(args=None):
     if (should_graph(args.graph, "bar_targets")):
         graph_bar_targets(months, monthlies, expenses, m_income, remaining, args.save)
     if (should_graph(args.graph, "xy_progressive_mean")):
-        graph_xy_progressive_mean(months, d_grouped, m_income)
+        groups =  [ list(i.data() for i in g) for g in grouper ]
+        graph_xy_progressive_mean(months, d_grouped, m_income, groups, last_transaction)
     plt.show()
 
 if __name__ == "__main__":
