@@ -11,9 +11,11 @@ if v < (3,):
     print("NOTE: Installation failed. Run setup.py using python3")
     sys.exit(1)
 
-pylcs = Extension('pylcs', sources = [
-    "ext/pylcs.c",
-    "ext/lcs.c" ])
+pylcs = Extension('pylcs',
+    extra_compile_args = [ '-O2' ],
+    sources = [ "ext/pylcs.c",
+        "ext/lcs.c" ],
+    )
 
 pystrgrp = Extension('pystrgrp',
     include_dirs = ['ext'],
