@@ -19,7 +19,7 @@
 import argparse
 import pystrgrp
 import csv
-from datetime import datetime
+from datetime import datetime, timedelta
 from matplotlib import pyplot as plt
 from itertools import chain, cycle, islice
 import numpy as np
@@ -177,14 +177,23 @@ def forecast(groups, date, length=32):
     return [ (v + noise) for v in spend ], income
 
 def graph_bar_cashflow(groups, last):
-    ey, iy = forecast(groups, last, 32)
+    fl = 31 # forecast length
+    gl = fl + 2 # graph length
+    ey, iy = forecast(groups, last, fl)
     bs = bottoms(list(chain(*zip(ey, iy))))
-    plt.bar([ x + 0.1 for x in range(len(ey))], ey, bottom=bs[::2], color="r", width=0.3)
-    plt.bar([ x + 0.6 for x in range(len(iy))], iy, bottom=bs[1::2], color="b", width=0.3)
-    plt.xlim(0, len(ey) - 1)
-    plt.minorticks_on()
+    ex = [ x + 0.1 for x in range(1, len(ey) + 1)]
+    be = plt.bar(ex, ey, bottom=bs[::2], color="r", width=0.3)
+    ix = [ x + 0.6 for x in range(1, len(iy) + 1)]
+    bi = plt.bar(ix, iy, bottom=bs[1::2], color="b", width=0.3)
+    plt.axhline(0, color="black")
+    majors = list(range(1, gl, 7))
+    labels = [ (last + timedelta(i)).strftime("%d/%m/%y") for i in majors ]
+    plt.xticks(majors, labels, rotation=33)
+    plt.xlim(0, gl)
     plt.grid(axis="x", which="both")
     plt.grid(axis="y", which="major")
+    plt.title("Cashflow Forecast")
+    plt.legend((be, bi), ("Forecast Expenditure", "Forecast Income"))
     plt.show()
 
 def main(args=None):
