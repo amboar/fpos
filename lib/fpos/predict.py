@@ -176,6 +176,17 @@ def forecast(groups, date, length=32):
             d[k] += v
     return [ (v + noise) for v in spend ], income
 
+def graph_bar_cashflow(groups, last):
+    ey, iy = forecast(groups, last, 32)
+    bs = bottoms(list(chain(*zip(ey, iy))))
+    plt.bar([ x + 0.1 for x in range(len(ey))], ey, bottom=bs[::2], color="r", width=0.3)
+    plt.bar([ x + 0.6 for x in range(len(iy))], iy, bottom=bs[1::2], color="b", width=0.3)
+    plt.xlim(0, len(ey) - 1)
+    plt.minorticks_on()
+    plt.grid(axis="x", which="both")
+    plt.grid(axis="y", which="major")
+    plt.show()
+
 def main(args=None):
     if args is None:
         args = parse_args()
@@ -186,12 +197,4 @@ def main(args=None):
         if len(r) >= 4 and not "Internal" == r[3]:
             grouper.add(r[2], r)
             current = pd(r[0]) if not current else max(pd(r[0]), current)
-    ey, iy = forecast([ list(i.data() for i in g) for g in grouper ], current, 32)
-    bs = bottoms(list(chain(*zip(ey, iy))))
-    plt.bar([ x + 0.1 for x in range(len(ey))], ey, bottom=bs[::2], color="r", width=0.3)
-    plt.bar([ x + 0.6 for x in range(len(iy))], iy, bottom=bs[1::2], color="b", width=0.3)
-    plt.xlim(0, len(ey) - 1)
-    plt.minorticks_on()
-    plt.grid(axis="x", which="both")
-    plt.grid(axis="y", which="major")
-    plt.show()
+    graph_bar_cashflow([ list(i.data() for i in g) for g in grouper ], current, 32)
