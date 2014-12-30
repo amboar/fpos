@@ -26,7 +26,7 @@ from .core import categories, flexible, fixed
 from .core import money
 from .core import date_fmt, month_fmt
 import pystrgrp
-from .predict import forecast
+from .predict import forecast, graph_bar_cashflow
 
 cmd_description = \
         """Displays a number of graphs from an annotated IR document. The graphs include:
@@ -124,7 +124,8 @@ def parse_args(subparser=None):
     parser_init = subparser.add_parser if subparser else argparse.ArgumentParser
     parser = parser_init(name(), description=cmd_description, help=cmd_help)
     graph_choices = [ "stacked_bar_expenses", "bar_margin", "box_categories",
-            "xy_categories", "xy_weekly", "bar_targets", "xy_progressive_mean" ]
+            "xy_categories", "xy_weekly", "bar_targets", "xy_progressive_mean",
+            "bar_cashflow" ]
     parser.add_argument("database", metavar="FILE", type=argparse.FileType('r'),
             help="The IR document of which to draw graphs")
     parser.add_argument("--save", type=float, default=0,
@@ -521,8 +522,11 @@ def main(args=None):
     extractors = [extract_month, extract_week, extract_day]
     ctx = [ {} for e in extractors ]
     for row in csv.reader(args.database):
-        grouper.add(row[2], row)
+        if len(row) >= 4 and not row[3] == "Internal":
+            grouper.add(row[2], row)
         m_grouped, w_grouped, d_grouped = group_period(ctx, row, extractors)
+
+    groups =  [ list(i.data() for i in g) for g in grouper ]
 
     # m_summed: Looks like:
     #
@@ -572,8 +576,9 @@ def main(args=None):
     if (should_graph(args.graph, "bar_targets")):
         graph_bar_targets(months, monthlies, expenses, m_income, remaining, args.save)
     if (should_graph(args.graph, "xy_progressive_mean")):
-        groups =  [ list(i.data() for i in g) for g in grouper ]
         graph_xy_progressive_mean(months, d_grouped, m_income, groups, last_transaction)
+    if (should_graph(args.graph, "bar_cashflow")):
+        graph_bar_cashflow(groups, last_transaction)
     plt.show()
 
 if __name__ == "__main__":
