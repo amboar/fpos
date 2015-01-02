@@ -68,11 +68,13 @@ class LcsTaggerTest(unittest.TestCase):
         self.assertEquals(tag, tagger.classify(text))
 
     def test_lcs_match_one_fuzzy(self):
-        tagger = _LcsTagger()
+        tagger = _LcsTagger(0.75)
         a_text = "foo0"
         b_text = "foo1"
         tag = "bar"
-        tagger.classify(a_text, tag)
+        self.assertEquals(None, tagger.classify(a_text))
+        self.assertTrue(tagger.pending())
+        tagger.tag(tag)
         self.assertEquals(tag, tagger.classify(b_text))
 
     def test_lcs_miss_one(self):
@@ -154,23 +156,28 @@ class WindowTest(unittest.TestCase):
 
 class VisualiseTest(unittest.TestCase):
     def test_group_period_empty(self):
-        self.assertEquals({}, visualise.group_period([])[0])
+        pg = visualise.PeriodGroup()
+        self.assertEquals([], pg.groups())
 
     def test_group_period_extract_month(self):
         first = [ "01/01/2014", "-1.00", "Foo" ]
         second = [ "09/01/2014", "-2.00", "Bar" ]
-        month = [ first, second ]
-        expected = { "01/2014" : month }
-        result = visualise.group_period(month, [ visualise.extract_month ])
+        months = [ first, second ]
+        expected = { "01/2014" : months }
+        pg = visualise.PeriodGroup(visualise.extract_month)
+        pg.add_all(months)
+        result = pg.groups()
         self.assertEquals(1, len(result))
         self.assertEquals(expected, result[0])
 
     def test_group_period_extract_week(self):
         first = [ "01/01/2014", "-1.00", "Foo" ]
         second = [ "09/01/2014", "-2.00", "Bar" ]
-        week = [ first, second ]
+        weeks = [ first, second ]
         expected = { "2014:00" : [ first ], "2014:01" : [ second ] }
-        result = visualise.group_period(week, [ visualise.extract_week ])
+        pg = visualise.PeriodGroup(visualise.extract_week)
+        pg.add_all(weeks)
+        result = pg.groups()
         self.assertEquals(1, len(result))
         self.assertEquals(expected, result[0])
 
@@ -179,7 +186,9 @@ class VisualiseTest(unittest.TestCase):
         second = [ "02/01/2014", "-2.00", "Foo" ]
         transactions = [ first, second ]
         expected = [ { "01/2014" : [ first, second ] }, { "2014:00" : [ first, second ] } ]
-        result = visualise.group_period(transactions, [ visualise.extract_month, visualise.extract_week ])
+        pg = visualise.PeriodGroup(visualise.extract_month, visualise.extract_week)
+        pg.add_all(transactions)
+        result = pg.groups()
         self.assertEquals(2, len(result))
         self.assertEquals(expected, result)
 

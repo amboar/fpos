@@ -51,15 +51,26 @@ datesort = lambda x : datetime.strptime(x, date_fmt).date()
 monthsort = lambda x : datetime.strptime(x, month_fmt).date()
 monthname = lambda x : datetime.strptime(x, month_fmt).strftime("%b")
 
-def group_period(ctx, row, extract=None):
-    if not extract:
-        extract = [extract_month]
-    for i, e in enumerate(extract):
-        d = e(row[0])
-        if d not in ctx[i]:
-            ctx[i][d] = []
-        ctx[i][d].append(row)
-    return ctx
+class PeriodGroup(object):
+    def __init__(self, *extractors):
+        self.extractors = [extract_month] if not extractors else extractors
+        self.group_list = [ {} for e in extractors ]
+
+    def add_all(self, rows):
+        for r in rows:
+            self.add(r)
+
+    def add(self, row):
+        if not row:
+            return
+        for i, e in enumerate(self.extractors):
+            d = e(row[0])
+            if d not in self.group_list[i]:
+                self.group_list[i][d] = []
+            self.group_list[i][d].append(row)
+
+    def groups(self):
+        return self.group_list[:]
 
 def sum_categories(data):
     summed = dict((x, 0) for x in categories)
@@ -518,15 +529,14 @@ def main(args=None):
 
     # Core data, used across multiple plots
 
-    grouper = pystrgrp.Strgrp()
-    extractors = [extract_month, extract_week, extract_day]
-    ctx = [ {} for e in extractors ]
+    period_grouper = PeriodGroup(extract_month, extract_week, extract_day)
+    description_grouper = pystrgrp.Strgrp()
     for row in csv.reader(args.database):
         if len(row) >= 4 and not row[3] == "Internal":
-            grouper.add(row[2], row)
-        m_grouped, w_grouped, d_grouped = group_period(ctx, row, extractors)
-
-    groups =  [ list(i.data() for i in g) for g in grouper ]
+            description_grouper.add(row[2], row)
+        period_grouper.add(row)
+    m_grouped, w_grouped, d_grouped = period_grouper.groups()
+    description_groups =  [ list(i.data() for i in g) for g in description_grouper ]
 
     # m_summed: Looks like:
     #
@@ -576,9 +586,9 @@ def main(args=None):
     if (should_graph(args.graph, "bar_targets")):
         graph_bar_targets(months, monthlies, expenses, m_income, remaining, args.save)
     if (should_graph(args.graph, "xy_progressive_mean")):
-        graph_xy_progressive_mean(months, d_grouped, m_income, groups, last_transaction)
+        graph_xy_progressive_mean(months, d_grouped, m_income, description_groups, last_transaction)
     if (should_graph(args.graph, "bar_cashflow")):
-        graph_bar_cashflow(groups, last_transaction)
+        graph_bar_cashflow(description_groups, last_transaction)
     plt.show()
 
 if __name__ == "__main__":
