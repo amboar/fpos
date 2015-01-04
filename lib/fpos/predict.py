@@ -57,10 +57,14 @@ def group_delta_bins(deltas):
 def period(bins):
     """ period(bins) -> int
 
-    Takes a bincount list as input and returns the maximum bin of the spend
-    group.
+    Takes a bincount list as input and returns the last non-zero bin index of
+    the spend group.
     """
-    return len(bins)
+    if 0 == len(bins):
+        raise ValueError("No bins provided")
+    for i, e in enumerate(reversed(bins)):
+        if e > 0:
+            return len(bins) - i
 
 def pmf(bins):
     """ pmf(bins) -> list(float)
@@ -128,13 +132,16 @@ def group_forecast(members, date, debug=False):
     n = sum(bins)
     m = sum(float(e[1]) for e in members) / (n + 1)
     d = (date - last(members)).days
-    p = period(bins)
-    if 0 == p or p < d:
-        if debug:
-            fmt = "Dropped m={} as \"{}\": p={}, d={}"
-            msg = fmt.format(m, members[0][2], p, d)
-            print(msg)
+    if 0 == len(bins):
         return []
+    else:
+        p = period(bins)
+        if p < d:
+            if debug:
+                fmt = "Dropped m={} as \"{}\": p={}, d={}"
+                msg = fmt.format(m, members[0][2], p, d)
+                print(msg)
+            return []
     dhs = expected_spend(pmf(bins), m)
     adhs = align(dhs, n, d)
     return chain(adhs, cycle(dhs))
