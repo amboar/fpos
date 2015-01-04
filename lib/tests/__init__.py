@@ -17,8 +17,9 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from datetime import datetime as dt
+from itertools import islice
 import unittest
-from fpos import annotate, combine, core, transform, visualise, window
+from fpos import annotate, combine, core, transform, visualise, window, predict
 
 _LcsTagger = annotate._LcsTagger
 money = visualise.money
@@ -372,3 +373,174 @@ class CoreTest(unittest.TestCase):
 
     def test_lcs_similar(self):
         self.assertEquals(1, core.lcs("abbb", "aaaa"))
+
+class PredictTest(unittest.TestCase):
+    def test_group_deltas_empty(self):
+        data = []
+        expected = []
+        self.assertSequenceEqual(expected, predict.group_deltas(data))
+
+    def test_group_deltas_one(self):
+        data = [["01/01/2015"]]
+        expected = []
+        self.assertSequenceEqual(expected, predict.group_deltas(data))
+
+    def test_group_deltas_two(self):
+        data = [["01/01/2015"], ["02/01/2015"]]
+        expected = [1]
+        self.assertSequenceEqual(expected, predict.group_deltas(data))
+
+    def test_group_deltas_three(self):
+        data = [["01/01/2015"], ["02/01/2015"], ["04/01/2015"]]
+        expected = [1, 2]
+        self.assertSequenceEqual(expected, predict.group_deltas(data))
+
+    def test_group_delta_bins_one(self):
+        data = [1]
+        expected = [1]
+        self.assertSequenceEqual(expected, predict.group_delta_bins(data))
+
+    def test_group_delta_bins_two(self):
+        data = [1, 2]
+        expected = [1, 1]
+        self.assertSequenceEqual(expected, list(predict.group_delta_bins(data)))
+
+    def test_period_empty(self):
+        self.assertRaises(ValueError, predict.period, [])
+
+    def test_period_single(self):
+        self.assertEquals(1, predict.period([1]))
+
+    def test_period_spurious(self):
+        self.assertEquals(1, predict.period([1, 0]))
+
+    def test_period_multiple(self):
+        self.assertEquals(2, predict.period([1, 1]))
+
+    def test_pmf_empty(self):
+        self.assertSequenceEqual([], predict.pmf([]))
+
+    def test_pmf_one_bin(self):
+        self.assertSequenceEqual([1], predict.pmf([1]))
+
+    def test_pmf_two_bins_balanced(self):
+        self.assertSequenceEqual([0.5, 0.5], predict.pmf([1, 1]))
+
+    def test_pmf_two_bins_unbalanced(self):
+        self.assertSequenceEqual([0.25, 0.75], predict.pmf([1, 3]))
+
+    def test_pmf_two_bins_first_zero(self):
+        self.assertSequenceEqual([0.0, 1.0], predict.pmf([0, 1]))
+
+    def test_pmf_two_bins_second_zero(self):
+        self.assertSequenceEqual([1.0, 0.0], predict.pmf([1, 0]))
+
+    def test_probable_spend_emtpy(self):
+        self.assertSequenceEqual([], predict.probable_spend([], 0.0))
+
+    def test_probable_spend_one(self):
+        self.assertSequenceEqual([2], predict.probable_spend([1], 2.0))
+
+    def test_probable_spend_two_balanced(self):
+        self.assertSequenceEqual([1.0, 1.0], predict.probable_spend([0.5, 0.5], 2.0))
+
+    def test_probable_spend_two_unbalanced(self):
+        self.assertSequenceEqual([0.5, 1.5], predict.probable_spend([0.25, 0.75], 2.0))
+
+    def test_probable_spend_sum_is_mean(self):
+        mean = 2.0
+        mf = [ 0.25, 0.75 ]
+        self.assertEquals(mean, sum(predict.probable_spend(mf, mean)))
+
+    def test_last_empty(self):
+        self.assertRaises(ValueError, predict.last, [])
+
+    def test_last_one(self):
+        ds = "01/01/2015"
+        self.assertEquals(dt.strptime(ds, "%d/%m/%Y"), predict.last([[ds]]))
+
+    def test_last_two(self):
+        first = "01/01/2015"
+        last = "02/01/2015"
+        self.assertEquals(dt.strptime(last, "%d/%m/%Y"), predict.last([[first], [last]]))
+
+    def test_align_zero_delta(self):
+        bins = [ 0.5, 0.5 ]
+        self.assertSequenceEqual(bins, predict.align(bins, 0))
+
+    def test_align_one_delta(self):
+        bins = [ 0.5, 0.5 ]
+        self.assertSequenceEqual([1.0], predict.align(bins, 1))
+
+    def test_align_one_delta_zero_bin(self):
+        bins = [ 0.5, 0.0, 0.5 ]
+        self.assertSequenceEqual([0.0, 1.0], predict.align(bins, 1))
+
+    def test_align_zero_negative(self):
+        bins = [ -0.5, 0.0, -0.5 ]
+        self.assertSequenceEqual([-0.5, 0.0, -0.5], predict.align(bins, 0))
+
+    def test_align_overlong_sequence(self):
+        bins = [ 0.0 ]
+        self.assertSequenceEqual([0.0], predict.align(bins, 0))
+
+    def test_group_forecast_zero_members(self):
+        self.assertRaises(ValueError, predict.group_forecast, [], dt(2015, 2, 1))
+
+    def test_group_forecast_same_day_members(self):
+        members = [[ "01/01/2015", -100.0 ], [ "01/01/2015", -100.0 ]]
+        fc = predict.group_forecast(members, dt(2015, 1, 1))
+        self.assertSequenceEqual([], fc)
+
+    def test_group_forecast_two_members(self):
+        members = [[ "01/01/2015", -100.0 ], [ "01/02/2015", -100.0 ]]
+        fc = predict.group_forecast(members, dt(2015, 2, 1))
+        expected = ([ 0 ] * 30) + [ -100.0 ]
+        self.assertSequenceEqual(expected, list(islice(fc, 31)))
+
+    def test_group_forecast_drop(self):
+        members = [[ "01/01/2015", -100.0 ], [ "01/02/2015", -100.0 ]]
+        fc = predict.group_forecast(members, dt(2015, 4, 1))
+        self.assertSequenceEqual([], fc)
+
+    def test_forecast_single_expense_group(self):
+        groups = [[[ "01/01/2015", -100.0 ], [ "01/02/2015", -100.0 ]]]
+        length = 31
+        expenses, income = predict.forecast(groups, dt(2015, 2, 1), length)
+        expected = ([ 0 ] * 30) + [ -100.0 ]
+        self.assertSequenceEqual(expected, expenses)
+        self.assertSequenceEqual([ 0 ] * length, income)
+
+    def test_forecast_single_income_group(self):
+        groups = [[[ "01/01/2015", 100.0 ], [ "01/02/2015", 100.0 ]]]
+        length = 31
+        expenses, income = predict.forecast(groups, dt(2015, 2, 1), length)
+        expected = ([ 0 ] * 30) + [ 100.0 ]
+        self.assertSequenceEqual([ 0 ] * length, expenses)
+        self.assertSequenceEqual(expected, income)
+
+    def test_forecast_expenses_income(self):
+        groups = [ [[ "01/01/2015", -100.0 ], [ "01/02/2015", -100.0 ]],
+                [[ "15/01/2015", 100.0 ], [ "15/02/2015", 100.0 ]] ]
+        length = 31
+        fc_expenses, fc_income = predict.forecast(groups, dt(2015, 2, 15), length)
+        ex_expenses = ([ 0 ] * 16) + [ -100.0 ] + ([ 0 ] * 14)
+        ex_income = ([ 0 ] * 30) + [ 100.0 ]
+        self.assertSequenceEqual(ex_expenses, fc_expenses)
+        self.assertSequenceEqual(ex_income, fc_income)
+
+    def test_forecast_expense_noise(self):
+        groups = [[[ "01/02/2015", -100.0 ]], [[ "01/02/2015", -50.0 ]]]
+        length = 31
+        fc_expenses, fc_income = predict.forecast(groups, dt(2015, 2, 1), length)
+        self.assertSequenceEqual([ -75.0 ] * length, fc_expenses)
+        self.assertSequenceEqual([ 0 ] * length, fc_income)
+
+    def test_bottoms_zero(self):
+        self.assertRaises(ValueError, predict.bottoms, [])
+
+    def test_bottoms_one(self):
+        self.assertSequenceEqual([ 0 ], predict.bottoms([ -10 ]))
+
+    def test_bottoms_two(self):
+        self.assertSequenceEqual([ 0, -10 ], predict.bottoms([ -10, -20 ]))
