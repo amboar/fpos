@@ -75,8 +75,8 @@ def pmf(bins):
     n = sum(bins)
     return [ (v / n) for v in bins ]
 
-def expected_spend(mf, mean):
-    """ expected_spend(mf, mean) -> list(float)
+def probable_spend(mf, mean):
+    """ probable_spend(mf, mean) -> list(float)
 
     Given a reified mass function (i.e., the list of bins representing the
     probability mass function), distribute the provided mean across the bins of
@@ -91,8 +91,8 @@ def last(members):
     """
     return max(pd(x[0]) for x in members)
 
-def align(bins, n, delta):
-    """ align(bins, n, delta) -> list(float)
+def align(bins, delta):
+    """ align(bins, delta) -> list(float)
 
     Redistribute unspent predictions over the remaining predicted bins in the
     spending period.
@@ -114,7 +114,10 @@ def align(bins, n, delta):
     s = sum(bins[:delta])
     # Redistribution value, the mean of the ignored bins relative to the
     # remaining bins
-    m = (s / (n - s))
+    r = len([x for x in bins[delta:] if x != 0])
+    if 0 == r:
+        return [ 0 ] * (len(bins) - delta)
+    m = (s / r)
     # Recalculate the spend distribution with respect to delta and the
     # redistribution value
     return [ 0 if 0 == e else (e + m) for e in bins[delta:] ]
@@ -129,8 +132,7 @@ def group_forecast(members, date, debug=False):
     calculated spend period then future predictions are cancelled.
     """
     bins = group_delta_bins(group_deltas(members))
-    n = sum(bins)
-    m = sum(float(e[1]) for e in members) / (n + 1)
+    m = sum(float(e[1]) for e in members) / (sum(bins) + 1)
     d = (date - last(members)).days
     if 0 == len(bins):
         return []
@@ -142,8 +144,8 @@ def group_forecast(members, date, debug=False):
                 msg = fmt.format(m, members[0][2], p, d)
                 print(msg)
             return []
-    dhs = expected_spend(pmf(bins), m)
-    adhs = align(dhs, n, d)
+    dhs = probable_spend(pmf(bins), m)
+    adhs = align(dhs, d)
     return chain(adhs, cycle(dhs))
 
 def name():
