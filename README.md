@@ -9,6 +9,19 @@ Office on their [MoneySmart website][1]. These scripts were hacked together out
 of laziness when the author got fed up with manually entering his data into the
 site.
 
+Example Output
+========
+
+![Expenditure by Category per Month](examples/figure_1.png)
+![Remaining Capital after Expenses](examples/figure_2.png)
+![Box-plot of Expenses per Month](examples/figure_3.png)
+![XY Plots of Monthly Expenditure per Category](examples/figure_4.png)
+![XY Plot of Weekly Expenditure](examples/figure_5.png)
+![Bar Chart of Current Category Expenditure against Derived Budget](examples/figure_6.png)
+
+Details
+=======
+
 Transactions are put in one of the following categories:
 
 * Cash - Withdrawals from ATMs, given its own category as it's hard to track
@@ -45,7 +58,6 @@ The relevant commands are:
 * `fpos visualise`: Displays collated transactions as graphs and tables
 * `fpos window`: Output document transactions between given dates
 
-Example renderings from `fpos visualise` can be found in the examples directory.
 
 Use Cases
 =========
