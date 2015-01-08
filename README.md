@@ -5,7 +5,7 @@ Overview
 
 Accumulate and analyse your CSV transaction data to visualise your income and
 expenditure.  The categories are based on those used by the Australian Tax
-Office on their [MoneySmart website][1]. These scripts were hacked together out
+Office on their [MoneySmart website](https://www.moneysmart.gov.au/). These scripts were hacked together out
 of laziness when the author got fed up with manually entering his data into the
 site.
 
@@ -46,7 +46,7 @@ to ease the burden of categorising your expenses.
 fpos is currently a commandline tool, and so is not for the faint-of-heart. Out
 of a want for simplicity (again, read as laziness), fpos uses a simple text
 file as a database for the information it graphs. Power users might be
-interested in tracking changes to their transaction database using [GIT][2] or
+interested in tracking changes to their transaction database using [git](http://git-scm.com/) or
 similar tools.
 
 The relevant commands are:
@@ -196,6 +196,3 @@ Example IR Document
     09/08/2013,-59.75,Example description,Cash
     09/08/2013,-23.86,Example description,Utilities
     09/08/2013,-34.92,Example description,Health
-
-[1] https://www.moneysmart.gov.au/ "Simple guidance you can trust"
-[2] http://git-scm.com/
