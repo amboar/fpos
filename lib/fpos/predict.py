@@ -131,6 +131,8 @@ def group_forecast(members, date, debug=False):
     predicted spends for the calculated spend period. If no spend occurs in the
     calculated spend period then future predictions are cancelled.
     """
+    if not members:
+        raise ValueError("Requires at least one member in members list")
     bins = group_delta_bins(group_deltas(members))
     m = sum(float(e[1]) for e in members) / (sum(bins) + 1)
     d = (date - last(members)).days
@@ -159,6 +161,8 @@ def parse_args(subparser=None):
     return None if subparser else parser.parse_args()
 
 def bottoms(data):
+    if not data:
+        raise ValueError("Must be at least one element in data")
     bots = [ 0 ]
     for v in data[:-1]:
         bots.append(bots[-1] + v)
@@ -178,7 +182,7 @@ def forecast(groups, date, length=32):
     spend = [ 0 ] * length
     income = [ 0 ] * length
     noise_values = [ float(b[0][1]) for b in groups if len(b) == 1 ]
-    noise = sum(noise_values) / len(noise_values)
+    noise = 0 if not noise_values else sum(noise_values) / len(noise_values)
     for g in ( g for g in groups if len(g) > 1 ):
         for k, v in enumerate(islice(group_forecast(g, date), length)):
             d = spend if v < 0 else income
