@@ -17,7 +17,7 @@
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from datetime import datetime as dt
-from itertools import islice
+from itertools import islice, cycle
 import unittest
 from fpos import annotate, combine, core, transform, visualise, window, predict
 
@@ -502,6 +502,13 @@ class PredictTest(unittest.TestCase):
         members = [[ "01/01/2015", -100.0 ], [ "01/02/2015", -100.0 ]]
         fc = predict.group_forecast(members, dt(2015, 4, 1))
         self.assertSequenceEqual([], fc)
+
+    def test_group_forecast_cycle(self):
+        members = [[ "01/01/2015", -100.0 ], [ "01/02/2015", -100.0 ]]
+        length = 62
+        fc = list(islice(predict.group_forecast(members, dt(2015, 2, 1)), length))
+        expected = list(islice(cycle(([ 0 ] * 30) + [ -100 ]), length))
+        self.assertSequenceEqual(expected, fc)
 
     def test_forecast_single_expense_group(self):
         groups = [[[ "01/01/2015", -100.0 ], [ "01/02/2015", -100.0 ]]]
