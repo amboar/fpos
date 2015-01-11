@@ -28,7 +28,7 @@ struct strgrp_bin_iter;
 struct strgrp *
 strgrp_new(const double threshold);
 
-bool
+struct strgrp_bin *
 strgrp_add(struct strgrp * const ctx, const char * const str,
         void * const data);
 

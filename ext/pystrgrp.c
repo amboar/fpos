@@ -105,10 +105,8 @@ Bin_iternext(BinObject *self) {
     if (!item) {
         return PyErr_NoMemory();
     }
-    Py_INCREF(item);
     item->item = strgrp_bin_iter_next(self->iter);
     if (!item->item) {
-        Py_DECREF(item);
         Item_dealloc((PyObject *)item);
         self->iter = NULL;
         /* Raising of standard StopIteration exception with empty value. */
@@ -218,10 +216,16 @@ Strgrp_add(StrgrpObject *self, PyObject *args, PyObject *kwds) {
         return NULL;
     }
     Py_INCREF(data);
-    if (!strgrp_add(self->grp, key, data)) {
+    struct strgrp_bin * bin = strgrp_add(self->grp, key, data);
+    if (!bin) {
         return PyErr_NoMemory();
     }
-    Py_RETURN_NONE;
+    BinObject * const binobj = (BinObject *)PyType_GenericNew(&BinType, NULL, NULL);
+    if (!binobj) {
+        return PyErr_NoMemory();
+    }
+    binobj->bin = bin;
+    return (PyObject *)binobj;
 }
 
 static PyObject *
@@ -242,10 +246,8 @@ Strgrp_iternext(StrgrpObject *self) {
     if (!bin) {
         return PyErr_NoMemory();
     }
-    Py_INCREF(bin);
     bin->bin = strgrp_iter_next(self->iter);
     if (!bin->bin) {
-        Py_DECREF(bin);
         Bin_dealloc((PyObject *)bin);
         self->iter = NULL;
         /* Raising of standard StopIteration exception with empty value. */

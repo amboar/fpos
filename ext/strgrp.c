@@ -145,7 +145,7 @@ hteq(const void * const e, void * const str) {
     return strcmp(((struct strgrp_map *)e)->key, str) == 0;
 }
 
-struct strgrp_map *
+static struct strgrp_map *
 lookup(struct strgrp * const ctx, const char * const str) {
     return (struct strgrp_map *)htable_get(&ctx->known, hash_string(str), &hteq, str);
 }
@@ -171,7 +171,7 @@ cache(struct strgrp * const grp, struct strgrp_bin * const bin,
     return htable_add(&grp->known, hash_string(str), d);
 }
 
-bool
+struct strgrp_bin *
 strgrp_add(struct strgrp * const ctx, const char * const str,
         void * const data) {
     struct strgrp_bin * pick = NULL;
@@ -179,7 +179,7 @@ strgrp_add(struct strgrp * const ctx, const char * const str,
     if (ctx->n_bins) {
         const struct strgrp_map * const m = lookup(ctx, str);
         if (m) {
-            return add_item(m->bin, str, data);
+            return add_item(m->bin, str, data) ? m->bin : NULL;
         }
         struct strgrp_bin * bin;
         list_for_each(&ctx->bins, bin, list) {
@@ -204,7 +204,7 @@ strgrp_add(struct strgrp * const ctx, const char * const str,
         assert(NULL != pick);
         cache(ctx, pick, str, data);
     }
-    return inserted;
+    return pick;
 }
 
 struct strgrp_iter *
