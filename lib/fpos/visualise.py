@@ -495,13 +495,14 @@ def graph_xy_progressive_mean(months, dailies, m_income, groups, last):
     for ys in list(tail.values()):
         plt.plot(xs[:len(ys)], ys, ls="None", marker="o", color="grey")
     d_current = pm.head()
-    for i, df in enumerate(forecast(groups, last, len(xs) - len(d_current))[0]):
+    mr = calendar.monthrange(pm.prev.year, pm.prev.month)
+    remaining = (mr[1] - last.day)
+    for i, df in enumerate(forecast(groups, last, remaining)[0]):
         pm.update(last + timedelta(1 + i), df)
     d_forecast = pm.head()
-    dcl = len(d_current)
-    forecast_plt, = plt.plot(xs[dcl - 1:], d_forecast[dcl - 1:], ls="-", marker="o", color="orange")
+    forecast_plt, = plt.plot(xs[last.day - 1:mr[1]], d_forecast[last.day - 1:], ls="-", marker="o", color="orange")
     forecast_plt.set_label("{} - forecast".format(months[-1]))
-    current_plt, = plt.plot(xs[:dcl], d_current, ls="-", marker="o", color="red")
+    current_plt, = plt.plot(xs[:last.day], d_current, ls="-", marker="o", color="red")
     current_plt.set_label("{} - historic".format(months[-1]))
     n_tail_days = sum(len(x) for x in tail.values())
     mean_spend = sum(sum(v) for v in tail.values()) / n_tail_days
