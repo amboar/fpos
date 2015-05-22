@@ -83,10 +83,11 @@ def transform_nab(csv):
     # 28-Apr-14,-64.67,071644731756,,CREDIT CARD PURCHASE,BP CRAFERS 9125 CRAFERS,-169.28,
     def _gen():
         for l in csv:
-            ir_date = datetime.strptime(l[0], _nab_date_fmt).strftime(date_fmt)
-            ir_amount = money(float(l[1]))
-            ir_description = " ".join(e for e in l[4:6] if (e is not None and "" != e ))
-            yield [ ir_date, ir_amount, ir_description ]
+            if l:
+                ir_date = datetime.strptime(l[0], _nab_date_fmt).strftime(date_fmt)
+                ir_amount = money(float(l[1]))
+                ir_description = " ".join(e for e in l[4:6] if (e is not None and "" != e ))
+                yield [ ir_date, ir_amount, ir_description ]
     return _gen()
 
 def transform_bankwest(csv):
