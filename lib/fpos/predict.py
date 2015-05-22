@@ -22,6 +22,7 @@ import csv
 from datetime import datetime, timedelta
 from matplotlib import pyplot as plt
 from itertools import chain, cycle, islice
+from .core import money
 import numpy as np
 
 cmd_description = \
@@ -74,6 +75,14 @@ def pmf(bins):
     """
     n = sum(bins)
     return [ (v / n) for v in bins ]
+
+def cmfarg(bins, threshold=0.9):
+    s = 0
+    for i, v in enumerate(pmf(bins)):
+        s += v
+        if s > threshold:
+            return i
+    raise ValueError("Whut?")
 
 def probable_spend(mf, mean):
     """ probable_spend(mf, mean) -> list(float)
@@ -208,6 +217,27 @@ def graph_bar_cashflow(groups, last):
     plt.title("Cashflow Forecast")
     plt.legend((be, bi), ("Forecast Expenditure", "Forecast Income"))
     plt.show()
+
+def print_periodic_expenses(groups, date):
+    required_group_size = ( g for g in groups if len(g) > 3 )
+    group_bins = ( (g, group_delta_bins(group_deltas(g)))
+            for g in required_group_size )
+    required_bins_size = ( gb for gb in group_bins
+            if 0 < len(gb[1]) )
+    keep = ( gb for gb in required_bins_size
+            if period(gb[1]) > (date - last(gb[0])).days )
+    table = ( (gb[0][0][2],
+        len(gb[0]),
+        #period(gb[1]),
+        cmfarg(gb[1]),
+        sum(float(e[1]) for e in gb[0]) / (sum(gb[1]) + 1))
+            for gb in keep )
+    ordered = sorted(list(table), key=lambda x: (365 / x[2]) * x[3])
+    print("Description | N | Period | Mean Value | Annual Value | Monthly Value")
+    for row in ordered:
+        annual = (365 / row[2]) * row[3]
+        print("{} | {} | {} | {} | {} | {}".format(row[0], row[1], row[2],
+            money(row[3]), money(annual), money(annual / 12)))
 
 def main(args=None):
     if args is None:
