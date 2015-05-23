@@ -76,7 +76,7 @@ def pmf(bins):
     n = sum(bins)
     return [ (v / n) for v in bins ]
 
-def cmfarg(bins, threshold=0.9):
+def cmfarg(bins, threshold=0.75):
     s = 0
     for i, v in enumerate(pmf(bins)):
         s += v
@@ -143,7 +143,7 @@ def group_forecast(members, date, debug=False):
     if not members:
         raise ValueError("Requires at least one member in members list")
     bins = group_delta_bins(group_deltas(members))
-    m = sum(float(e[1]) for e in members) / (sum(bins) + 1)
+    mean = sum(float(e[1]) for e in members) / (sum(bins) + 1)
     d = (date - last(members)).days
     if 0 == len(bins):
         return []
@@ -151,13 +151,59 @@ def group_forecast(members, date, debug=False):
         p = period(bins)
         if p < d:
             if debug:
-                fmt = "Dropped m={} as \"{}\": p={}, d={}"
-                msg = fmt.format(m, members[0][2], p, d)
+                fmt = "Dropped mean={} as \"{}\": p={}, d={}"
+                msg = fmt.format(mean, members[0][2], p, d)
                 print(msg)
             return []
-    dhs = probable_spend(pmf(bins), m)
-    adhs = align(dhs, d)
-    return chain(adhs, cycle(dhs))
+    # Estimate the periodicity using cmfarg.
+    #
+    # The goal is to estimate cashflow for around the next 30 days. Some
+    # spending patterns are going to have periods of less than 30 days, so we
+    # need to cycle our the observed pattern to meet the projection length.
+    #
+    # A property of using cmfarg is that the estimated periodicity will likely
+    # be less than the full period of the PMF. To account for this  we merge
+    # the following cycle of the probability distribution into the current from
+    # the index of cmfarg's periodicity estimate. To paint a picture, imagine
+    # the bin distribution is such:
+    #
+    #    *
+    #    *
+    #    *
+    # ** * *   *
+    # ----------
+    # 0123456789
+    #
+    # Giving a PMF of:
+    #
+    # 00   0   0
+    # ..   .   .
+    # 11 0 1   1
+    # 22 . 2   2
+    # 55 5 5   5
+    # ----------
+    # 0123456789
+    #
+    # cmfarg estimates the periodicity as 4, and the code below overlaps the
+    # PMF on-top of itself such that each PMF is repeated from bin 4 of the
+    # previous:
+    #
+    # 00  0
+    # ..  .0   0
+    # 11 01. 0 .
+    # 22 .22 . 2
+    # 55 555 5 5
+    # ----------
+    # 0123456789
+    mass = pmf(bins)
+    interval = cmfarg(mass)
+    overlap = period(mass) - (interval + 1)
+    merged_mass = mass[:]
+    for i in range(overlap):
+        merged_mass[interval + 1 + i] += mass[i]
+    ps = probable_spend(merged_mass, mean)
+    aps = align(ps, d)
+    return chain(aps, cycle(ps[overlap:]))
 
 def name():
     return __name__.split(".")[-1]
@@ -190,9 +236,9 @@ def forecast(groups, date, length=32):
     """
     spend = [ 0 ] * length
     income = [ 0 ] * length
-    noise_values = [ float(b[0][1]) for b in groups if len(b) == 1 ]
+    noise_values = [ float(b[0][1]) for b in groups if len(b) <= 3 ]
     noise = 0 if not noise_values else sum(noise_values) / len(noise_values)
-    for g in ( g for g in groups if len(g) > 1 ):
+    for g in ( g for g in groups if len(g) > 3 ):
         for k, v in enumerate(islice(group_forecast(g, date), length)):
             d = spend if v < 0 else income
             d[k] += v
