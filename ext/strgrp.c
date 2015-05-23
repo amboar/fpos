@@ -37,7 +37,7 @@ struct strgrp_iter {
 };
 
 struct strgrp_bin {
-    const char * key;
+    char * key;
     size_t key_len;
     int32_t n_items;
     struct list_node list;
@@ -50,13 +50,13 @@ struct strgrp_bin_iter {
 };
 
 struct strgrp_item {
-    const char * value;
-    void * data;
+    char * key;
+    void * value;
     struct list_node list;
 };
 
 struct strgrp_map {
-    const char * key;
+    char * key;
     struct strgrp_bin * bin;
 };
 
@@ -89,8 +89,8 @@ new_item(TALLOC_CTX * const tctx, const char * const str, void * const data) {
     if (!i) {
         return NULL;
     }
-    i->value = talloc_strdup(i, str);
-    i->data = data;
+    i->key = talloc_strdup(i, str);
+    i->value = data;
     return i;
 }
 
@@ -257,9 +257,19 @@ strgrp_bin_iter_free(struct strgrp_bin_iter * iter) {
     talloc_free(iter);
 }
 
+char *
+strgrp_bin_key(struct strgrp_bin * const bin) {
+    return bin->key;
+}
+
+char *
+strgrp_item_key(const struct strgrp_item * const item) {
+    return item->key;
+}
+
 void *
-strgrp_item_data(const struct strgrp_item * const item) {
-    return item->data;
+strgrp_item_value(const struct strgrp_item * const item) {
+    return item->value;
 }
 
 void
@@ -273,7 +283,7 @@ strgrp_free_cb(struct strgrp * const ctx, void (*cb)(void * data)) {
     struct strgrp_item * item;
     list_for_each(&ctx->bins, bin, list) {
         list_for_each(&bin->items, item, list) {
-            cb(item->data);
+            cb(item->value);
         }
     }
     strgrp_free(ctx);
@@ -283,7 +293,7 @@ strgrp_free_cb(struct strgrp * const ctx, void (*cb)(void * data)) {
 
 static void
 print_item(const struct strgrp_item * item) {
-    printf("\t%s\n", item->value);
+    printf("\t%s\n", item->key);
 }
 
 static void

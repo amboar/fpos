@@ -16,14 +16,24 @@ Item_dealloc(PyObject *obj) {
 }
 
 static PyObject *
-Item_data(ItemObject *self) {
-    PyObject *data = strgrp_item_data(self->item);
-    Py_XINCREF(data);
-    return data;
+Item_key(ItemObject *self) {
+    char *key = strgrp_item_key(self->item);
+    PyObject *py_key = Py_BuildValue("s", key);
+    Py_XINCREF(py_key);
+    return py_key;
+}
+
+static PyObject *
+Item_value(ItemObject *self) {
+    PyObject *value = strgrp_item_value(self->item);
+    Py_XINCREF(value);
+    return value;
 }
 
 static PyMethodDef Item_methods[] = {
-    { "data", (PyCFunction)Item_data, METH_NOARGS,
+    { "key", (PyCFunction)Item_key, METH_NOARGS,
+        "Fetch the description stored in the item" },
+    { "value", (PyCFunction)Item_value, METH_NOARGS,
         "Fetch the data stored in the item" },
     {NULL}
 };
@@ -116,6 +126,20 @@ Bin_iternext(BinObject *self) {
     return (PyObject *)item;
 }
 
+static PyObject *
+Bin_key(BinObject *self) {
+    char *key = strgrp_bin_key(self->bin);
+    PyObject *py_key = Py_BuildValue("s", key);
+    Py_XINCREF(py_key);
+    return py_key;
+}
+
+static PyMethodDef Bin_methods[] = {
+    { "key", (PyCFunction)Bin_key, METH_NOARGS,
+        "Fetch the description stored in the item" },
+    {NULL}
+};
+
 static PyTypeObject BinType = {
     PyVarObject_HEAD_INIT(NULL, 0)
     "strgrp.Bin",           /* tp_name */
@@ -144,7 +168,7 @@ static PyTypeObject BinType = {
     0,                         /* tp_weaklistoffset */
     (getiterfunc) &Bin_iter,                         /* tp_iter */
     (iternextfunc) &Bin_iternext,                         /* tp_iternext */
-    0,                         /* tp_methods */
+    Bin_methods,                         /* tp_methods */
     0,                         /* tp_members */
     0,                         /* tp_getset */
     0,                         /* tp_base */

@@ -23,9 +23,9 @@ if os.path.exists(os.path.join(realdir, '..', '.git')):
     sys.path.insert(0, os.path.join(realdir, '..', 'lib'))
 
 import argparse
-from fpos import annotate, combine, generate, transform, visualise, window, predict
+from fpos import annotate, combine, generate, transform, visualise, window, predict, cdesc
 
-_commands = (annotate, combine, generate, transform, visualise, window, predict)
+_commands = (annotate, combine, generate, transform, visualise, window, predict, cdesc)
 
 def parse_args():
     parser = argparse.ArgumentParser()

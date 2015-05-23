@@ -24,6 +24,7 @@ struct strgrp;
 struct strgrp_iter;
 struct strgrp_bin;
 struct strgrp_bin_iter;
+struct strgrp_item;
 
 struct strgrp *
 strgrp_new(const double threshold);
@@ -38,6 +39,9 @@ strgrp_iter_new(struct strgrp * const ctx);
 struct strgrp_bin *
 strgrp_iter_next(struct strgrp_iter * const iter);
 
+char *
+strgrp_bin_key(struct strgrp_bin * const bin);
+
 void
 strgrp_iter_free(struct strgrp_iter * const iter);
 
@@ -50,8 +54,11 @@ strgrp_bin_iter_next(struct strgrp_bin_iter * const iter);
 void
 strgrp_bin_iter_free(struct strgrp_bin_iter * iter);
 
+char *
+strgrp_item_key(const struct strgrp_item * const item);
+
 void *
-strgrp_item_data(const struct strgrp_item * const item);
+strgrp_item_value(const struct strgrp_item * const item);
 
 void
 strgrp_free(struct strgrp * const ctx);

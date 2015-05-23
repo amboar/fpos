@@ -27,6 +27,7 @@ from .core import money
 from .core import date_fmt, month_fmt
 import pystrgrp
 from .predict import forecast, graph_bar_cashflow, print_periodic_expenses
+from .cdesc import cdesc
 
 cmd_description = \
         """Displays a number of graphs from an annotated IR document. The graphs include:
@@ -531,13 +532,12 @@ def main(args=None):
     # Core data, used across multiple plots
 
     period_grouper = PeriodGroup(extract_month, extract_week, extract_day)
-    description_grouper = pystrgrp.Strgrp()
-    for row in csv.reader(args.database):
-        if len(row) >= 4 and not row[3] == "Internal":
-            description_grouper.add(row[2], row)
+    table = list(csv.reader(args.database))
+    for row in table:
         period_grouper.add(row)
     m_grouped, w_grouped, d_grouped = period_grouper.groups()
-    description_groups =  [ list(i.data() for i in g) for g in description_grouper ]
+    description_groups = cdesc(row for row in table
+            if len(row) >= 4 and not row[3] == "Internal")
 
     # m_summed: Looks like:
     #
