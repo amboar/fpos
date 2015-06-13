@@ -480,7 +480,7 @@ class ProgressiveMean(object):
             s.extend(x)
         return "\n".join(s)
 
-def graph_xy_progressive_mean(months, dailies, m_income, groups, last):
+def graph_xy_progressive_mean(months, dailies, m_income, groups, dates):
     d_categories = dict((d, sum_categories(v)) for d, v in dailies.items())
     d_expenses = ignore(d_categories, *blacklist)
     d_spending = dict((d, sum(v.values())) for d, v in d_expenses.items())
@@ -497,13 +497,13 @@ def graph_xy_progressive_mean(months, dailies, m_income, groups, last):
         plt.plot(xs[:len(ys)], ys, ls="None", marker="o", color="grey")
     d_current = pm.head()
     mr = calendar.monthrange(pm.prev.year, pm.prev.month)
-    remaining = (mr[1] - last.day)
-    for i, df in enumerate(forecast(groups, last, remaining)[0]):
-        pm.update(last + timedelta(1 + i), df)
+    remaining = (mr[1] - dates[1].day)
+    for i, df in enumerate(forecast(groups, dates, remaining)[0]):
+        pm.update(dates[1] + timedelta(1 + i), df)
     d_forecast = pm.head()
-    forecast_plt, = plt.plot(xs[last.day - 1:mr[1]], d_forecast[last.day - 1:], ls="-", marker="o", color="orange")
+    forecast_plt, = plt.plot(xs[dates[1].day - 1:mr[1]], d_forecast[dates[1].day - 1:], ls="-", marker="o", color="orange")
     forecast_plt.set_label("{} - forecast".format(months[-1]))
-    current_plt, = plt.plot(xs[:last.day], d_current, ls="-", marker="o", color="red")
+    current_plt, = plt.plot(xs[:dates[1].day], d_current, ls="-", marker="o", color="red")
     current_plt.set_label("{} - historic".format(months[-1]))
     n_tail_days = sum(len(x) for x in tail.values())
     mean_spend = sum(sum(v) for v in tail.values()) / n_tail_days
@@ -569,7 +569,9 @@ def main(args=None):
 
 
     # Grab the date of the most recent transaction in the database
+    first_transaction = datetime.strptime(m_grouped[months[0]][0][0], date_fmt)
     last_transaction = datetime.strptime(m_grouped[months[-1]][-1][0], date_fmt)
+    span = [first_transaction, last_transaction]
     if args.current_date:
         last_transaction = datetime.today()
     remaining = days_remaining(last_transaction)
@@ -587,9 +589,9 @@ def main(args=None):
     if (should_graph(args.graph, "bar_targets")):
         graph_bar_targets(months, monthlies, expenses, m_income, remaining, args.save)
     if (should_graph(args.graph, "xy_progressive_mean")):
-        graph_xy_progressive_mean(months, d_grouped, m_income, description_groups, last_transaction)
+        graph_xy_progressive_mean(months, d_grouped, m_income, description_groups, span)
     if (should_graph(args.graph, "bar_cashflow")):
-        graph_bar_cashflow(description_groups, last_transaction)
+        graph_bar_cashflow(description_groups, span)
     if (should_graph(args.graph, "periodic_expenses")):
         print_periodic_expenses(description_groups, last_transaction)
     plt.show()

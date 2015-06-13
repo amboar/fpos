@@ -223,7 +223,7 @@ def bottoms(data):
         bots.append(bots[-1] + v)
     return bots
 
-def forecast(groups, date, length=32):
+def forecast(groups, dates, length=32):
     """ forecast(groups, date, length) -> list(float), list(float)
 
     Predict cashflow in terms of spending (first return value) and income
@@ -236,18 +236,22 @@ def forecast(groups, date, length=32):
     """
     spend = [ 0 ] * length
     income = [ 0 ] * length
-    noise_values = [ float(b[0][1]) for b in groups if len(b) <= 3 ]
-    noise = 0 if not noise_values else sum(noise_values) / len(noise_values)
+    nv = [ float(b[0][1]) for b in groups if len(b) <= 3 ]
+    ns, ni = 0, 0
+    span = (dates[1] - dates[0]).days
+    if nv and span:
+        ns = sum(v for v in nv if v < 0) / span
+        ni = sum(v for v in nv if v > 0) / span
     for g in ( g for g in groups if len(g) > 3 ):
-        for k, v in enumerate(islice(group_forecast(g, date), length)):
+        for k, v in enumerate(islice(group_forecast(g, dates[1]), length)):
             d = spend if v < 0 else income
             d[k] += v
-    return [ (v + noise) for v in spend ], income
+    return [ (v + ns) for v in spend ], [ (v + ni) for v in income ]
 
-def graph_bar_cashflow(groups, last):
+def graph_bar_cashflow(groups, dates):
     fl = 31 # forecast length
     gl = fl + 2 # graph length
-    ey, iy = forecast(groups, last, fl)
+    ey, iy = forecast(groups, dates, fl)
     bs = bottoms(list(chain(*zip(ey, iy))))
     ex = [ x + 0.1 for x in range(1, len(ey) + 1)]
     be = plt.bar(ex, ey, bottom=bs[::2], color="r", width=0.3)
@@ -255,7 +259,7 @@ def graph_bar_cashflow(groups, last):
     bi = plt.bar(ix, iy, bottom=bs[1::2], color="b", width=0.3)
     plt.axhline(0, color="black")
     majors = list(range(1, gl, 7))
-    labels = [ (last + timedelta(i)).strftime("%d/%m/%y") for i in majors ]
+    labels = [ (dates[1] + timedelta(i)).strftime("%d/%m/%y") for i in majors ]
     plt.xticks(majors, labels, rotation=33)
     plt.xlim(0, gl)
     plt.grid(axis="x", which="both")
@@ -290,9 +294,10 @@ def main(args=None):
         args = parse_args()
     grouper = pystrgrp.Strgrp()
     reader = csv.reader(args.infile, dialect='excel')
-    current = None
+    dates = [ None, None ]
     for r in reader:
         if len(r) >= 4 and not "Internal" == r[3]:
             grouper.add(r[2], r)
-            current = pd(r[0]) if not current else max(pd(r[0]), current)
-    graph_bar_cashflow([ list(i.data() for i in g) for g in grouper ], current, 32)
+            dates[0] = pd(r[0]) if not dates[0] else min(pd(r[0]), dates[0])
+            dates[1] = pd(r[0]) if not dates[1] else max(pd(r[0]), dates[1])
+    graph_bar_cashflow([ list(i.data() for i in g) for g in grouper ], dates, 32)
