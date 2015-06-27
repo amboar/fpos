@@ -377,7 +377,7 @@ def graph_bar_targets(months, monthlies, expenses, m_income, remaining, want_sav
     mean_income = np.mean([m_income[m] for m in months[:-1]])
     cash = mean_income
     # Subtract fixed costs
-    cash -= abs(sum(v for k, v in ms.items() if k in fixed))
+    cash -= abs(sum(min(curr_expenses[k], v) for k, v in ms.items() if k in fixed))
     # Subtract saving
     can_save = min(cash, want_save)
     cash -= can_save
