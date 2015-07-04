@@ -76,7 +76,8 @@ def pmf(bins):
     n = sum(bins)
     return [ (v / n) for v in bins ]
 
-def cmfarg(bins, threshold=0.75):
+def icmf(bins, threshold=0.75):
+    """Inverse cumulative probability mass function"""
     s = 0
     for i, v in enumerate(pmf(bins)):
         s += v
@@ -155,16 +156,16 @@ def group_forecast(members, date, debug=False):
                 msg = fmt.format(mean, members[0][2], p, d)
                 print(msg)
             return []
-    # Estimate the periodicity using cmfarg.
+    # Estimate the periodicity using icmf.
     #
     # The goal is to estimate cashflow for around the next 30 days. Some
     # spending patterns are going to have periods of less than 30 days, so we
     # need to cycle our the observed pattern to meet the projection length.
     #
-    # A property of using cmfarg is that the estimated periodicity will likely
+    # A property of using icmf is that the estimated periodicity will likely
     # be less than the full period of the PMF. To account for this  we merge
     # the following cycle of the probability distribution into the current from
-    # the index of cmfarg's periodicity estimate. To paint a picture, imagine
+    # the index of icmf's periodicity estimate. To paint a picture, imagine
     # the bin distribution is such:
     #
     #    *
@@ -184,7 +185,7 @@ def group_forecast(members, date, debug=False):
     # ----------
     # 0123456789
     #
-    # cmfarg estimates the periodicity as 4, and the code below overlaps the
+    # icmf estimates the periodicity as 4, and the code below overlaps the
     # PMF on-top of itself such that each PMF is repeated from bin 4 of the
     # previous:
     #
@@ -196,7 +197,7 @@ def group_forecast(members, date, debug=False):
     # ----------
     # 0123456789
     mass = pmf(bins)
-    interval = cmfarg(mass)
+    interval = icmf(mass)
     overlap = period(mass) - (interval + 1)
     merged_mass = mass[:]
     for i in range(overlap):
@@ -280,7 +281,7 @@ def print_periodic_expenses(groups, date):
     table = ( (gb[0][0][2],
         len(gb[0]),
         #period(gb[1]),
-        cmfarg(gb[1]),
+        icmf(gb[1]),
         sum(float(e[1]) for e in gb[0]) / (sum(gb[1]) + 1))
             for gb in keep )
     ordered = sorted(list(table), key=lambda x: (365 / x[2]) * x[3])
