@@ -30,6 +30,9 @@ struct strgrp *
 strgrp_new(const double threshold);
 
 struct strgrp_bin *
+strgrp_bin_for(struct strgrp * const ctx, const char * const str);
+
+struct strgrp_bin *
 strgrp_add(struct strgrp * const ctx, const char * const str,
         void * const data);
 

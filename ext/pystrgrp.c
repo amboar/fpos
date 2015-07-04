@@ -229,6 +229,25 @@ Strgrp_dealloc(PyObject *obj) {
 }
 
 static PyObject *
+Strgrp_bin_for(StrgrpObject *self, PyObject *args, PyObject *kwds) {
+    char *key;
+    static char *kwlist[] = { "key", NULL };
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "s", kwlist, &key)) {
+        return NULL;
+    }
+    struct strgrp_bin * bin = strgrp_bin_for(self->grp, key);
+    if (!bin) {
+        Py_RETURN_NONE;
+    }
+    BinObject * const binobj = (BinObject *)PyType_GenericNew(&BinType, NULL, NULL);
+    if (!binobj) {
+        return PyErr_NoMemory();
+    }
+    binobj->bin = bin;
+    return (PyObject *)binobj;
+}
+
+static PyObject *
 Strgrp_add(StrgrpObject *self, PyObject *args, PyObject *kwds) {
     char *key;
     PyObject *data = NULL;
@@ -284,6 +303,8 @@ Strgrp_iternext(StrgrpObject *self) {
 static PyMethodDef Strgrp_methods[] = {
     { "add", (PyCFunction)Strgrp_add, (METH_VARARGS | METH_KEYWORDS),
         "Classify a string into a bin" },
+    { "bin_for", (PyCFunction)Strgrp_bin_for, (METH_VARARGS | METH_KEYWORDS),
+        "Find a bin for a string, if one exists" },
     {NULL}
 };
 

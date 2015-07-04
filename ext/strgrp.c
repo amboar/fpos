@@ -172,14 +172,13 @@ cache(struct strgrp * const grp, struct strgrp_bin * const bin,
 }
 
 struct strgrp_bin *
-strgrp_add(struct strgrp * const ctx, const char * const str,
-        void * const data) {
+strgrp_bin_for(struct strgrp * const ctx, const char * const str) {
     struct strgrp_bin * pick = NULL;
     double max = 0;
     if (ctx->n_bins) {
         const struct strgrp_map * const m = lookup(ctx, str);
         if (m) {
-            return add_item(m->bin, str, data) ? m->bin : NULL;
+            return m->bin;
         }
         struct strgrp_bin * bin;
         list_for_each(&ctx->bins, bin, list) {
@@ -192,11 +191,17 @@ strgrp_add(struct strgrp * const ctx, const char * const str,
             }
         }
     }
+    return max > ctx->threshold ? pick : NULL;
+}
+
+struct strgrp_bin *
+strgrp_add(struct strgrp * const ctx, const char * const str,
+        void * const data) {
     bool inserted = false;
-    if (ctx->threshold <= max) {
+    struct strgrp_bin * pick = strgrp_bin_for(ctx, str);
+    if (pick) {
         inserted = add_item(pick, str, data);
     } else {
-        assert(!ctx->n_bins || ctx->threshold > max);
         pick = add_bin(ctx, str, data);
         inserted = (NULL != pick);
     }

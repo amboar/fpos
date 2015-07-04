@@ -18,7 +18,8 @@
 
 import argparse
 import csv
-from pylcs import pylcs
+import collections
+from pystrgrp import Strgrp
 import math
 from .core import categories
 from .core import money
@@ -32,112 +33,13 @@ cmd_help = \
         """Associate categories with transactions, so that visualise can graph
         spending"""
 
-def normal_lcs(a, b, la=None, lb=None):
-    if not la:
-        la = len(a)
-    if not lb:
-        lb = len(b)
-    return 2 * pylcs(a, b) / ( la + lb )
+Entry = collections.namedtuple("Entry", ("date", "amount", "description"))
+TaggedEntry = collections.namedtuple("TaggedEntry", ("entry", "tag"))
 
-def fuzzy_match(a, b, t):
-    la = len(a)
-    lb = len(b)
-    r = la / lb if lb > la else lb / la
-    if t <= r:
-        return t <= normal_lcs(a, b, la, lb)
-    else:
-        return False
-
-class _ThresholdGroup(object):
-    def __init__(self, threshold, key, tag=None):
-        self.threshold = threshold
-        self.key = key
-        self.count = 1
-        self.tagged = {}
-        if tag:
-            self.tag(key, tag)
-
-    def guess(self, text):
-        if fuzzy_match(self.key, text, self.threshold):
-            if len(self.tagged) > 0:
-                t = max(((v.score(text), k) for k, v in self.tagged.items()), key=lambda x: x[0])
-                return t[1]
-        return None
-
-    def tag(self, text, tag):
-        if tag not in self.tagged:
-            self.tagged[tag] = _TaggedList(text, tag)
-        else:
-            tl = self.tagged[tag]
-            tl.add(text)
-            self.count += 1
-
-class _TaggedList(object):
-    def __init__(self, key, tag=None, debug=False):
-        self.key = key
-        self.tag = tag
-        self._score = 1
-        self._sum = 1
-        self._count = 1
-        self.debug = debug
-        if self.debug:
-            self.members = [ key ]
-
-    def score(self, text, member=None):
-        if not member:
-            member = self.key
-        return normal_lcs(member, text) * self._score
-
-    def add(self, text):
-        self._sum += normal_lcs(text, self.key)
-        self._count += 1
-        self._score = self._sum / self._count
-        if self.debug:
-            self.members.append(text)
-
-class _LcsTagger(object):
-    def __init__(self, threshold=0.85):
-        self._groups = []
-        self._pending = None
-        self._threshold = threshold
-
-    def _sort(self):
-        self._groups.sort(key=lambda x: x.count, reverse=True)
-
-    def _find_group_guess(self, text):
-        for group in self._groups:
-            guess = group.guess(text)
-            if guess:
-                return group, guess
-        return None, None
-
-    def classify(self, text, tag=None):
-        group, guess = self._find_group_guess(text)
-        if guess:
-            if tag:
-                group.tag(text, tag)
-                self._sort()
-            else :
-                self._pending = (text, group)
-            return guess
-        tg = _ThresholdGroup(self._threshold, text, tag)
-        self._groups.append(tg)
-        self._pending = (text, tg)
-        return None
-
-    def pending(self):
-        return self._pending is not None
-
-    def tag(self, tag):
-        if self._pending:
-            self._pending[1].tag(self._pending[0], tag)
-            self._pending = None
-            self._sort()
 
 class _Tagger(object):
     def __init__(self, fuzzer=None):
-        self._learnt = {}
-        self._fuzzer = fuzzer
+        self._strgrp = Strgrp()
 
     @staticmethod
     def find_category(needle, haystack):
@@ -161,20 +63,31 @@ class _Tagger(object):
         except ValueError:
             return _Tagger.find_category(needle, categories)
 
-    def categorize(self, date, amount, description, confirm=False):
+    def _bin2hist(self, grpbin):
+        return collections.Counter(x.value().tag for x in grpbin)
+
+    def _tag_for(self, grpbin):
+        if grpbin is None:
+            return None
+        return max(self._bin2hist(grpbin).items(), key=lambda x: x[1])[0]
+
+    def classify(self, description):
+        grpbin = self._strgrp.bin_for(description)
+        if grpbin is None:
+             return None
+        return self._tag_for(grpbin)
+
+    def categorize(self, entry, confirm=False):
         need = True
         category = None
-        fmtargs = ("Spent" if 0 > float(amount) else "Earnt",
-                money(abs(float(amount))),
-                date,
-                description)
+        fmtargs = ("Spent" if 0 > float(entry.amount) else "Earnt",
+                money(abs(float(entry.amount))),
+                entry.date,
+                entry.description)
         print("{} ${!s} on {!s}: {!s}".format(*fmtargs))
         while need:
             guess = None
-            if description in self._learnt:
-                guess = self._learnt[description]
-            if guess is None and self._fuzzer:
-                guess = self._fuzzer.classify(description)
+            guess = self.classify(entry.description)
             prompt = "Category [{!s}]: ".format("?" if guess is None else guess)
             raw = input(prompt).strip()
             if "" == raw:
@@ -194,11 +107,10 @@ class _Tagger(object):
                 assert category is not None
                 confirmation = input("Confirm {} [y/N]: ".format(category)).strip()
                 need = "y" != confirmation.lower()
-        if category is not None:
-            self._learnt[description] = category
-            if self._fuzzer.pending():
-                self._fuzzer.tag(category)
         return category
+
+    def add(self, entry, category):
+        self._strgrp.add(entry.description, TaggedEntry(entry, category))
 
 def name():
     return __name__.split(".")[-1]
@@ -212,8 +124,6 @@ def parse_args(subparser=None):
             help="The IR document to which to write annotated transactions")
     parser.add_argument('--confirm', default=False, action="store_true",
             help="Prompt for confirmation after each entry has been annotated with a category")
-    parser.add_argument('--fuzzy', default=False, action="store_true",
-            help="Do fuzzy matching of descriptions to help classification")
     return None if subparser else parser.parse_args()
 
 def main(args=None):
@@ -222,32 +132,31 @@ def main(args=None):
     try:
         r = csv.reader(args.infile, dialect='excel')
         w = csv.writer(args.outfile, dialect='excel')
-        # The fuzzy matcher is always created, but only used against the
-        # classified entries if --fuzzy is specified. Otherwise, it's only used
-        # against entries that aren't explicitly classified.
-        f = _LcsTagger()
-        t = _Tagger(f)
-        for entry in r:
-            if 0 == len(entry):
+        t = _Tagger()
+        for row in r:
+            if 0 == len(row):
                 # Skip empty lines
                 continue
-            output = []
-            if 4 == len(entry):
+            entry = Entry(*row[:3])
+            category = None
+            if 4 == len(row):
                 # Fourth column is category, check that it's known
                 try:
-                    t.resolve_category(entry[3])
-                    if args.fuzzy:
-                        f.classify(entry[2], entry[3])
-                    output.extend(entry)
+                    category = t.resolve_category(row[3])
+                    t.add(entry, category)
                 except ValueError:
                     # Category isn't known, output remains empty to
                     # trigger user input
                     pass
-            if 0 == len(output):
+            if category is None:
                 # Haven't yet determined the category, require user input
-                output.extend(entry)
-                output.append(t.categorize(*entry, confirm=args.confirm))
+                category = t.categorize(entry, confirm=args.confirm)
+                assert None is not category
+                t.add(entry, category)
                 print()
+            output = []
+            output.extend(entry)
+            output.append(category)
             w.writerow(output)
     finally:
         args.infile.close()
