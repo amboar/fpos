@@ -21,7 +21,8 @@ pystrgrp = Extension('pystrgrp',
     include_dirs = ['ext'],
     extra_compile_args = [ '-O2' ],
     extra_link_args = [ ],
-    sources = [ "ext/ccan/talloc/talloc.c",
+    sources = [
+        "ext/ccan/talloc/talloc.c",
         "ext/ccan/str/str.c",
         "ext/ccan/str/debug.c",
         "ext/ccan/list/list.c",
@@ -29,7 +30,10 @@ pystrgrp = Extension('pystrgrp',
         "ext/ccan/hash/hash.c",
         "ext/lcs.c",
         "ext/pystrgrp.c",
-        "ext/strgrp.c" ])
+        "ext/pylcs.c",
+        "ext/strgrp.c"
+        ]
+    )
 
 setup(name='fpos',
         version='0.1',
@@ -39,6 +43,7 @@ setup(name='fpos',
         url='https://github.com/amboar/fpos',
         packages=['fpos'],
         package_dir={'' : 'lib'},
+        package_data={'fpos' : [ 'propernames' ]},
         scripts=['bin/fpos'],
         ext_modules = [pylcs, pystrgrp],
         license='GPLv3')

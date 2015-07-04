@@ -1,0 +1,2 @@
+include lib/fpos/propernames
+recursive-include ext *

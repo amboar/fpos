@@ -196,3 +196,9 @@ Example IR Document
     09/08/2013,-59.75,Example description,Cash
     09/08/2013,-23.86,Example description,Utilities
     09/08/2013,-34.92,Example description,Health
+
+Licenses
+========
+
+* `lib/fpos/propernames` is licensed under GPLv2, copied from
+  [GNU's miscfiles](https://www.gnu.org/software/miscfiles/) package.
