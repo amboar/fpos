@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 #
 #    Tests functionality in user scripts
-#    Copyright (C) 2014  Andrew Jeffery <andrew@aj.id.au>
+#    Copyright (C) 2014,2015  Andrew Jeffery <andrew@aj.id.au>
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -511,36 +511,58 @@ class PredictTest(unittest.TestCase):
         self.assertSequenceEqual(expected, fc)
 
     def test_forecast_single_expense_group(self):
-        groups = [[[ "01/01/2015", -100.0 ], [ "01/02/2015", -100.0 ]]]
+        # The expense period is 31 days, so given the lengths of the months
+        # involved the last payment should be on the 04/03/2015
+        groups = [[
+            [ "01/01/2015", -100.0 ],
+            [ "01/02/2015", -100.0 ],
+            [ "04/03/2015", -100.0]
+        ]]
         length = 31
-        expenses, income = predict.forecast(groups, dt(2015, 2, 1), length)
+        expenses, income = predict.forecast(groups,
+                [ dt(2015, 1, 1), dt(2015, 2, 1) ],
+                length)
         expected = ([ 0 ] * 30) + [ -100.0 ]
         self.assertSequenceEqual(expected, expenses)
         self.assertSequenceEqual([ 0 ] * length, income)
 
     def test_forecast_single_income_group(self):
-        groups = [[[ "01/01/2015", 100.0 ], [ "01/02/2015", 100.0 ]]]
+        # The income period is 31 days, so given the lengths of the months
+        # involved the last payment should be on the 04/03/2015
+        groups = [[
+            [ "01/01/2015", 100.0 ],
+            [ "01/02/2015", 100.0 ],
+            [ "04/03/2015", 100.0]
+        ]]
         length = 31
-        expenses, income = predict.forecast(groups, dt(2015, 2, 1), length)
+        expenses, income = predict.forecast(groups,
+                [ dt(2015, 1, 1), dt(2015, 2, 1) ],
+                length)
         expected = ([ 0 ] * 30) + [ 100.0 ]
         self.assertSequenceEqual([ 0 ] * length, expenses)
         self.assertSequenceEqual(expected, income)
 
     def test_forecast_expenses_income(self):
-        groups = [ [[ "01/01/2015", -100.0 ], [ "01/02/2015", -100.0 ]],
-                [[ "15/01/2015", 100.0 ], [ "15/02/2015", 100.0 ]] ]
+        groups = [
+            [[ "01/01/2015", -100.0 ], [ "01/02/2015", -100.0 ], [ "04/03/2015", -100.0]],
+            [[ "15/01/2015", 100.0 ], [ "15/02/2015", 100.0 ], [ "18/03/2015", 100.0]]
+        ]
         length = 31
-        fc_expenses, fc_income = predict.forecast(groups, dt(2015, 2, 15), length)
+        fc_expenses, fc_income = predict.forecast(groups,
+                [ dt(2015, 1, 1), dt(2015, 2, 15) ],
+                length)
         ex_expenses = ([ 0 ] * 16) + [ -100.0 ] + ([ 0 ] * 14)
         ex_income = ([ 0 ] * 30) + [ 100.0 ]
         self.assertSequenceEqual(ex_expenses, fc_expenses)
         self.assertSequenceEqual(ex_income, fc_income)
 
     def test_forecast_expense_noise(self):
-        groups = [[[ "01/02/2015", -100.0 ]], [[ "01/02/2015", -50.0 ]]]
+        groups = [[[ "01/01/2015", -31.0 ]], [[ "15/01/2015", -31.0 ]]]
         length = 31
-        fc_expenses, fc_income = predict.forecast(groups, dt(2015, 2, 1), length)
-        self.assertSequenceEqual([ -75.0 ] * length, fc_expenses)
+        fc_expenses, fc_income = predict.forecast(groups,
+                [ dt(2015, 1, 1), dt(2015, 2, 1)],
+                length)
+        self.assertSequenceEqual([ -2.0 ] * length, fc_expenses)
         self.assertSequenceEqual([ 0 ] * length, fc_income)
 
     def test_bottoms_zero(self):

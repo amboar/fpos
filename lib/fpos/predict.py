@@ -236,13 +236,14 @@ def forecast(groups, dates, length=32):
     """
     spend = [ 0 ] * length
     income = [ 0 ] * length
-    nv = [ float(b[0][1]) for b in groups if len(b) <= 3 ]
+    # noise values
+    nv = [ float(b[0][1]) for b in groups if len(b) <= 2 ]
     ns, ni = 0, 0
     span = (dates[1] - dates[0]).days
     if nv and span:
         ns = sum(v for v in nv if v < 0) / span
         ni = sum(v for v in nv if v > 0) / span
-    for g in ( g for g in groups if len(g) > 3 ):
+    for g in ( g for g in groups if len(g) > 2 ):
         for k, v in enumerate(islice(group_forecast(g, dates[1]), length)):
             d = spend if v < 0 else income
             d[k] += v
