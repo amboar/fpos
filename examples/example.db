@@ -1,395 +1,463 @@
-03/01/2013,-48.01,Cash description,Cash
-06/01/2013,-66.75,Cash description,Cash
-09/01/2013,-84.59,Cash description,Cash
-13/01/2013,-62.73,Cash description,Cash
-15/01/2013,-74.83,Cash description,Cash
-17/01/2013,-50.39,Cash description,Cash
-21/01/2013,-61.55,Cash description,Cash
-23/01/2013,-41.47,Cash description,Cash
-24/01/2013,-73.11,Cash description,Cash
-29/01/2013,-58.00,Cash description,Cash
-04/02/2013,-48.33,Cash description,Cash
-06/02/2013,-61.99,Cash description,Cash
-09/02/2013,-54.25,Cash description,Cash
-12/02/2013,-52.29,Cash description,Cash
-15/02/2013,-62.20,Cash description,Cash
-19/02/2013,-53.88,Cash description,Cash
-19/02/2013,-46.71,Cash description,Cash
-22/02/2013,-67.31,Cash description,Cash
-26/02/2013,-63.41,Cash description,Cash
-01/03/2013,-62.03,Cash description,Cash
-05/03/2013,-57.46,Cash description,Cash
-08/03/2013,-53.84,Cash description,Cash
-11/03/2013,-65.20,Cash description,Cash
-14/03/2013,-59.60,Cash description,Cash
-17/03/2013,-64.34,Cash description,Cash
-22/03/2013,-52.66,Cash description,Cash
-25/03/2013,-63.99,Cash description,Cash
-27/03/2013,-74.95,Cash description,Cash
-01/04/2013,-54.95,Cash description,Cash
-06/04/2013,-67.21,Cash description,Cash
-11/04/2013,-59.44,Cash description,Cash
-13/04/2013,-57.94,Cash description,Cash
-16/04/2013,-49.27,Cash description,Cash
-16/04/2013,-58.83,Cash description,Cash
-20/04/2013,-75.08,Cash description,Cash
-21/04/2013,-62.56,Cash description,Cash
-24/04/2013,-44.31,Cash description,Cash
-28/04/2013,-60.36,Cash description,Cash
-06/05/2013,-72.26,Cash description,Cash
-07/05/2013,-50.39,Cash description,Cash
-09/05/2013,-44.33,Cash description,Cash
-13/05/2013,-62.48,Cash description,Cash
-18/05/2013,-58.26,Cash description,Cash
-22/05/2013,-55.42,Cash description,Cash
-23/05/2013,-62.82,Cash description,Cash
-25/05/2013,-48.59,Cash description,Cash
-27/05/2013,-59.58,Cash description,Cash
-01/06/2013,-60.15,Cash description,Cash
-06/06/2013,-64.93,Cash description,Cash
-12/06/2013,-60.64,Cash description,Cash
-16/06/2013,-66.60,Cash description,Cash
-17/06/2013,-66.44,Cash description,Cash
-21/06/2013,-70.39,Cash description,Cash
-25/06/2013,-80.03,Cash description,Cash
-29/06/2013,-75.25,Cash description,Cash
-03/07/2013,-84.45,Cash description,Cash
-03/07/2013,-64.82,Cash description,Cash
-07/07/2013,-58.90,Cash description,Cash
-11/07/2013,-65.26,Cash description,Cash
-14/07/2013,-75.26,Cash description,Cash
-17/07/2013,-44.75,Cash description,Cash
-16/07/2013,-54.28,Cash description,Cash
-20/07/2013,-76.28,Cash description,Cash
-22/07/2013,-53.15,Cash description,Cash
-22/07/2013,-61.68,Cash description,Cash
-26/07/2013,-35.94,Cash description,Cash
-31/07/2013,-46.79,Cash description,Cash
-02/08/2013,-49.30,Cash description,Cash
-04/08/2013,-53.22,Cash description,Cash
-11/08/2013,-42.60,Cash description,Cash
-16/08/2013,-70.96,Cash description,Cash
-20/08/2013,-81.61,Cash description,Cash
-25/08/2013,-50.29,Cash description,Cash
-29/08/2013,-52.23,Cash description,Cash
-11/01/2013,-918.80,Commitment description,Commitment
-25/01/2013,-945.24,Commitment description,Commitment
-09/02/2013,-936.97,Commitment description,Commitment
-24/02/2013,-918.01,Commitment description,Commitment
-09/03/2013,-958.90,Commitment description,Commitment
-23/03/2013,-992.71,Commitment description,Commitment
-09/04/2013,-1061.02,Commitment description,Commitment
-22/04/2013,-1054.74,Commitment description,Commitment
-07/05/2013,-1000.33,Commitment description,Commitment
-23/05/2013,-1086.22,Commitment description,Commitment
-06/06/2013,-919.72,Commitment description,Commitment
-17/06/2013,-1050.14,Commitment description,Commitment
-02/07/2013,-912.25,Commitment description,Commitment
-19/07/2013,-890.01,Commitment description,Commitment
-03/08/2013,-1192.64,Commitment description,Commitment
-16/08/2013,-1061.92,Commitment description,Commitment
-30/08/2013,-1162.30,Commitment description,Commitment
-04/01/2013,-135.31,Dining description,Dining
-07/01/2013,-7.10,Dining description,Dining
-12/01/2013,-63.81,Dining description,Dining
-12/01/2013,-56.38,Dining description,Dining
-16/01/2013,-78.65,Dining description,Dining
-19/01/2013,-59.15,Dining description,Dining
-21/01/2013,-79.23,Dining description,Dining
-27/01/2013,-41.72,Dining description,Dining
-31/01/2013,-38.27,Dining description,Dining
-02/02/2013,-97.23,Dining description,Dining
-03/02/2013,6.19,Dining description,Dining
-09/02/2013,-63.76,Dining description,Dining
-12/02/2013,-27.43,Dining description,Dining
-16/02/2013,21.02,Dining description,Dining
-20/02/2013,-80.32,Dining description,Dining
-23/02/2013,-48.70,Dining description,Dining
-27/02/2013,-100.14,Dining description,Dining
-26/02/2013,-85.36,Dining description,Dining
-27/02/2013,37.17,Dining description,Dining
-27/02/2013,13.77,Dining description,Dining
-28/02/2013,-99.73,Dining description,Dining
-28/02/2013,-59.88,Dining description,Dining
-04/03/2013,-58.42,Dining description,Dining
-06/03/2013,-30.81,Dining description,Dining
-10/03/2013,-85.12,Dining description,Dining
-11/03/2013,-42.30,Dining description,Dining
-13/03/2013,-72.47,Dining description,Dining
-17/03/2013,-73.21,Dining description,Dining
-20/03/2013,-41.47,Dining description,Dining
-23/03/2013,-155.27,Dining description,Dining
-25/03/2013,-73.04,Dining description,Dining
-28/03/2013,-223.55,Dining description,Dining
-30/03/2013,26.54,Dining description,Dining
-30/03/2013,145.25,Dining description,Dining
-01/04/2013,-49.16,Dining description,Dining
-08/04/2013,-3.52,Dining description,Dining
-09/04/2013,-77.83,Dining description,Dining
-15/04/2013,-82.32,Dining description,Dining
-17/04/2013,-14.09,Dining description,Dining
-17/04/2013,-76.32,Dining description,Dining
-21/04/2013,59.04,Dining description,Dining
-26/04/2013,-12.70,Dining description,Dining
-30/04/2013,-21.74,Dining description,Dining
-04/05/2013,-34.61,Dining description,Dining
-04/05/2013,-47.65,Dining description,Dining
-07/05/2013,-51.31,Dining description,Dining
-12/05/2013,69.18,Dining description,Dining
-14/05/2013,31.55,Dining description,Dining
-15/05/2013,-34.24,Dining description,Dining
-16/05/2013,-33.28,Dining description,Dining
-22/05/2013,-54.13,Dining description,Dining
-27/05/2013,-101.11,Dining description,Dining
-28/05/2013,-57.79,Dining description,Dining
-01/06/2013,-80.78,Dining description,Dining
-04/06/2013,-74.59,Dining description,Dining
-05/06/2013,-130.23,Dining description,Dining
-08/06/2013,3.56,Dining description,Dining
-10/06/2013,-39.70,Dining description,Dining
-10/06/2013,-46.48,Dining description,Dining
-14/06/2013,-148.65,Dining description,Dining
-17/06/2013,7.47,Dining description,Dining
-21/06/2013,-25.46,Dining description,Dining
-23/06/2013,-125.51,Dining description,Dining
-23/06/2013,72.49,Dining description,Dining
-25/06/2013,-60.54,Dining description,Dining
-24/06/2013,-51.31,Dining description,Dining
-28/06/2013,-118.47,Dining description,Dining
-30/06/2013,-89.27,Dining description,Dining
-04/07/2013,-67.04,Dining description,Dining
-08/07/2013,67.30,Dining description,Dining
-13/07/2013,-56.78,Dining description,Dining
-15/07/2013,0.14,Dining description,Dining
-18/07/2013,-77.06,Dining description,Dining
-18/07/2013,35.06,Dining description,Dining
-20/07/2013,-64.15,Dining description,Dining
-22/07/2013,-8.81,Dining description,Dining
-23/07/2013,-90.45,Dining description,Dining
-24/07/2013,9.70,Dining description,Dining
-28/07/2013,-28.04,Dining description,Dining
-01/08/2013,-102.60,Dining description,Dining
-31/07/2013,-131.67,Dining description,Dining
-06/08/2013,-45.35,Dining description,Dining
-09/08/2013,-50.54,Dining description,Dining
-15/08/2013,-101.99,Dining description,Dining
-19/08/2013,-49.13,Dining description,Dining
-21/08/2013,-44.15,Dining description,Dining
-25/08/2013,-82.67,Dining description,Dining
-25/08/2013,-24.71,Dining description,Dining
-29/08/2013,-114.73,Dining description,Dining
-30/01/2013,-104.57,Education description,Education
-01/03/2013,-92.60,Education description,Education
-30/03/2013,-100.95,Education description,Education
-30/04/2013,-106.75,Education description,Education
-31/05/2013,-112.82,Education description,Education
-30/06/2013,-110.16,Education description,Education
-30/07/2013,-107.72,Education description,Education
-31/08/2013,-107.30,Education description,Education
-06/01/2013,-106.02,Entertainment description,Entertainment
-14/01/2013,-34.01,Entertainment description,Entertainment
-19/01/2013,-150.50,Entertainment description,Entertainment
-25/01/2013,-142.47,Entertainment description,Entertainment
-30/01/2013,-91.56,Entertainment description,Entertainment
-03/02/2013,-142.32,Entertainment description,Entertainment
-08/02/2013,-111.03,Entertainment description,Entertainment
-13/02/2013,-72.54,Entertainment description,Entertainment
-19/02/2013,-76.34,Entertainment description,Entertainment
-24/02/2013,-63.50,Entertainment description,Entertainment
-03/03/2013,-122.58,Entertainment description,Entertainment
-08/03/2013,8.81,Entertainment description,Entertainment
-12/03/2013,-29.87,Entertainment description,Entertainment
-17/03/2013,-173.26,Entertainment description,Entertainment
-20/03/2013,-172.57,Entertainment description,Entertainment
-27/03/2013,-145.52,Entertainment description,Entertainment
-01/04/2013,-110.73,Entertainment description,Entertainment
-04/04/2013,-125.53,Entertainment description,Entertainment
-08/04/2013,-45.67,Entertainment description,Entertainment
-14/04/2013,-147.67,Entertainment description,Entertainment
-18/04/2013,-19.29,Entertainment description,Entertainment
-22/04/2013,-87.65,Entertainment description,Entertainment
-30/04/2013,-79.60,Entertainment description,Entertainment
-07/05/2013,-168.98,Entertainment description,Entertainment
-12/05/2013,-217.80,Entertainment description,Entertainment
-16/05/2013,-116.88,Entertainment description,Entertainment
-20/05/2013,-77.20,Entertainment description,Entertainment
-26/05/2013,-207.98,Entertainment description,Entertainment
-30/05/2013,-137.81,Entertainment description,Entertainment
-04/06/2013,-127.72,Entertainment description,Entertainment
-11/06/2013,-62.58,Entertainment description,Entertainment
-17/06/2013,-127.53,Entertainment description,Entertainment
-23/06/2013,-102.95,Entertainment description,Entertainment
-25/06/2013,-75.80,Entertainment description,Entertainment
-29/06/2013,-98.33,Entertainment description,Entertainment
-30/06/2013,9.72,Entertainment description,Entertainment
-03/07/2013,-171.61,Entertainment description,Entertainment
-09/07/2013,-11.89,Entertainment description,Entertainment
-14/07/2013,-115.72,Entertainment description,Entertainment
-18/07/2013,-61.22,Entertainment description,Entertainment
-24/07/2013,-151.61,Entertainment description,Entertainment
-31/07/2013,-108.82,Entertainment description,Entertainment
-06/08/2013,-59.82,Entertainment description,Entertainment
-11/08/2013,-130.43,Entertainment description,Entertainment
-15/08/2013,-12.55,Entertainment description,Entertainment
-21/08/2013,-141.48,Entertainment description,Entertainment
-28/08/2013,-99.16,Entertainment description,Entertainment
-13/01/2013,95.38,Health description,Health
-26/01/2013,-121.99,Health description,Health
-06/02/2013,-58.53,Health description,Health
-20/02/2013,-42.90,Health description,Health
-05/03/2013,16.32,Health description,Health
-19/03/2013,94.30,Health description,Health
-31/03/2013,-213.42,Health description,Health
-13/04/2013,9.24,Health description,Health
-27/04/2013,50.95,Health description,Health
-11/05/2013,-120.72,Health description,Health
-27/05/2013,-37.60,Health description,Health
-12/06/2013,-210.23,Health description,Health
-26/06/2013,-89.04,Health description,Health
-10/07/2013,10.79,Health description,Health
-27/07/2013,43.86,Health description,Health
-12/08/2013,-167.03,Health description,Health
-23/08/2013,19.51,Health description,Health
-14/01/2013,-256.81,Home description,Home
-31/01/2013,-345.55,Home description,Home
-14/02/2013,-132.47,Home description,Home
-28/02/2013,-172.56,Home description,Home
-14/03/2013,-185.32,Home description,Home
-29/03/2013,46.18,Home description,Home
-11/04/2013,-41.43,Home description,Home
-27/04/2013,-236.43,Home description,Home
-10/05/2013,-195.69,Home description,Home
-26/05/2013,-78.28,Home description,Home
-07/06/2013,-182.02,Home description,Home
-21/06/2013,-339.65,Home description,Home
-08/07/2013,182.11,Home description,Home
-25/07/2013,70.54,Home description,Home
-05/08/2013,-257.79,Home description,Home
-23/08/2013,125.51,Home description,Home
-05/01/2013,1488.31,Income description,Income
-11/01/2013,1511.68,Income description,Income
-17/01/2013,1500.48,Income description,Income
-26/01/2013,1491.01,Income description,Income
-04/02/2013,1504.34,Income description,Income
-09/02/2013,1512.32,Income description,Income
-14/02/2013,1503.59,Income description,Income
-18/02/2013,1503.14,Income description,Income
-25/02/2013,1501.48,Income description,Income
-02/03/2013,1508.57,Income description,Income
-09/03/2013,1491.38,Income description,Income
-16/03/2013,1513.63,Income description,Income
-19/03/2013,1495.78,Income description,Income
-25/03/2013,1481.90,Income description,Income
-29/03/2013,1500.45,Income description,Income
-03/04/2013,1517.76,Income description,Income
-10/04/2013,1511.47,Income description,Income
-18/04/2013,1489.58,Income description,Income
-24/04/2013,1501.41,Income description,Income
-01/05/2013,1518.21,Income description,Income
-05/05/2013,1497.32,Income description,Income
-19/05/2013,1503.66,Income description,Income
-27/05/2013,1509.74,Income description,Income
-31/05/2013,1508.61,Income description,Income
-11/06/2013,1500.97,Income description,Income
-18/06/2013,1508.23,Income description,Income
-23/06/2013,1515.76,Income description,Income
-30/06/2013,1504.75,Income description,Income
-05/07/2013,1499.79,Income description,Income
-08/07/2013,1484.08,Income description,Income
-13/07/2013,1500.45,Income description,Income
-18/07/2013,1493.20,Income description,Income
-26/07/2013,1505.71,Income description,Income
-02/08/2013,1496.98,Income description,Income
-12/08/2013,1513.30,Income description,Income
-18/08/2013,1514.04,Income description,Income
-26/08/2013,1495.90,Income description,Income
-31/08/2013,1502.38,Income description,Income
-11/01/2013,-162.73,Shopping description,Shopping
-18/01/2013,-164.21,Shopping description,Shopping
-26/01/2013,-185.01,Shopping description,Shopping
-05/02/2013,-143.76,Shopping description,Shopping
-11/02/2013,-225.16,Shopping description,Shopping
-20/02/2013,-212.37,Shopping description,Shopping
-27/02/2013,-240.58,Shopping description,Shopping
-05/03/2013,-167.75,Shopping description,Shopping
-12/03/2013,-145.17,Shopping description,Shopping
-21/03/2013,-215.28,Shopping description,Shopping
-30/03/2013,-137.56,Shopping description,Shopping
-05/04/2013,-132.84,Shopping description,Shopping
-14/04/2013,-175.28,Shopping description,Shopping
-22/04/2013,-232.38,Shopping description,Shopping
-30/04/2013,-245.82,Shopping description,Shopping
-04/05/2013,-151.48,Shopping description,Shopping
-09/05/2013,-219.59,Shopping description,Shopping
-17/05/2013,-228.37,Shopping description,Shopping
-28/05/2013,-261.03,Shopping description,Shopping
-03/06/2013,-240.56,Shopping description,Shopping
-13/06/2013,-183.55,Shopping description,Shopping
-23/06/2013,-176.27,Shopping description,Shopping
-28/06/2013,-192.96,Shopping description,Shopping
-07/07/2013,-255.41,Shopping description,Shopping
-14/07/2013,-223.89,Shopping description,Shopping
-22/07/2013,-251.17,Shopping description,Shopping
-31/07/2013,-207.51,Shopping description,Shopping
-11/08/2013,-153.03,Shopping description,Shopping
-19/08/2013,-201.79,Shopping description,Shopping
-25/08/2013,-151.37,Shopping description,Shopping
-04/01/2013,-70.22,Transport description,Transport
-10/01/2013,-64.76,Transport description,Transport
-19/01/2013,-62.27,Transport description,Transport
-22/01/2013,-67.78,Transport description,Transport
-29/01/2013,-66.25,Transport description,Transport
-02/02/2013,-55.37,Transport description,Transport
-09/02/2013,-55.83,Transport description,Transport
-17/02/2013,-56.80,Transport description,Transport
-20/02/2013,-42.91,Transport description,Transport
-27/02/2013,-67.01,Transport description,Transport
-10/03/2013,-51.39,Transport description,Transport
-18/03/2013,-67.76,Transport description,Transport
-22/03/2013,-68.54,Transport description,Transport
-29/03/2013,-54.76,Transport description,Transport
-01/04/2013,-59.58,Transport description,Transport
-05/04/2013,-51.07,Transport description,Transport
-10/04/2013,-64.76,Transport description,Transport
-15/04/2013,-48.31,Transport description,Transport
-22/04/2013,-52.27,Transport description,Transport
-29/04/2013,-52.95,Transport description,Transport
-05/05/2013,-68.63,Transport description,Transport
-07/05/2013,-45.68,Transport description,Transport
-12/05/2013,-56.52,Transport description,Transport
-20/05/2013,-71.92,Transport description,Transport
-26/05/2013,-67.97,Transport description,Transport
-01/06/2013,-55.03,Transport description,Transport
-06/06/2013,-70.62,Transport description,Transport
-12/06/2013,-53.44,Transport description,Transport
-16/06/2013,-60.12,Transport description,Transport
-25/06/2013,-74.76,Transport description,Transport
-04/07/2013,-64.17,Transport description,Transport
-12/07/2013,-54.03,Transport description,Transport
-16/07/2013,-68.94,Transport description,Transport
-25/07/2013,-67.76,Transport description,Transport
-28/07/2013,-53.09,Transport description,Transport
-06/08/2013,-68.51,Transport description,Transport
-10/08/2013,-47.14,Transport description,Transport
-13/08/2013,-74.67,Transport description,Transport
-23/08/2013,-60.32,Transport description,Transport
-26/08/2013,-67.54,Transport description,Transport
-31/08/2013,-55.03,Transport description,Transport
-16/01/2013,-75.73,Utilities description,Utilities
-27/01/2013,39.55,Utilities description,Utilities
-08/02/2013,51.33,Utilities description,Utilities
-17/02/2013,10.79,Utilities description,Utilities
-04/03/2013,-185.67,Utilities description,Utilities
-12/03/2013,-261.62,Utilities description,Utilities
-28/03/2013,-198.51,Utilities description,Utilities
-12/04/2013,62.67,Utilities description,Utilities
-27/04/2013,-141.37,Utilities description,Utilities
-08/05/2013,-217.73,Utilities description,Utilities
-22/05/2013,-57.23,Utilities description,Utilities
-08/06/2013,30.42,Utilities description,Utilities
-19/06/2013,-135.02,Utilities description,Utilities
-01/07/2013,-55.26,Utilities description,Utilities
-15/07/2013,-124.65,Utilities description,Utilities
-29/07/2013,-113.30,Utilities description,Utilities
-14/08/2013,-121.26,Utilities description,Utilities
-27/08/2013,28.77,Utilities description,Utilities
+02/01/2014,-70.14,Tommy Kerry Prakash Louis Werner,Cash
+05/01/2014,-109.42,VISA DEBIT PURCHASE CARD Cathryn Isaac Wesley Hohn Clarissa [72307398],Entertainment
+06/01/2014,-56.10,Tommy Kerry Prakash Louis Werner,Cash
+06/01/2014,-38.39,VISA DEBIT PURCHASE CARD Marty Jesse Jacobson,Dining
+07/01/2014,-176.71,Matt Hirotoshi Mechael Pa [73927519],Shopping
+07/01/2014,-54.28,Brooke Whitney Duke Kathy,Transport
+08/01/2014,-59.35,Tommy Kerry Prakash Louis Werner,Cash
+11/01/2014,-54.59,Tommy Kerry Prakash Louis Werner,Cash
+11/01/2014,-25.07,Marty Jesse Jacobson,Dining
+11/01/2014,-22.28,VISA DEBIT PURCHASE CARD Cathryn Isaac Wesley Hohn Clarissa [46423133],Entertainment
+12/01/2014,-119.77,Jerome Hwa Tai Benson,Health
+13/01/2014,-229.12,VISA DEBIT PURCHASE CARD Stanislaw Carisa Candida  Jessica,Home
+13/01/2014,-138.59,VISA DEBIT PURCHASE CARD Jinny Malcolm Dustin,Utilities
+13/01/2014,3075.68,Jeffrey Shaw Pierette Nov,Income
+14/01/2014,-1055.04,VISA DEBIT PURCHASE CARD Aimee Andries Jinny Joube [38948753],Commitment
+14/01/2014,-60.47,Tommy Kerry Prakash Louis Werner,Cash
+14/01/2014,-54.21,Brooke Whitney Duke Kathy,Transport
+14/01/2014,-18.49,VISA DEBIT PURCHASE CARD Marty Jesse Jacobson,Dining
+15/01/2014,-253.48,VISA DEBIT PURCHASE CARD Matt Hirotoshi Mechael Pa [72324274],Shopping
+17/01/2014,-159.71,VISA DEBIT PURCHASE CARD Cathryn Isaac Wesley Hohn Clarissa [95758806],Entertainment
+17/01/2014,-41.42,Tommy Kerry Prakash Louis Werner,Cash
+19/01/2014,-69.38,VISA DEBIT PURCHASE CARD Brooke Whitney Duke Kathy,Transport
+19/01/2014,-31.54,VISA DEBIT PURCHASE CARD Marty Jesse Jacobson,Dining
+23/01/2014,-110.61,Cathryn Isaac Wesley Hohn Clarissa [32382072],Entertainment
+23/01/2014,-57.11,Tommy Kerry Prakash Louis Werner,Cash
+24/01/2014,-214.40,Matt Hirotoshi Mechael Pa [01011059],Shopping
+24/01/2014,-12.73,Marty Jesse Jacobson,Dining
+26/01/2014,-73.06,Jerome Hwa Tai Benson,Health
+27/01/2014,-839.32,Aimee Andries Jinny Joube [09787084],Commitment
+27/01/2014,-60.18,Brooke Whitney Duke Kathy,Transport
+27/01/2014,-55.45,Tommy Kerry Prakash Louis Werner,Cash
+28/01/2014,-214.45,VISA DEBIT PURCHASE CARD Stanislaw Carisa Candida  Jessica,Home
+28/01/2014,-65.36,Jinny Malcolm Dustin,Utilities
+28/01/2014,-38.47,VISA DEBIT PURCHASE CARD Marty Jesse Jacobson,Dining
+28/01/2014,17.61,Cathryn Isaac Wesley Hohn Clarissa [74073203],Entertainment
+28/01/2014,3052.61,Jeffrey Shaw Pierette Nov,Income
+29/01/2014,-104.32,VISA DEBIT PURCHASE CARD Kit Phiroze Gerard Nicola Tait [22611280],Education
+30/01/2014,-70.43,Tommy Kerry Prakash Louis Werner,Cash
+31/01/2014,-186.60,VISA DEBIT PURCHASE CARD Matt Hirotoshi Mechael Pa [45476385],Shopping
+31/01/2014,-133.28,Cathryn Isaac Wesley Hohn Clarissa [89791192],Entertainment
+03/02/2014,-44.56,Tommy Kerry Prakash Louis Werner,Cash
+03/02/2014,-20.79,Marty Jesse Jacobson,Dining
+04/02/2014,-48.34,Brooke Whitney Duke Kathy,Transport
+07/02/2014,-135.78,VISA DEBIT PURCHASE CARD Cathryn Isaac Wesley Hohn Clarissa [02090421],Entertainment
+07/02/2014,-24.12,Marty Jesse Jacobson,Dining
+08/02/2014,-51.90,Tommy Kerry Prakash Louis Werner,Cash
+09/02/2014,-260.87,Matt Hirotoshi Mechael Pa [16910467],Shopping
+10/02/2014,-68.98,Tommy Kerry Prakash Louis Werner,Cash
+11/02/2014,-107.52,Jerome Hwa Tai Benson,Health
+11/02/2014,-75.85,VISA DEBIT PURCHASE CARD Jinny Malcolm Dustin,Utilities
+12/02/2014,-983.28,VISA DEBIT PURCHASE CARD Aimee Andries Jinny Joube [65886502],Commitment
+12/02/2014,-92.86,VISA DEBIT PURCHASE CARD Cathryn Isaac Wesley Hohn Clarissa [89161107],Entertainment
+12/02/2014,-55.47,Marty Jesse Jacobson,Dining
+12/02/2014,2992.05,Jeffrey Shaw Pierette Nov,Income
+13/02/2014,-245.41,Stanislaw Carisa Candida  Jessica,Home
+13/02/2014,-62.37,VISA DEBIT PURCHASE CARD Brooke Whitney Duke Kathy,Transport
+14/02/2014,-59.62,Tommy Kerry Prakash Louis Werner,Cash
+15/02/2014,-55.49,Marty Jesse Jacobson,Dining
+17/02/2014,-211.17,VISA DEBIT PURCHASE CARD Matt Hirotoshi Mechael Pa [78300554],Shopping
+17/02/2014,-95.03,VISA DEBIT PURCHASE CARD Cathryn Isaac Wesley Hohn Clarissa [04712088],Entertainment
+19/02/2014,-59.39,Tommy Kerry Prakash Louis Werner,Cash
+19/02/2014,-46.50,VISA DEBIT PURCHASE CARD Marty Jesse Jacobson,Dining
+20/02/2014,-63.43,VISA DEBIT PURCHASE CARD Brooke Whitney Duke Kathy,Transport
+24/02/2014,-79.14,Cathryn Isaac Wesley Hohn Clarissa [09859042],Entertainment
+24/02/2014,-56.23,Tommy Kerry Prakash Louis Werner,Cash
+24/02/2014,-25.33,VISA DEBIT PURCHASE CARD Marty Jesse Jacobson,Dining
+25/02/2014,-176.54,Matt Hirotoshi Mechael Pa [21464434],Shopping
+25/02/2014,-98.06,Jinny Malcolm Dustin,Utilities
+26/02/2014,-1049.48,Aimee Andries Jinny Joube [27178206],Commitment
+27/02/2014,-134.25,VISA DEBIT PURCHASE CARD Jerome Hwa Tai Benson,Health
+28/02/2014,-63.62,Tommy Kerry Prakash Louis Werner,Cash
+28/02/2014,-44.54,Marty Jesse Jacobson,Dining
+28/02/2014,2998.65,Jeffrey Shaw Pierette Nov,Income
+01/03/2014,-108.03,Stanislaw Carisa Candida  Jessica,Home
+01/03/2014,-72.66,Brooke Whitney Duke Kathy,Transport
+02/03/2014,-99.26,VISA DEBIT PURCHASE CARD Cathryn Isaac Wesley Hohn Clarissa [49422786],Entertainment
+03/03/2014,-115.65,Kit Phiroze Gerard Nicola Tait [66692026],Education
+03/03/2014,-14.72,VISA DEBIT PURCHASE CARD Marty Jesse Jacobson,Dining
+04/03/2014,-58.21,Tommy Kerry Prakash Louis Werner,Cash
+05/03/2014,-238.98,Matt Hirotoshi Mechael Pa [92204783],Shopping
+06/03/2014,-72.53,Tommy Kerry Prakash Louis Werner,Cash
+07/03/2014,-52.10,VISA DEBIT PURCHASE CARD Marty Jesse Jacobson,Dining
+08/03/2014,-116.92,VISA DEBIT PURCHASE CARD Cathryn Isaac Wesley Hohn Clarissa [68074931],Entertainment
+08/03/2014,-69.03,Brooke Whitney Duke Kathy,Transport
+10/03/2014,-53.32,Tommy Kerry Prakash Louis Werner,Cash
+11/03/2014,-246.97,VISA DEBIT PURCHASE CARD Matt Hirotoshi Mechael Pa [86212807],Shopping
+11/03/2014,-30.57,Marty Jesse Jacobson,Dining
+12/03/2014,-115.31,VISA DEBIT PURCHASE CARD Jinny Malcolm Dustin,Utilities
+13/03/2014,-988.01,VISA DEBIT PURCHASE CARD Aimee Andries Jinny Joube [21942872],Commitment
+13/03/2014,-48.46,Tommy Kerry Prakash Louis Werner,Cash
+15/03/2014,-107.99,Jerome Hwa Tai Benson,Health
+15/03/2014,-64.79,Brooke Whitney Duke Kathy,Transport
+15/03/2014,-20.53,Marty Jesse Jacobson,Dining
+16/03/2014,-57.00,VISA DEBIT PURCHASE CARD Cathryn Isaac Wesley Hohn Clarissa [20600244],Entertainment
+16/03/2014,3011.43,Jeffrey Shaw Pierette Nov,Income
+17/03/2014,-55.91,Tommy Kerry Prakash Louis Werner,Cash
+17/03/2014,-32.07,Stanislaw Carisa Candida  Jessica,Home
+18/03/2014,-50.05,VISA DEBIT PURCHASE CARD Marty Jesse Jacobson,Dining
+20/03/2014,-53.89,Tommy Kerry Prakash Louis Werner,Cash
+21/03/2014,-242.35,Matt Hirotoshi Mechael Pa [77591752],Shopping
+21/03/2014,-149.61,Cathryn Isaac Wesley Hohn Clarissa [09125855],Entertainment
+21/03/2014,-51.55,VISA DEBIT PURCHASE CARD Marty Jesse Jacobson,Dining
+21/03/2014,-49.39,VISA DEBIT PURCHASE CARD Brooke Whitney Duke Kathy,Transport
+25/03/2014,-43.18,Tommy Kerry Prakash Louis Werner,Cash
+26/03/2014,-70.91,Marty Jesse Jacobson,Dining
+27/03/2014,-997.89,VISA DEBIT PURCHASE CARD Aimee Andries Jinny Joube [17661487],Commitment
+27/03/2014,-94.84,VISA DEBIT PURCHASE CARD Matt Hirotoshi Mechael Pa [07596379],Shopping
+28/03/2014,-99.60,VISA DEBIT PURCHASE CARD Jinny Malcolm Dustin,Utilities
+28/03/2014,-49.30,Cathryn Isaac Wesley Hohn Clarissa [78012910],Entertainment
+29/03/2014,-62.15,Tommy Kerry Prakash Louis Werner,Cash
+30/03/2014,-68.22,VISA DEBIT PURCHASE CARD Marty Jesse Jacobson,Dining
+30/03/2014,-54.19,VISA DEBIT PURCHASE CARD Brooke Whitney Duke Kathy,Transport
+31/03/2014,-353.99,Stanislaw Carisa Candida  Jessica,Home
+31/03/2014,-112.97,Jerome Hwa Tai Benson,Health
+31/03/2014,-93.10,Kit Phiroze Gerard Nicola Tait [10123997],Education
+31/03/2014,-57.04,Tommy Kerry Prakash Louis Werner,Cash
+01/04/2014,3020.94,Jeffrey Shaw Pierette Nov,Income
+02/04/2014,-129.66,Cathryn Isaac Wesley Hohn Clarissa [34516403],Entertainment
+03/04/2014,-154.68,VISA DEBIT PURCHASE CARD Matt Hirotoshi Mechael Pa [45992421],Shopping
+03/04/2014,-2.98,Marty Jesse Jacobson,Dining
+04/04/2014,-54.32,Tommy Kerry Prakash Louis Werner,Cash
+07/04/2014,-77.60,Marty Jesse Jacobson,Dining
+07/04/2014,-75.31,Tommy Kerry Prakash Louis Werner,Cash
+08/04/2014,-56.04,Brooke Whitney Duke Kathy,Transport
+09/04/2014,-177.14,Cathryn Isaac Wesley Hohn Clarissa [22518149],Entertainment
+10/04/2014,-1147.98,VISA DEBIT PURCHASE CARD Aimee Andries Jinny Joube [66374139],Commitment
+11/04/2014,-148.83,Matt Hirotoshi Mechael Pa [25555223],Shopping
+11/04/2014,-120.18,Jinny Malcolm Dustin,Utilities
+11/04/2014,-51.27,Tommy Kerry Prakash Louis Werner,Cash
+12/04/2014,-89.17,Marty Jesse Jacobson,Dining
+14/04/2014,-58.56,Tommy Kerry Prakash Louis Werner,Cash
+15/04/2014,-150.46,Stanislaw Carisa Candida  Jessica,Home
+15/04/2014,-134.62,VISA DEBIT PURCHASE CARD Jerome Hwa Tai Benson,Health
+15/04/2014,-98.46,VISA DEBIT PURCHASE CARD Cathryn Isaac Wesley Hohn Clarissa [53702355],Entertainment
+16/04/2014,-57.92,Brooke Whitney Duke Kathy,Transport
+16/04/2014,-32.90,Marty Jesse Jacobson,Dining
+17/04/2014,-51.18,Tommy Kerry Prakash Louis Werner,Cash
+17/04/2014,3047.69,Jeffrey Shaw Pierette Nov,Income
+20/04/2014,-114.36,VISA DEBIT PURCHASE CARD Cathryn Isaac Wesley Hohn Clarissa [41311641],Entertainment
+21/04/2014,-257.71,VISA DEBIT PURCHASE CARD Matt Hirotoshi Mechael Pa [52163198],Shopping
+21/04/2014,-64.96,VISA DEBIT PURCHASE CARD Marty Jesse Jacobson,Dining
+22/04/2014,-61.91,Tommy Kerry Prakash Louis Werner,Cash
+23/04/2014,-56.85,Brooke Whitney Duke Kathy,Transport
+25/04/2014,-82.66,VISA DEBIT PURCHASE CARD Cathryn Isaac Wesley Hohn Clarissa [44119255],Entertainment
+25/04/2014,-44.04,VISA DEBIT PURCHASE CARD Marty Jesse Jacobson,Dining
+26/04/2014,-128.25,Jinny Malcolm Dustin,Utilities
+26/04/2014,-60.53,Tommy Kerry Prakash Louis Werner,Cash
+27/04/2014,-1063.04,VISA DEBIT PURCHASE CARD Aimee Andries Jinny Joube [66268730],Commitment
+28/04/2014,-154.83,VISA DEBIT PURCHASE CARD Matt Hirotoshi Mechael Pa [40012942],Shopping
+29/04/2014,-91.12,VISA DEBIT PURCHASE CARD Jerome Hwa Tai Benson,Health
+29/04/2014,-74.78,VISA DEBIT PURCHASE CARD Stanislaw Carisa Candida  Jessica,Home
+30/04/2014,-51.79,Tommy Kerry Prakash Louis Werner,Cash
+30/04/2014,-15.35,Marty Jesse Jacobson,Dining
+30/04/2014,3047.52,Jeffrey Shaw Pierette Nov,Income
+01/05/2014,-163.53,Cathryn Isaac Wesley Hohn Clarissa [21090950],Entertainment
+02/05/2014,-88.10,VISA DEBIT PURCHASE CARD Kit Phiroze Gerard Nicola Tait [04398379],Education
+02/05/2014,-33.36,Brooke Whitney Duke Kathy,Transport
+03/05/2014,-72.93,Tommy Kerry Prakash Louis Werner,Cash
+04/05/2014,-41.73,VISA DEBIT PURCHASE CARD Marty Jesse Jacobson,Dining
+06/05/2014,-236.68,VISA DEBIT PURCHASE CARD Matt Hirotoshi Mechael Pa [76965372],Shopping
+07/05/2014,-82.32,Tommy Kerry Prakash Louis Werner,Cash
+07/05/2014,-68.79,Cathryn Isaac Wesley Hohn Clarissa [45855637],Entertainment
+08/05/2014,-71.54,Tommy Kerry Prakash Louis Werner,Cash
+08/05/2014,-25.51,Marty Jesse Jacobson,Dining
+10/05/2014,-937.12,Aimee Andries Jinny Joube [16720438],Commitment
+10/05/2014,-110.68,Jinny Malcolm Dustin,Utilities
+11/05/2014,-50.88,Brooke Whitney Duke Kathy,Transport
+12/05/2014,-59.06,VISA DEBIT PURCHASE CARD Marty Jesse Jacobson,Dining
+13/05/2014,-211.92,VISA DEBIT PURCHASE CARD Stanislaw Carisa Candida  Jessica,Home
+13/05/2014,-164.16,VISA DEBIT PURCHASE CARD Matt Hirotoshi Mechael Pa [88191241],Shopping
+13/05/2014,-114.16,Jerome Hwa Tai Benson,Health
+14/05/2014,-153.62,Cathryn Isaac Wesley Hohn Clarissa [32216158],Entertainment
+14/05/2014,-72.10,Tommy Kerry Prakash Louis Werner,Cash
+15/05/2014,3075.20,Jeffrey Shaw Pierette Nov,Income
+16/05/2014,-69.84,Tommy Kerry Prakash Louis Werner,Cash
+16/05/2014,-33.17,Marty Jesse Jacobson,Dining
+18/05/2014,-84.01,VISA DEBIT PURCHASE CARD Brooke Whitney Duke Kathy,Transport
+20/05/2014,-63.94,Tommy Kerry Prakash Louis Werner,Cash
+21/05/2014,-255.91,VISA DEBIT PURCHASE CARD Matt Hirotoshi Mechael Pa [32838449],Shopping
+22/05/2014,-103.15,VISA DEBIT PURCHASE CARD Cathryn Isaac Wesley Hohn Clarissa [08448432],Entertainment
+22/05/2014,-33.59,VISA DEBIT PURCHASE CARD Marty Jesse Jacobson,Dining
+24/05/2014,-18.62,Marty Jesse Jacobson,Dining
+25/05/2014,-87.61,VISA DEBIT PURCHASE CARD Jinny Malcolm Dustin,Utilities
+25/05/2014,-71.25,Tommy Kerry Prakash Louis Werner,Cash
+26/05/2014,-984.62,Aimee Andries Jinny Joube [40555557],Commitment
+27/05/2014,-113.86,VISA DEBIT PURCHASE CARD Stanislaw Carisa Candida  Jessica,Home
+27/05/2014,-87.37,Jerome Hwa Tai Benson,Health
+27/05/2014,-58.48,VISA DEBIT PURCHASE CARD Brooke Whitney Duke Kathy,Transport
+28/05/2014,-159.27,VISA DEBIT PURCHASE CARD Matt Hirotoshi Mechael Pa [21301792],Shopping
+28/05/2014,-74.46,Marty Jesse Jacobson,Dining
+29/05/2014,-80.30,Cathryn Isaac Wesley Hohn Clarissa [54382879],Entertainment
+30/05/2014,-63.74,Tommy Kerry Prakash Louis Werner,Cash
+01/06/2014,-65.47,VISA DEBIT PURCHASE CARD Marty Jesse Jacobson,Dining
+01/06/2014,2932.46,Jeffrey Shaw Pierette Nov,Income
+02/06/2014,-53.15,Tommy Kerry Prakash Louis Werner,Cash
+04/06/2014,-146.00,VISA DEBIT PURCHASE CARD Cathryn Isaac Wesley Hohn Clarissa [14926525],Entertainment
+04/06/2014,-89.59,Kit Phiroze Gerard Nicola Tait [37083144],Education
+05/06/2014,-196.17,Matt Hirotoshi Mechael Pa [55188997],Shopping
+05/06/2014,-50.18,Tommy Kerry Prakash Louis Werner,Cash
+05/06/2014,-43.86,VISA DEBIT PURCHASE CARD Brooke Whitney Duke Kathy,Transport
+07/06/2014,-47.55,Marty Jesse Jacobson,Dining
+08/06/2014,-45.04,Tommy Kerry Prakash Louis Werner,Cash
+09/06/2014,-1052.00,Aimee Andries Jinny Joube [26434187],Commitment
+09/06/2014,-81.15,VISA DEBIT PURCHASE CARD Jinny Malcolm Dustin,Utilities
+10/06/2014,-49.02,VISA DEBIT PURCHASE CARD Marty Jesse Jacobson,Dining
+11/06/2014,-230.96,VISA DEBIT PURCHASE CARD Matt Hirotoshi Mechael Pa [20188766],Shopping
+11/06/2014,-113.54,VISA DEBIT PURCHASE CARD Stanislaw Carisa Candida  Jessica,Home
+11/06/2014,-113.43,VISA DEBIT PURCHASE CARD Cathryn Isaac Wesley Hohn Clarissa [65692234],Entertainment
+12/06/2014,-163.67,Jerome Hwa Tai Benson,Health
+12/06/2014,-73.41,Tommy Kerry Prakash Louis Werner,Cash
+13/06/2014,-77.01,VISA DEBIT PURCHASE CARD Marty Jesse Jacobson,Dining
+13/06/2014,-47.46,Brooke Whitney Duke Kathy,Transport
+15/06/2014,-39.58,Marty Jesse Jacobson,Dining
+17/06/2014,-64.08,Tommy Kerry Prakash Louis Werner,Cash
+17/06/2014,3138.10,Jeffrey Shaw Pierette Nov,Income
+18/06/2014,-167.83,VISA DEBIT PURCHASE CARD Cathryn Isaac Wesley Hohn Clarissa [57075403],Entertainment
+19/06/2014,-39.80,Marty Jesse Jacobson,Dining
+20/06/2014,-223.32,VISA DEBIT PURCHASE CARD Matt Hirotoshi Mechael Pa [10075862],Shopping
+21/06/2014,-60.90,VISA DEBIT PURCHASE CARD Brooke Whitney Duke Kathy,Transport
+22/06/2014,-70.34,VISA DEBIT PURCHASE CARD Cathryn Isaac Wesley Hohn Clarissa [32151387],Entertainment
+22/06/2014,-46.93,Tommy Kerry Prakash Louis Werner,Cash
+24/06/2014,-73.75,VISA DEBIT PURCHASE CARD Marty Jesse Jacobson,Dining
+25/06/2014,-339.75,Stanislaw Carisa Candida  Jessica,Home
+25/06/2014,-98.32,Jinny Malcolm Dustin,Utilities
+25/06/2014,-52.48,Marty Jesse Jacobson,Dining
+26/06/2014,-1016.00,Aimee Andries Jinny Joube [33286123],Commitment
+27/06/2014,-175.95,VISA DEBIT PURCHASE CARD Matt Hirotoshi Mechael Pa [08562934],Shopping
+27/06/2014,-84.93,Jerome Hwa Tai Benson,Health
+27/06/2014,-80.07,Tommy Kerry Prakash Louis Werner,Cash
+28/06/2014,-80.15,VISA DEBIT PURCHASE CARD Cathryn Isaac Wesley Hohn Clarissa [52125390],Entertainment
+28/06/2014,-63.86,Brooke Whitney Duke Kathy,Transport
+29/06/2014,-38.51,VISA DEBIT PURCHASE CARD Marty Jesse Jacobson,Dining
+01/07/2014,-62.06,Tommy Kerry Prakash Louis Werner,Cash
+02/07/2014,-48.66,VISA DEBIT PURCHASE CARD Marty Jesse Jacobson,Dining
+03/07/2014,2979.12,Jeffrey Shaw Pierette Nov,Income
+04/07/2014,-75.66,Tommy Kerry Prakash Louis Werner,Cash
+05/07/2014,-258.04,VISA DEBIT PURCHASE CARD Matt Hirotoshi Mechael Pa [83912879],Shopping
+05/07/2014,-79.51,VISA DEBIT PURCHASE CARD Kit Phiroze Gerard Nicola Tait [50694310],Education
+06/07/2014,-202.89,VISA DEBIT PURCHASE CARD Cathryn Isaac Wesley Hohn Clarissa [11246397],Entertainment
+06/07/2014,-54.26,VISA DEBIT PURCHASE CARD Brooke Whitney Duke Kathy,Transport
+08/07/2014,-31.42,Marty Jesse Jacobson,Dining
+09/07/2014,-897.15,Aimee Andries Jinny Joube [44324085],Commitment
+09/07/2014,-126.09,VISA DEBIT PURCHASE CARD Jinny Malcolm Dustin,Utilities
+09/07/2014,-66.86,Tommy Kerry Prakash Louis Werner,Cash
+11/07/2014,-162.18,Stanislaw Carisa Candida  Jessica,Home
+12/07/2014,-80.03,Jerome Hwa Tai Benson,Health
+12/07/2014,9.97,VISA DEBIT PURCHASE CARD Cathryn Isaac Wesley Hohn Clarissa [05108455],Entertainment
+13/07/2014,-267.52,VISA DEBIT PURCHASE CARD Matt Hirotoshi Mechael Pa [15201125],Shopping
+13/07/2014,-54.87,Tommy Kerry Prakash Louis Werner,Cash
+13/07/2014,-45.23,VISA DEBIT PURCHASE CARD Marty Jesse Jacobson,Dining
+15/07/2014,-65.44,VISA DEBIT PURCHASE CARD Brooke Whitney Duke Kathy,Transport
+17/07/2014,-158.18,Cathryn Isaac Wesley Hohn Clarissa [68821403],Entertainment
+18/07/2014,-60.12,Marty Jesse Jacobson,Dining
+18/07/2014,-53.01,Tommy Kerry Prakash Louis Werner,Cash
+18/07/2014,2990.74,Jeffrey Shaw Pierette Nov,Income
+21/07/2014,-73.03,Tommy Kerry Prakash Louis Werner,Cash
+22/07/2014,-266.37,Matt Hirotoshi Mechael Pa [19744426],Shopping
+22/07/2014,-111.04,Cathryn Isaac Wesley Hohn Clarissa [54506669],Entertainment
+22/07/2014,-62.93,Marty Jesse Jacobson,Dining
+23/07/2014,-84.00,Jinny Malcolm Dustin,Utilities
+23/07/2014,-71.84,VISA DEBIT PURCHASE CARD Brooke Whitney Duke Kathy,Transport
+24/07/2014,-57.59,Tommy Kerry Prakash Louis Werner,Cash
+25/07/2014,-992.66,Aimee Andries Jinny Joube [19472841],Commitment
+26/07/2014,-143.41,VISA DEBIT PURCHASE CARD Stanislaw Carisa Candida  Jessica,Home
+26/07/2014,-47.85,Jerome Hwa Tai Benson,Health
+29/07/2014,-72.33,Tommy Kerry Prakash Louis Werner,Cash
+29/07/2014,-64.73,Cathryn Isaac Wesley Hohn Clarissa [75035406],Entertainment
+29/07/2014,-62.71,Marty Jesse Jacobson,Dining
+30/07/2014,-209.02,VISA DEBIT PURCHASE CARD Matt Hirotoshi Mechael Pa [98444685],Shopping
+31/07/2014,-56.43,Brooke Whitney Duke Kathy,Transport
+02/08/2014,-57.19,Tommy Kerry Prakash Louis Werner,Cash
+03/08/2014,-118.34,VISA DEBIT PURCHASE CARD Cathryn Isaac Wesley Hohn Clarissa [30030831],Entertainment
+03/08/2014,2998.56,Jeffrey Shaw Pierette Nov,Income
+04/08/2014,-62.57,Marty Jesse Jacobson,Dining
+05/08/2014,-62.17,Tommy Kerry Prakash Louis Werner,Cash
+06/08/2014,-96.96,Kit Phiroze Gerard Nicola Tait [22812775],Education
+07/08/2014,-147.16,VISA DEBIT PURCHASE CARD Jinny Malcolm Dustin,Utilities
+07/08/2014,-145.62,VISA DEBIT PURCHASE CARD Matt Hirotoshi Mechael Pa [95004361],Shopping
+07/08/2014,-60.61,Tommy Kerry Prakash Louis Werner,Cash
+08/08/2014,-916.92,Aimee Andries Jinny Joube [83686394],Commitment
+08/08/2014,-78.11,VISA DEBIT PURCHASE CARD Marty Jesse Jacobson,Dining
+09/08/2014,-330.72,VISA DEBIT PURCHASE CARD Stanislaw Carisa Candida  Jessica,Home
+09/08/2014,-81.08,Cathryn Isaac Wesley Hohn Clarissa [40681189],Entertainment
+09/08/2014,-69.23,Brooke Whitney Duke Kathy,Transport
+11/08/2014,-92.39,VISA DEBIT PURCHASE CARD Jerome Hwa Tai Benson,Health
+11/08/2014,-52.90,Tommy Kerry Prakash Louis Werner,Cash
+14/08/2014,-78.57,VISA DEBIT PURCHASE CARD Marty Jesse Jacobson,Dining
+15/08/2014,-236.01,VISA DEBIT PURCHASE CARD Matt Hirotoshi Mechael Pa [24076743],Shopping
+15/08/2014,-50.91,Cathryn Isaac Wesley Hohn Clarissa [55516267],Entertainment
+16/08/2014,-51.26,Tommy Kerry Prakash Louis Werner,Cash
+18/08/2014,-59.96,Brooke Whitney Duke Kathy,Transport
+19/08/2014,3005.15,Jeffrey Shaw Pierette Nov,Income
+20/08/2014,-67.13,Marty Jesse Jacobson,Dining
+20/08/2014,-48.64,Tommy Kerry Prakash Louis Werner,Cash
+21/08/2014,-79.22,VISA DEBIT PURCHASE CARD Cathryn Isaac Wesley Hohn Clarissa [09481251],Entertainment
+22/08/2014,-88.88,VISA DEBIT PURCHASE CARD Jinny Malcolm Dustin,Utilities
+23/08/2014,-1047.45,Aimee Andries Jinny Joube [29536968],Commitment
+23/08/2014,-167.23,VISA DEBIT PURCHASE CARD Matt Hirotoshi Mechael Pa [33771244],Shopping
+24/08/2014,-51.99,VISA DEBIT PURCHASE CARD Marty Jesse Jacobson,Dining
+24/08/2014,-51.83,Tommy Kerry Prakash Louis Werner,Cash
+25/08/2014,-144.87,VISA DEBIT PURCHASE CARD Stanislaw Carisa Candida  Jessica,Home
+25/08/2014,-70.14,Brooke Whitney Duke Kathy,Transport
+26/08/2014,-121.98,Cathryn Isaac Wesley Hohn Clarissa [53026648],Entertainment
+28/08/2014,-79.55,VISA DEBIT PURCHASE CARD Jerome Hwa Tai Benson,Health
+28/08/2014,-68.71,Marty Jesse Jacobson,Dining
+29/08/2014,-57.19,Tommy Kerry Prakash Louis Werner,Cash
+31/08/2014,-209.88,Matt Hirotoshi Mechael Pa [17634399],Shopping
+31/08/2014,-122.55,VISA DEBIT PURCHASE CARD Cathryn Isaac Wesley Hohn Clarissa [95562983],Entertainment
+31/08/2014,-65.82,Tommy Kerry Prakash Louis Werner,Cash
+31/08/2014,-58.02,VISA DEBIT PURCHASE CARD Marty Jesse Jacobson,Dining
+03/09/2014,-54.60,Brooke Whitney Duke Kathy,Transport
+03/09/2014,2968.04,Jeffrey Shaw Pierette Nov,Income
+04/09/2014,-12.36,VISA DEBIT PURCHASE CARD Marty Jesse Jacobson,Dining
+05/09/2014,-114.09,VISA DEBIT PURCHASE CARD Cathryn Isaac Wesley Hohn Clarissa [01426531],Entertainment
+05/09/2014,-78.51,VISA DEBIT PURCHASE CARD Kit Phiroze Gerard Nicola Tait [15262145],Education
+05/09/2014,-50.40,Tommy Kerry Prakash Louis Werner,Cash
+06/09/2014,-86.06,Jinny Malcolm Dustin,Utilities
+08/09/2014,-1102.60,Aimee Andries Jinny Joube [54843298],Commitment
+08/09/2014,-188.43,VISA DEBIT PURCHASE CARD Matt Hirotoshi Mechael Pa [33331826],Shopping
+08/09/2014,-113.48,Stanislaw Carisa Candida  Jessica,Home
+08/09/2014,-46.85,Marty Jesse Jacobson,Dining
+09/09/2014,-59.58,Tommy Kerry Prakash Louis Werner,Cash
+10/09/2014,-46.95,VISA DEBIT PURCHASE CARD Brooke Whitney Duke Kathy,Transport
+11/09/2014,-167.73,Cathryn Isaac Wesley Hohn Clarissa [33883459],Entertainment
+11/09/2014,-80.43,Jerome Hwa Tai Benson,Health
+12/09/2014,-67.92,Tommy Kerry Prakash Louis Werner,Cash
+13/09/2014,-1.37,Marty Jesse Jacobson,Dining
+15/09/2014,-207.73,Matt Hirotoshi Mechael Pa [53866428],Shopping
+17/09/2014,-76.71,Tommy Kerry Prakash Louis Werner,Cash
+17/09/2014,3002.51,Jeffrey Shaw Pierette Nov,Income
+18/09/2014,-67.97,Cathryn Isaac Wesley Hohn Clarissa [73786329],Entertainment
+18/09/2014,-31.15,VISA DEBIT PURCHASE CARD Marty Jesse Jacobson,Dining
+19/09/2014,-64.70,Brooke Whitney Duke Kathy,Transport
+21/09/2014,-120.12,Jinny Malcolm Dustin,Utilities
+21/09/2014,-57.78,Tommy Kerry Prakash Louis Werner,Cash
+22/09/2014,-23.49,Marty Jesse Jacobson,Dining
+23/09/2014,-1259.13,Aimee Andries Jinny Joube [10894872],Commitment
+24/09/2014,-257.50,Stanislaw Carisa Candida  Jessica,Home
+24/09/2014,-171.79,VISA DEBIT PURCHASE CARD Matt Hirotoshi Mechael Pa [29287084],Shopping
+24/09/2014,-106.34,VISA DEBIT PURCHASE CARD Cathryn Isaac Wesley Hohn Clarissa [74314483],Entertainment
+25/09/2014,-108.48,Jerome Hwa Tai Benson,Health
+25/09/2014,-71.66,Tommy Kerry Prakash Louis Werner,Cash
+26/09/2014,-58.61,VISA DEBIT PURCHASE CARD Marty Jesse Jacobson,Dining
+28/09/2014,-71.74,Tommy Kerry Prakash Louis Werner,Cash
+28/09/2014,-61.77,Brooke Whitney Duke Kathy,Transport
+29/09/2014,-92.48,VISA DEBIT PURCHASE CARD Marty Jesse Jacobson,Dining
+30/09/2014,-90.55,Cathryn Isaac Wesley Hohn Clarissa [78475800],Entertainment
+02/10/2014,-231.54,VISA DEBIT PURCHASE CARD Matt Hirotoshi Mechael Pa [05114065],Shopping
+03/10/2014,-59.96,VISA DEBIT PURCHASE CARD Marty Jesse Jacobson,Dining
+03/10/2014,-50.55,Tommy Kerry Prakash Louis Werner,Cash
+03/10/2014,3047.31,Jeffrey Shaw Pierette Nov,Income
+06/10/2014,-97.29,VISA DEBIT PURCHASE CARD Kit Phiroze Gerard Nicola Tait [45735017],Education
+06/10/2014,-45.07,VISA DEBIT PURCHASE CARD Brooke Whitney Duke Kathy,Transport
+07/10/2014,-1070.59,VISA DEBIT PURCHASE CARD Aimee Andries Jinny Joube [31475928],Commitment
+07/10/2014,1.36,Cathryn Isaac Wesley Hohn Clarissa [84669974],Entertainment
+08/10/2014,-86.63,Jinny Malcolm Dustin,Utilities
+08/10/2014,-60.87,Tommy Kerry Prakash Louis Werner,Cash
+08/10/2014,-48.32,Marty Jesse Jacobson,Dining
+09/10/2014,-282.41,Stanislaw Carisa Candida  Jessica,Home
+09/10/2014,-99.28,VISA DEBIT PURCHASE CARD Jerome Hwa Tai Benson,Health
+11/10/2014,-105.09,Matt Hirotoshi Mechael Pa [39851198],Shopping
+12/10/2014,-5.13,Marty Jesse Jacobson,Dining
+14/10/2014,-57.49,Tommy Kerry Prakash Louis Werner,Cash
+14/10/2014,-43.60,Cathryn Isaac Wesley Hohn Clarissa [69794828],Entertainment
+15/10/2014,-64.84,VISA DEBIT PURCHASE CARD Marty Jesse Jacobson,Dining
+15/10/2014,-50.53,Brooke Whitney Duke Kathy,Transport
+18/10/2014,-182.14,VISA DEBIT PURCHASE CARD Matt Hirotoshi Mechael Pa [63827988],Shopping
+18/10/2014,-59.63,Tommy Kerry Prakash Louis Werner,Cash
+18/10/2014,3050.55,Jeffrey Shaw Pierette Nov,Income
+19/10/2014,-156.31,Cathryn Isaac Wesley Hohn Clarissa [11470357],Entertainment
+20/10/2014,-17.94,Marty Jesse Jacobson,Dining
+22/10/2014,-1072.30,VISA DEBIT PURCHASE CARD Aimee Andries Jinny Joube [12831988],Commitment
+22/10/2014,-67.31,Brooke Whitney Duke Kathy,Transport
+22/10/2014,-61.31,Tommy Kerry Prakash Louis Werner,Cash
+23/10/2014,-242.76,VISA DEBIT PURCHASE CARD Stanislaw Carisa Candida  Jessica,Home
+23/10/2014,-78.93,Jinny Malcolm Dustin,Utilities
+24/10/2014,-75.02,VISA DEBIT PURCHASE CARD Marty Jesse Jacobson,Dining
+26/10/2014,-165.64,Matt Hirotoshi Mechael Pa [27751357],Shopping
+26/10/2014,-76.81,Cathryn Isaac Wesley Hohn Clarissa [59625151],Entertainment
+26/10/2014,-73.27,Tommy Kerry Prakash Louis Werner,Cash
+26/10/2014,-71.93,Jerome Hwa Tai Benson,Health
+28/10/2014,-80.05,VISA DEBIT PURCHASE CARD Marty Jesse Jacobson,Dining
+29/10/2014,-55.08,VISA DEBIT PURCHASE CARD Brooke Whitney Duke Kathy,Transport
+31/10/2014,-184.83,VISA DEBIT PURCHASE CARD Cathryn Isaac Wesley Hohn Clarissa [91117514],Entertainment
+31/10/2014,-81.55,VISA DEBIT PURCHASE CARD Marty Jesse Jacobson,Dining
+01/11/2014,-69.90,Tommy Kerry Prakash Louis Werner,Cash
+01/11/2014,2944.48,Jeffrey Shaw Pierette Nov,Income
+02/11/2014,-79.52,VISA DEBIT PURCHASE CARD Marty Jesse Jacobson,Dining
+04/11/2014,-271.83,VISA DEBIT PURCHASE CARD Matt Hirotoshi Mechael Pa [79321167],Shopping
+04/11/2014,-99.99,Kit Phiroze Gerard Nicola Tait [73567761],Education
+05/11/2014,-90.06,Cathryn Isaac Wesley Hohn Clarissa [89439618],Entertainment
+05/11/2014,-63.07,Tommy Kerry Prakash Louis Werner,Cash
+05/11/2014,1.94,Marty Jesse Jacobson,Dining
+07/11/2014,-892.34,Aimee Andries Jinny Joube [51863495],Commitment
+07/11/2014,-92.51,Jinny Malcolm Dustin,Utilities
+07/11/2014,-60.66,Brooke Whitney Duke Kathy,Transport
+08/11/2014,-117.36,VISA DEBIT PURCHASE CARD Stanislaw Carisa Candida  Jessica,Home
+08/11/2014,-37.97,VISA DEBIT PURCHASE CARD Marty Jesse Jacobson,Dining
+10/11/2014,-57.47,Tommy Kerry Prakash Louis Werner,Cash
+10/11/2014,-51.47,VISA DEBIT PURCHASE CARD Jerome Hwa Tai Benson,Health
+11/11/2014,-39.09,VISA DEBIT PURCHASE CARD Marty Jesse Jacobson,Dining
+12/11/2014,-211.60,Matt Hirotoshi Mechael Pa [64393824],Shopping
+13/11/2014,-58.70,Tommy Kerry Prakash Louis Werner,Cash
+13/11/2014,-0.66,Cathryn Isaac Wesley Hohn Clarissa [37615637],Entertainment
+15/11/2014,3091.77,Jeffrey Shaw Pierette Nov,Income
+16/11/2014,-59.46,Marty Jesse Jacobson,Dining
+16/11/2014,-45.27,Brooke Whitney Duke Kathy,Transport
+18/11/2014,-55.11,Tommy Kerry Prakash Louis Werner,Cash
+20/11/2014,-127.56,Cathryn Isaac Wesley Hohn Clarissa [87979598],Entertainment
+21/11/2014,-225.81,Matt Hirotoshi Mechael Pa [24838127],Shopping
+21/11/2014,-63.06,VISA DEBIT PURCHASE CARD Marty Jesse Jacobson,Dining
+23/11/2014,-899.60,Aimee Andries Jinny Joube [90203565],Commitment
+23/11/2014,-81.11,Tommy Kerry Prakash Louis Werner,Cash
+23/11/2014,-71.94,Stanislaw Carisa Candida  Jessica,Home
+23/11/2014,-61.90,VISA DEBIT PURCHASE CARD Brooke Whitney Duke Kathy,Transport
+24/11/2014,-124.54,VISA DEBIT PURCHASE CARD Jinny Malcolm Dustin,Utilities
+25/11/2014,-56.52,VISA DEBIT PURCHASE CARD Marty Jesse Jacobson,Dining
+26/11/2014,-67.57,VISA DEBIT PURCHASE CARD Cathryn Isaac Wesley Hohn Clarissa [58571316],Entertainment
+26/11/2014,-65.89,Jerome Hwa Tai Benson,Health
+27/11/2014,-50.42,Tommy Kerry Prakash Louis Werner,Cash
+29/11/2014,-199.28,Matt Hirotoshi Mechael Pa [71269657],Shopping
+30/11/2014,-51.74,VISA DEBIT PURCHASE CARD Brooke Whitney Duke Kathy,Transport
+30/11/2014,2993.37,Jeffrey Shaw Pierette Nov,Income
+01/12/2014,-78.88,Tommy Kerry Prakash Louis Werner,Cash
+01/12/2014,-29.74,Marty Jesse Jacobson,Dining
+03/12/2014,-155.63,Cathryn Isaac Wesley Hohn Clarissa [41704532],Entertainment
+04/12/2014,-108.91,VISA DEBIT PURCHASE CARD Kit Phiroze Gerard Nicola Tait [00406238],Education
+04/12/2014,-69.36,Marty Jesse Jacobson,Dining
+06/12/2014,-56.07,Tommy Kerry Prakash Louis Werner,Cash
+07/12/2014,-170.03,Matt Hirotoshi Mechael Pa [94157270],Shopping
+07/12/2014,-36.73,VISA DEBIT PURCHASE CARD Marty Jesse Jacobson,Dining
+08/12/2014,-215.62,Stanislaw Carisa Candida  Jessica,Home
+09/12/2014,-858.68,Aimee Andries Jinny Joube [10954550],Commitment
+09/12/2014,-71.26,VISA DEBIT PURCHASE CARD Brooke Whitney Duke Kathy,Transport
+10/12/2014,-156.27,Cathryn Isaac Wesley Hohn Clarissa [42404676],Entertainment
+10/12/2014,-94.51,VISA DEBIT PURCHASE CARD Jinny Malcolm Dustin,Utilities
+10/12/2014,-60.78,Tommy Kerry Prakash Louis Werner,Cash
+11/12/2014,-113.10,VISA DEBIT PURCHASE CARD Jerome Hwa Tai Benson,Health
+12/12/2014,-81.36,Marty Jesse Jacobson,Dining
+13/12/2014,-55.34,Tommy Kerry Prakash Louis Werner,Cash
+15/12/2014,-207.91,Matt Hirotoshi Mechael Pa [95722362],Shopping
+15/12/2014,-67.23,VISA DEBIT PURCHASE CARD Cathryn Isaac Wesley Hohn Clarissa [18930778],Entertainment
+15/12/2014,-63.65,VISA DEBIT PURCHASE CARD Marty Jesse Jacobson,Dining
+17/12/2014,-62.54,Tommy Kerry Prakash Louis Werner,Cash
+17/12/2014,-42.28,Brooke Whitney Duke Kathy,Transport
+18/12/2014,2974.31,Jeffrey Shaw Pierette Nov,Income
+19/12/2014,-56.08,VISA DEBIT PURCHASE CARD Marty Jesse Jacobson,Dining
+21/12/2014,-62.70,Tommy Kerry Prakash Louis Werner,Cash
+22/12/2014,-264.52,VISA DEBIT PURCHASE CARD Stanislaw Carisa Candida  Jessica,Home
+22/12/2014,-105.55,Cathryn Isaac Wesley Hohn Clarissa [16200503],Entertainment
+23/12/2014,-10.50,VISA DEBIT PURCHASE CARD Marty Jesse Jacobson,Dining
+24/12/2014,-189.17,Matt Hirotoshi Mechael Pa [25216038],Shopping
+24/12/2014,-43.11,Tommy Kerry Prakash Louis Werner,Cash
+25/12/2014,-1113.67,VISA DEBIT PURCHASE CARD Aimee Andries Jinny Joube [07638546],Commitment
+26/12/2014,-128.44,VISA DEBIT PURCHASE CARD Jinny Malcolm Dustin,Utilities
+26/12/2014,-115.73,VISA DEBIT PURCHASE CARD Jerome Hwa Tai Benson,Health
+27/12/2014,-76.72,Tommy Kerry Prakash Louis Werner,Cash
+27/12/2014,-50.24,VISA DEBIT PURCHASE CARD Brooke Whitney Duke Kathy,Transport
+27/12/2014,-10.53,VISA DEBIT PURCHASE CARD Marty Jesse Jacobson,Dining
+28/12/2014,-82.53,VISA DEBIT PURCHASE CARD Cathryn Isaac Wesley Hohn Clarissa [57976220],Entertainment
+31/12/2014,-192.61,VISA DEBIT PURCHASE CARD Matt Hirotoshi Mechael Pa [49042248],Shopping
+31/12/2014,-43.45,Tommy Kerry Prakash Louis Werner,Cash
+31/12/2014,-8.66,Marty Jesse Jacobson,Dining

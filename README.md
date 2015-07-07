@@ -5,9 +5,9 @@ Overview
 
 Accumulate and analyse your CSV transaction data to visualise your income and
 expenditure.  The categories are based on those used by the Australian Tax
-Office on their [MoneySmart website](https://www.moneysmart.gov.au/). These scripts were hacked together out
-of laziness when the author got fed up with manually entering his data into the
-site.
+Office on their [MoneySmart website](https://www.moneysmart.gov.au/). These
+scripts were hacked together out of laziness when the author got fed up with
+manually entering his data into the site.
 
 Example Output
 ========
@@ -18,6 +18,8 @@ Example Output
 ![XY Plots of Monthly Expenditure per Category](examples/figure_4.png)
 ![XY Plot of Weekly Expenditure](examples/figure_5.png)
 ![Bar Chart of Current Category Expenditure against Derived Budget](examples/figure_6.png)
+![Monthly Progressive Mean Daily Spend](examples/figure_7.png)
+![30-day Cashflow Forecast](examples/figure_8.png)
 
 Details
 =======
