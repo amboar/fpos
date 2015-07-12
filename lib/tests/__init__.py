@@ -21,7 +21,6 @@ from itertools import islice, cycle
 import unittest
 from fpos import annotate, combine, core, transform, visualise, window, predict
 
-_LcsTagger = annotate._LcsTagger
 money = visualise.money
 
 class AnnotateTest(unittest.TestCase):
@@ -53,38 +52,6 @@ class AnnotateTest(unittest.TestCase):
 
     def test_resolve_category_needle(self):
         self.assertEquals(annotate.categories[0], annotate._Tagger.resolve_category(annotate.categories[0]))
-
-class LcsTaggerTest(unittest.TestCase):
-    def test_lcs_match_none(self):
-        tagger = _LcsTagger()
-        self.assertEquals(None, tagger.classify("foo"))
-
-    def test_lcs_match_one_exact(self):
-        tagger = _LcsTagger()
-        text = "foo"
-        tag = "bar"
-        self.assertEquals(None, tagger.classify(text))
-        self.assertTrue(tagger.pending())
-        tagger.tag(tag)
-        self.assertEquals(tag, tagger.classify(text))
-
-    def test_lcs_match_one_fuzzy(self):
-        tagger = _LcsTagger(0.75)
-        a_text = "foo0"
-        b_text = "foo1"
-        tag = "bar"
-        self.assertEquals(None, tagger.classify(a_text))
-        self.assertTrue(tagger.pending())
-        tagger.tag(tag)
-        self.assertEquals(tag, tagger.classify(b_text))
-
-    def test_lcs_miss_one(self):
-        tagger = _LcsTagger()
-        a_text = "aaaa"
-        b_text = "bbaa"
-        tag = "bar"
-        tagger.classify(a_text, tag)
-        self.assertEquals(None, tagger.classify(b_text))
 
 class TransformTest(unittest.TestCase):
     expected = [ [ "01/01/2014", "1.00", "Positive" ],
