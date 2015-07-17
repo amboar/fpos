@@ -19,7 +19,7 @@ pylcs = Extension('pylcs',
 
 pystrgrp = Extension('pystrgrp',
     include_dirs = ['ext'],
-    extra_compile_args = [ '-O2' ],
+    extra_compile_args = [ '-O2', '-fwrapv', '-Wall', '-Wstrict-prototypes' ],
     extra_link_args = [ ],
     sources = [
         "ext/ccan/talloc/talloc.c",
@@ -30,7 +30,6 @@ pystrgrp = Extension('pystrgrp',
         "ext/ccan/hash/hash.c",
         "ext/lcs.c",
         "ext/pystrgrp.c",
-        "ext/pylcs.c",
         "ext/strgrp.c"
         ]
     )

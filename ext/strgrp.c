@@ -319,6 +319,7 @@ strgrp_print(const struct strgrp * const ctx) {
     }
 }
 
+#ifdef DEFINE_MAIN
 #include <stdlib.h>
 
 int
@@ -338,4 +339,6 @@ main(int argc, char ** argv) {
     strgrp_free(grp);
     free(buf);
     fclose(f);
+    return 0;
 }
+#endif /* DEFINE_MAIN */
