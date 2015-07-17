@@ -271,7 +271,7 @@ def graph_bar_cashflow(groups, dates):
     plt.show()
 
 def print_periodic_expenses(groups, date):
-    required_group_size = ( g for g in groups if len(g) > 3 )
+    required_group_size = ( g for g in groups if len(g) > 2 )
     group_bins = ( (g, group_delta_bins(group_deltas(g)))
             for g in required_group_size )
     required_bins_size = ( gb for gb in group_bins
