@@ -323,17 +323,14 @@ strgrp_print(const struct strgrp * const ctx) {
 
 int
 main(int argc, char ** argv) {
-    assert(2 == argc);
-    FILE * const f = fopen(argv[1], "r");
+    FILE * const f = fdopen(0, "r");
 #define BUF_SIZE 512
     char * buf = malloc(BUF_SIZE);
     struct strgrp * grp = strgrp_new(0.85);
     while(fgets(buf, BUF_SIZE, f)) {
-        strtok(buf, ",");
-        strtok(NULL, ",");
-        const char * const str = strtok(NULL, ",");
-        if (!strgrp_add(grp, str, NULL)) {
-            printf("Failed to classify %s\n", str);
+        buf[strcspn(buf, "\r\n")] = '\0';
+        if (!strgrp_add(grp, buf, NULL)) {
+            printf("Failed to classify %s\n", buf);
             break;
         }
     }
