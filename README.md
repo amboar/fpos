@@ -1,4 +1,4 @@
-fpos - Financial Position
+[![Build Status](https://travis-ci.org/amboar/fpos.svg?branch=master)](https://travis-ci.org/amboar/fpos)
 
 Overview
 ========
@@ -161,15 +161,17 @@ Run-time
 Installation
 ============
 
-Install python 3 and dependencies, eg with apt-get
-	apt-get install python3 libpy-blah blah
+fpos can be installed in a virtualenv:
 
-Then build and install
-python3.4 ./setup.py build
-sudo python3.4 ./setup.py install
+    $ virtualenv ve
+    $ source ve/bin/activate
+    $ pip install -r requirements.txt
+    $ ./bin/fpos --help
+    ...
+    $ deactivate
 
-On OSX manually linking fpos to $PATH is required
-sudo ln -s /opt/local/Library/Frameworks/Python.framework/Versions/3.4/bin/fpos /opt/local/bin/fpos
+This may take a while as fpos depends on numpy/scipy/matplotlib which are
+sizeable dependencies with native extensions.
 
 Intermediate Representation
 ===========================
