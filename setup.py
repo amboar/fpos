@@ -19,8 +19,8 @@ pylcs = Extension('pylcs',
 
 pystrgrp = Extension('pystrgrp',
     include_dirs = ['ext'],
-    extra_compile_args = [ '-O2', '-fwrapv', '-Wall', '-Wstrict-prototypes' ],
-    extra_link_args = [ ],
+    extra_compile_args = [ '-O2', '-fwrapv', '-Wall', '-Wstrict-prototypes', '-fopenmp' ],
+    extra_link_args = [ '-fopenmp' ],
     sources = [
         "ext/ccan/talloc/talloc.c",
         "ext/ccan/str/str.c",

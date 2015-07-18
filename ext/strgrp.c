@@ -171,27 +171,48 @@ cache(struct strgrp * const grp, struct strgrp_bin * const bin,
     return htable_add(&grp->known, hash_string(str), d);
 }
 
+struct bin_score {
+    struct strgrp_bin * bin;
+    double score;
+};
+
 struct strgrp_bin *
 strgrp_bin_for(struct strgrp * const ctx, const char * const str) {
-    struct strgrp_bin * pick = NULL;
-    double max = 0;
-    if (ctx->n_bins) {
-        const struct strgrp_map * const m = lookup(ctx, str);
-        if (m) {
-            return m->bin;
-        }
+    if (!ctx->n_bins) {
+        return NULL;
+    }
+    const struct strgrp_map * const m = lookup(ctx, str);
+    if (m) {
+        return m->bin;
+    }
+    struct strgrp_bin ** bins = malloc(sizeof(struct strgrp_bin *) * ctx->n_bins);
+    assert(bins);
+    struct bin_score * scores = malloc(sizeof(struct bin_score) * ctx->n_bins);
+    assert(scores);
+    {
+        int i = 0;
         struct strgrp_bin * bin;
         list_for_each(&ctx->bins, bin, list) {
-            if (should_bin_score(ctx, bin, str)) {
-                const double score = bin_score(bin, str);
-                if (score > max) {
-                    max = score;
-                    pick = bin;
-                }
-            }
+            bins[i++] = bin;
         }
     }
-    return max > ctx->threshold ? pick : NULL;
+    int i;
+    #pragma omp parallel for
+    for (i = 0; i < ctx->n_bins; i++) {
+        if (should_bin_score(ctx, bins[i], str)) {
+            scores[i].bin = bins[i];
+            scores[i].score = bin_score(bins[i], str);
+        }
+    }
+    struct bin_score * max = NULL;
+    for (i = 0; i < ctx->n_bins; i++) {
+        if (!max || scores[i].score > max->score) {
+            max = &scores[i];
+        }
+    }
+    free(bins);
+    free(scores);
+    return (max && max->score > ctx->threshold) ? max->bin : NULL;
 }
 
 struct strgrp_bin *

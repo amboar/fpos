@@ -1,8 +1,7 @@
 #CFLAGS=-I. -O2
-CFLAGS=-I. -ggdb -O2 -pg -fwrapv -Wall -Wstrict-prototypes -DDEFINE_MAIN
+CFLAGS=-I. -ggdb -O2 -pg -fwrapv -Wall -Wstrict-prototypes -DDEFINE_MAIN -fopenmp
 #CFLAGS=-I. -ggdb -pg -O2 -fprofile-arcs -ftest-coverage
-LDFLAGS=
-LDFLAGS=-pg
+LDFLAGS=-fopenmp
 #LDFLAGS=-pg -fprofile-arcs -ftest-coverage
 
 OBJS = strgrp.o \

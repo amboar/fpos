@@ -1,0 +1,10 @@
+for i in $( seq 500 500 $( wc -l database.csv | cut -d ' ' -f 1 ) ); do echo sampling start $i; for j in $( seq 1 10 ); do echo time start; tail -n $i database.csv | cut -d, -f3 | time -p ./strgrp > /dev/null; echo time stop; done; echo sampling stop $i; done 2>&1 | tee openmptimes.txt
+
+awk 'BEGIN { samples = 0; timer = "off"; rd[0] = 0; rl = 0 } /sampling start/ { samples = $3 } /time start/ { timer = "on" } /time stop/ { timer = "off" } /real/ { if (timer == "on") { rd[rl++] = $2 } } /sampling stop/ { printf("%s, ", samples); for (e in rd) printf("%s, ", rd[e]); printf("\n"); rd[0] = 0; rl = 0; }' openmptimes.txt | tee omp-strgrp-samples.csv
+
+500, 0.09, 0.09, 0.08, 0.09, 0.09, 0.09, 0.09, 0.08, 0.08, 0.08, 
+1000, 0.33, 0.33, 0.34, 0.33, 0.33, 0.33, 0.34, 0.34, 0.33, 0.34, 
+1500, 0.65, 0.66, 0.66, 0.67, 0.66, 0.67, 0.66, 0.66, 0.65, 0.66, 
+2000, 1.11, 1.10, 1.10, 1.11, 1.11, 1.10, 1.10, 1.10, 1.11, 1.10, 
+2500, 1.63, 1.64, 1.64, 1.64, 1.64, 1.65, 1.63, 1.65, 1.64, 1.67, 
+3000, 2.32, 2.34, 2.35, 2.32, 2.32, 2.31, 2.33, 2.34, 2.35, 2.34, 

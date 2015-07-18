@@ -1,0 +1,10 @@
+for i in $( seq 500 500 $( wc -l database.csv | cut -d ' ' -f 1 ) ); do echo sampling start $i; for j in $( seq 1 10 ); do echo time start; tail -n $i database.csv | cut -d, -f3 | time -p ./strgrp > /dev/null; echo time stop; done; echo sampling stop $i; done 2>&1 | tee times.txt
+
+awk 'BEGIN { samples = 0; timer = "off"; rd[0] = 0; rl = 0 } /sampling start/ { samples = $3 } /time start/ { timer = "on" } /time stop/ { timer = "off" } /real/ { if (timer == "on") { rd[rl++] = $2 } } /sampling stop/ { printf("%s, ", samples); for (e in rd) printf("%s, ", rd[e]); printf("\n"); rd[0] = 0; rl = 0; }' times.txt | tee linear-strgrp-samples.csv
+
+500, 0.18, 0.19, 0.19, 0.17, 0.17, 0.24, 0.16, 0.17, 0.16, 0.23, 
+1000, 0.73, 0.91, 0.72, 0.72, 0.90, 0.72, 1.06, 0.72, 0.71, 0.73, 
+1500, 1.43, 1.40, 1.42, 1.65, 1.40, 1.40, 1.48, 1.52, 1.40, 1.41, 
+2000, 2.41, 2.49, 2.46, 2.39, 2.39, 2.43, 2.48, 2.61, 2.40, 2.41, 
+2500, 3.71, 3.68, 3.68, 3.77, 3.69, 3.70, 3.71, 3.71, 3.77, 3.83, 
+3000, 5.32, 5.03, 5.10, 5.39, 4.99, 4.99, 4.99, 5.03, 5.05, 5.03, 
