@@ -197,7 +197,7 @@ strgrp_bin_for(struct strgrp * const ctx, const char * const str) {
         }
     }
     int i;
-    #pragma omp parallel for
+    #pragma omp parallel for schedule(dynamic)
     for (i = 0; i < ctx->n_bins; i++) {
         if (should_bin_score(ctx, bins[i], str)) {
             scores[i].bin = bins[i];
