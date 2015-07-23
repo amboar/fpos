@@ -15,44 +15,54 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
+#include <assert.h>
 #include <stdbool.h>
 #include <string.h>
+#include "ccan/darray/darray.h"
 #include "ccan/talloc/talloc.h"
-#include "ccan/list/list.h"
 #include "ccan/htable/htable.h"
 #include "ccan/hash/hash.h"
 #include "strgrp.h"
 #include "lcs.h"
 
+typedef darray(struct strgrp_bin *) darray_bin;
+typedef darray(struct strgrp_item *) darray_item;
+
+struct bin_score {
+    struct strgrp_bin * bin;
+    double score;
+};
+
+typedef darray(struct bin_score *) darray_score;
+
 struct strgrp {
     double threshold;
     struct htable known;
-    struct list_head bins;
     unsigned int n_bins;
+    darray_bin bins;
+    struct bin_score * scores;
 };
 
 struct strgrp_iter {
-    struct list_head *head;
-    struct strgrp_bin *current;
+    struct strgrp * ctx;
+    int i;
 };
 
 struct strgrp_bin {
     char * key;
     size_t key_len;
+    darray_item items;
     int32_t n_items;
-    struct list_node list;
-    struct list_head items;
 };
 
 struct strgrp_bin_iter {
-    struct list_head *head;
-    struct strgrp_item *current;
+    struct strgrp_bin * bin;
+    int i;
 };
 
 struct strgrp_item {
     char * key;
     void * value;
-    struct list_node list;
 };
 
 struct strgrp_map {
@@ -101,9 +111,15 @@ add_item(struct strgrp_bin * const ctx, const char * const str,
     if (!i) {
         return false;
     }
-    list_add(&ctx->items, &i->list);
+    darray_push(ctx->items, i);
     ctx->n_items++;
     return true;
+}
+
+static int
+free_bin(struct strgrp_bin * bin) {
+    darray_free(bin->items);
+    return 0;
 }
 
 static struct strgrp_bin *
@@ -115,7 +131,8 @@ new_bin(TALLOC_CTX * const tctx, const char * const str, void * const data) {
     b->key = talloc_strdup(b, str);
     b->key_len = strlen(str);
     b->n_items = 0;
-    list_head_init(&b->items);
+    darray_init(b->items);
+    talloc_set_destructor(b, free_bin);
     if (!add_item(b, str, data)) {
         talloc_free(b);
         return NULL;
@@ -130,8 +147,10 @@ add_bin(struct strgrp * const grp, const char * const str,
     if (!b) {
         return NULL;
     }
-    list_add(&grp->bins, &b->list);
+    darray_push(grp->bins, b);
     grp->n_bins++;
+    grp->scores = realloc(grp->scores, sizeof(struct bin_score) * grp->n_bins);
+    assert(grp->scores);
     return b;
 }
 
@@ -155,7 +174,7 @@ strgrp_new(const double threshold) {
     struct strgrp * ctx = talloc_zero(NULL, struct strgrp);
     ctx->threshold = threshold;
     htable_init(&ctx->known, rehash, NULL);
-    list_head_init(&ctx->bins);
+    darray_init(ctx->bins);
     return ctx;
 }
 
@@ -171,11 +190,6 @@ cache(struct strgrp * const grp, struct strgrp_bin * const bin,
     return htable_add(&grp->known, hash_string(str), d);
 }
 
-struct bin_score {
-    struct strgrp_bin * bin;
-    double score;
-};
-
 struct strgrp_bin *
 strgrp_bin_for(struct strgrp * const ctx, const char * const str) {
     if (!ctx->n_bins) {
@@ -185,33 +199,19 @@ strgrp_bin_for(struct strgrp * const ctx, const char * const str) {
     if (m) {
         return m->bin;
     }
-    struct strgrp_bin ** bins = malloc(sizeof(struct strgrp_bin *) * ctx->n_bins);
-    assert(bins);
-    struct bin_score * scores = malloc(sizeof(struct bin_score) * ctx->n_bins);
-    assert(scores);
-    {
-        int i = 0;
-        struct strgrp_bin * bin;
-        list_for_each(&ctx->bins, bin, list) {
-            bins[i++] = bin;
-        }
-    }
     int i;
     #pragma omp parallel for schedule(dynamic)
     for (i = 0; i < ctx->n_bins; i++) {
-        if (should_bin_score(ctx, bins[i], str)) {
-            scores[i].bin = bins[i];
-            scores[i].score = bin_score(bins[i], str);
-        }
+        ctx->scores[i].bin = darray_item(ctx->bins, i);
+        const bool ss = should_bin_score(ctx, ctx->scores[i].bin, str);
+        ctx->scores[i].score = ss ? bin_score(ctx->scores[i].bin, str) : 0;
     }
     struct bin_score * max = NULL;
     for (i = 0; i < ctx->n_bins; i++) {
-        if (!max || scores[i].score > max->score) {
-            max = &scores[i];
+        if (!max || ctx->scores[i].score > max->score) {
+            max = &(ctx->scores[i]);
         }
     }
-    free(bins);
-    free(scores);
     return (max && max->score > ctx->threshold) ? max->bin : NULL;
 }
 
@@ -239,18 +239,15 @@ strgrp_iter_new(struct strgrp * const ctx) {
     if (!iter) {
         return NULL;
     }
-    iter->head = &ctx->bins;
+    iter->ctx = ctx;
+    iter->i = 0;
     return iter;
 }
 
 struct strgrp_bin *
 strgrp_iter_next(struct strgrp_iter * const iter) {
-    if (!iter->current) {
-        iter->current = list_top(iter->head, struct strgrp_bin, list);
-    } else {
-        iter->current = list_next(iter->head, iter->current, list);
-    }
-    return iter->current;
+    return (iter->ctx->n_bins == iter->i) ?
+        NULL : darray_item(iter->ctx->bins, iter->i++);
 }
 
 void
@@ -264,18 +261,15 @@ strgrp_bin_iter_new(struct strgrp_bin * const bin) {
     if (!iter) {
         return NULL;
     }
-    iter->head = &bin->items;
+    iter->bin = bin;
+    iter->i = 0;
     return iter;
 }
 
 struct strgrp_item *
 strgrp_bin_iter_next(struct strgrp_bin_iter * const iter) {
-    if (!iter->current) {
-        iter->current = list_top(iter->head, struct strgrp_item, list);
-    } else {
-        iter->current = list_next(iter->head, iter->current, list);
-    }
-    return iter->current;
+    return (iter->bin->n_items == iter->i) ?
+        NULL : darray_item(iter->bin->items, iter->i++);
 }
 
 void
@@ -300,16 +294,19 @@ strgrp_item_value(const struct strgrp_item * const item) {
 
 void
 strgrp_free(struct strgrp * const ctx) {
+    free(ctx->scores);
+    darray_free(ctx->bins);
+    htable_clear(&ctx->known);
     talloc_free(ctx);
 }
 
 void
 strgrp_free_cb(struct strgrp * const ctx, void (*cb)(void * data)) {
-    struct strgrp_bin * bin;
-    struct strgrp_item * item;
-    list_for_each(&ctx->bins, bin, list) {
-        list_for_each(&bin->items, item, list) {
-            cb(item->value);
+    struct strgrp_bin ** bin;
+    struct strgrp_item ** item;
+    darray_foreach(bin, ctx->bins) {
+        darray_foreach(item, (*bin)->items) {
+            cb((*item)->value);
         }
     }
     strgrp_free(ctx);
@@ -324,19 +321,19 @@ print_item(const struct strgrp_item * item) {
 
 static void
 print_bin(const struct strgrp_bin * const bin) {
-    struct strgrp_item * item;
+    struct strgrp_item ** item;
     printf("%s:\n", bin->key);
-    list_for_each(&bin->items, item, list) {
-        print_item(item);
+    darray_foreach(item, bin->items) {
+        print_item(*item);
     }
     printf("\n");
 }
 
 void
 strgrp_print(const struct strgrp * const ctx) {
-    struct strgrp_bin * bin;
-    list_for_each(&ctx->bins, bin, list) {
-        print_bin(bin);
+    struct strgrp_bin ** bin;
+    darray_foreach(bin, ctx->bins) {
+        print_bin(*bin);
     }
 }
 

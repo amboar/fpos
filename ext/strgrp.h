@@ -18,7 +18,6 @@
 #ifndef STRGRP_H
 #define STRGRP_H
 #include <stdbool.h>
-#include "ccan/list/list.h"
 
 struct strgrp;
 struct strgrp_iter;
