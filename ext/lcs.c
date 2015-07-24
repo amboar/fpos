@@ -13,7 +13,7 @@ int16_t
 lcs(const char * const a, const char * const b) {
     const int lb = strlen(b);
     const int lbp1 = lb + 1;
-    int16_t * const lookup = calloc(ROWS * lbp1, sizeof(uint16_t));
+    int16_t * const lookup = calloc(ROWS * lbp1, sizeof(int16_t));
     if (!lookup) {
         return -1;
     }
