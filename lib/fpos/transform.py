@@ -20,10 +20,12 @@ import argparse
 import csv
 import sys
 from datetime import datetime
+import dateutil.parser as dp
 from .core import money
 from .core import date_fmt
+from itertools import chain
 
-transform_choices = sorted([ "anz", "commbank", "stgeorge", "nab", "bankwest" ])
+transform_choices = sorted([ "auto", "anz", "commbank", "stgeorge", "nab", "bankwest" ])
 cmd_description = \
         """Not all bank CSV exports are equal. fpos defines an intermediate
         representation (IR) which each of the tools expect as input to eventually
@@ -50,25 +52,108 @@ def _take_three_commbank(src):
             yield [ l[0], money(amount), l[2] ]
     return _gen()
 
-def transform_commbank(csv):
+_EMPTY = "empty"
+_DATE = "date"
+_NUMBER = "number"
+_STRING = "string"
+
+sense = {}
+sense[(_DATE, _NUMBER, _STRING, _NUMBER)] = "commbank"
+sense[(_DATE, _NUMBER, _STRING)] = "anz"
+sense[(_DATE, _STRING, _EMPTY, _NUMBER, _NUMBER)] = "stgeorge"
+sense[(_DATE, _STRING, _NUMBER, _EMPTY, _NUMBER)] = "stgeorge"
+sense[(_DATE, _NUMBER, _NUMBER, _EMPTY, _STRING, _STRING, _NUMBER)] = "nab"
+sense[(_DATE, _NUMBER, _EMPTY, _EMPTY, _STRING, _STRING, _NUMBER, _EMPTY)] = "nab"
+sense[(_EMPTY, _NUMBER, _DATE, _STRING, _NUMBER, _EMPTY, _EMPTY, _NUMBER, _STRING)] = "bankwest"
+sense[(_EMPTY, _NUMBER, _DATE, _STRING, _EMPTY, _NUMBER, _EMPTY, _NUMBER, _STRING)] = "bankwest"
+sense[(_EMPTY, _NUMBER, _DATE, _STRING, _EMPTY, _EMPTY, _NUMBER, _NUMBER, _STRING)] = "bankwest"
+
+def _is_empty(x):
+    return x is None or "" == x
+
+def _is_date(x):
+    try:
+        dp.parse(x)
+        return True
+    except ValueError:
+        pass
+    return False
+
+def _is_number(x):
+    try:
+        float(x)
+        return True
+    except ValueError:
+        pass
+    return False
+
+def _compute_cell_type(x):
+    if _is_empty(x):
+        return _EMPTY
+    elif _is_number(x):
+        return _NUMBER
+    elif _is_date(x):
+        return _DATE
+    else:
+        if x is None:
+            raise ValueError("Parameter is None when it should not be")
+        return _STRING
+
+def _compute_type_tuple(row):
+    return tuple(_compute_cell_type(x) for x in row)
+
+def _sense_form(row, debug=False):
+    if debug:
+        print(row)
+    tt = _compute_type_tuple(row)
+    if debug:
+        print(tt)
+    return sense[tt]
+
+def _acquire_form(row, confirm):
+    guess = None
+    try:
+        guess = _sense_form(row)
+    except KeyError:
+        pass
+    if not confirm:
+        assert guess is not None
+        return guess
+    need = True
+    form = None
+    while need:
+        raw = input("Input type [{}]: ".format(guess if guess else "?")).strip()
+        if "" == raw:
+            need = None is guess
+            form = guess
+        elif "?" == raw:
+            print()
+            print(*transform_choices, sep="\n")
+            print()
+        elif raw in transform_choices:
+            return raw
+    return form
+
+def transform_auto(csv, args=None):
+    first = next(csv)
+    return transform(_acquire_form(first, args.confirm), chain([first], csv))
+
+def transform_commbank(csv, args=None):
     # Commbank format:
     #
     # Date,Amount,Description,Balance
     return _take_three_commbank(csv)
 
-def transform_anz(csv):
+def transform_anz(csv, args=None):
     # Identity transform, ANZ's format meets IR:
     #
     # Date,Amount,Description
     return _take_three_anz(csv)
 
-def transform_stgeorge(csv):
+def transform_stgeorge(csv, args=None):
     # St George Bank, first row is header
     #
     # Date,Description,Debit,Credit,Balance
-    #
-    # Discard header
-    next(csv)
     def _gen():
         for l in csv:
             yield [ l[0], money((-1.0 * float(l[2])) if l[2] else float(l[3])), l[1] ]
@@ -76,7 +161,7 @@ def transform_stgeorge(csv):
 
 _nab_date_fmt = "%d-%b-%y"
 
-def transform_nab(csv):
+def transform_nab(csv, args=None):
     # NAB format:
     #
     # Date, Amount, Ref #,, Description, Merchant, Remaining Balance
@@ -90,13 +175,11 @@ def transform_nab(csv):
                 yield [ ir_date, ir_amount, ir_description ]
     return _gen()
 
-def transform_bankwest(csv):
+def transform_bankwest(csv, args=None):
     # Bankwest format:
     #
     # BSB Number,Account Number,Transaction Date,Narration,Cheque,Debit,Credit,Balance,Transaction Type
     # ,5229 8079 0109 8683,27/10/2014,"CALTRAIN TVM             SAN CARLOS   CA85450784297436040013768           5.25US",,6.00,,116.32,WDL
-    # Discard header
-    next(csv)
     def _gen():
         for l in csv:
             yield [l[2], money((-1.0 * float(l[5])) if l[5] else float(l[6])), l[3][1:-1]]
@@ -108,23 +191,25 @@ def name():
 def parse_args(subparser=None):
     parser_init = subparser.add_parser if subparser else argparse.ArgumentParser
     parser = parser_init(name(), description=cmd_description, help=cmd_help)
-    parser.add_argument("form", metavar="FORM", choices=transform_choices,
+    parser.add_argument("--form", metavar="FORM", choices=transform_choices, default="auto",
             help="The CSV schema used by the input file, named after associated banks")
+    parser.add_argument("--confirm", default=False, action="store_true")
     parser.add_argument("infile", metavar="INPUT", type=argparse.FileType('r'), default=sys.stdin,
             help="The source file whose contents should be transformed to fpos IR")
     parser.add_argument("outfile", metavar="OUTPUT", type=argparse.FileType('w'), default=sys.stdout,
             help="The destination file to which the IR will be written")
     return None if subparser else parser.parse_args()
 
-def transform(form, source):
-    assert form in transform_choices
-    return globals()["transform_{}".format(form)](source)
+def transform(form, source, args=None):
+    assert form in transform_choices, "form {} not in {}".format(form, transform_choices)
+    t = globals()["transform_{}".format(form)]
+    return t((e for e in source if len(e) > 0 and not e[0].startswith("#")), args)
 
 def main(args=None):
     if args is None:
         args = parse_args()
     try:
-        csv.writer(args.outfile).writerows(transform(args.form, csv.reader(args.infile)))
+        csv.writer(args.outfile).writerows(transform(args.form, csv.reader(args.infile), args))
     finally:
         args.infile.close()
         args.outfile.close()

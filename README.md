@@ -77,7 +77,7 @@ Starting Out: No History and a Single Account
 Here's the simple case; it's the first time we've used fpos and we want to look
 at data from a single account.
 
-    $ fpos transform nab nab-export.csv transformed.csv
+    $ fpos transform nab-export.csv transformed.csv
     $ fpos annotate transformed.csv database.csv
       ...
     $ fpos visualise database.csv
@@ -90,7 +90,7 @@ didn't include transaction data from all of them. Here we have three NAB
 accounts; in the example presented here it's important that the exports are
 from the same bank.
 
-    $ cat nab-export1.csv nab-export2.csv nab-export3.csv | fpos transform nab - transformed.csv
+    $ cat nab-export1.csv nab-export2.csv nab-export3.csv | fpos transform - transformed.csv
     $ fpos annotate transformed.csv database.csv
       ...
     $ fpos visualise database.csv
@@ -102,8 +102,8 @@ This is similar to no history with a single account; the difference is we will
 have multiple calls to the translate subcommand. Here we demonstrate managing a
 NAB and a St George account.
 
-    $ fpos transform nab nab-export.csv transformed1.csv
-    $ fpos transform stgeorge stgeorge-export.csv transformed2.csv
+    $ fpos transform nab-export.csv transformed1.csv
+    $ fpos transform stgeorge-export.csv transformed2.csv
     $ fpos combine transformed1.csv transformed2.csv > combined.csv
     $ fpos annotate combined.csv database.csv
       ...
@@ -129,7 +129,7 @@ above. We've seen how to manage merging multiple exports, from different banks,
 and thus will only demonstrate updating an existing `database.csv` with a
 single NAB 'update' export, named "nab-update-export.csv".
 
-    $ fpos transform nab nab-update-export.csv transformed.csv
+    $ fpos transform nab-update-export.csv transformed.csv
     $ fpos combine database.csv transformed.csv > combined.csv
     $ fpos annotate combined.csv database.csv
       ...

@@ -16,6 +16,8 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import matplotlib
+matplotlib.use('Agg')
 from datetime import datetime as dt
 from itertools import islice, cycle
 import unittest
@@ -67,7 +69,7 @@ class TransformTest(unittest.TestCase):
         self.assertEquals(self.expected, list(transform.transform("anz", anz)))
 
     def test_transform_stgeorge(self):
-        stgeorge = iter([ [ "Date", "Description", "Debit", "Credit", "Balance" ],
+        stgeorge = iter([ [ "#Date", "Description", "Debit", "Credit", "Balance" ],
                 [ "01/01/2014", "Positive", None, "1.0", "1.0" ],
                 [ "01/01/2014", "Negative", "1.0", None, "0.0" ] ])
         self.assertEquals(self.expected, list(transform.transform("stgeorge", stgeorge)))
@@ -76,6 +78,69 @@ class TransformTest(unittest.TestCase):
         nab = iter([ [ "01-Jan-14", "1.00", "1", None, None, "Positive", "1.00", None ],
             [ "01-Jan-14", "-1.00", "2", None, None, "Negative", "0.00", None ] ])
         self.assertEquals(self.expected, list(transform.transform("nab", nab)))
+
+    def test__is_empty_None(self):
+        self.assertTrue(transform._is_empty(None))
+
+    def test__is_empty_empty(self):
+        self.assertTrue(transform._is_empty(None))
+
+    def test__is_date_mdY(self):
+        self.assertTrue(transform._is_date("01/01/2014"))
+
+    def test__is_date_dby(self):
+        self.assertTrue(transform._is_date("28-Apr-14"))
+
+    def test__is_date_fail(self):
+        self.assertFalse(transform._is_date("not a date"))
+
+    def test__is_number_int(self):
+        self.assertTrue(transform._is_number(1))
+
+    def test__is_number_float(self):
+        self.assertTrue(transform._is_number(1.0))
+
+    def test__is_number_neg_float(self):
+        self.assertTrue(transform._is_number(-1.0))
+
+    def test__is_number_fail(self):
+        self.assertFalse(transform._is_number("not a number"))
+
+    def test__compute_cell_type__EMPTY(self):
+        self.assertEquals(transform._EMPTY, transform._compute_cell_type(None))
+
+    def test__compute_cell_type__DATE(self):
+        self.assertEquals(transform._DATE, transform._compute_cell_type("01/01/2014"))
+
+    def test__compute_cell_type__NUMBER(self):
+        self.assertEquals(transform._NUMBER, transform._compute_cell_type("-12.34"))
+
+    def test__compute_cell_type__STRING(self):
+        self.assertEquals(transform._STRING, transform._compute_cell_type("neither"))
+
+    def test__sense_form_commbank(self):
+        self.assertEquals("commbank", transform._sense_form(["01/01/2014", "-1.0", "description", "-1.0"]))
+
+    def test__sense_form_anz(self):
+        self.assertEquals("anz", transform._sense_form(["01/01/2014", "-1.0", "description"]))
+
+    def test__sense_form_stgeorge_debit(self):
+        self.assertEquals("stgeorge", transform._sense_form(["01/01/2014",  "description", "1.0", "", "-1.0"]))
+
+    def test__sense_form_stgeorge_credit(self):
+        self.assertEquals("stgeorge", transform._sense_form(["01/01/2014",  "description", "", "1.0", "1.0"]))
+
+    def test__sense_form_nab(self):
+        self.assertEquals("nab", transform._sense_form(["01/01/2014", "-1.0", "12345", "", "description", "my merchant", "1.0"]))
+
+    def test__sense_form_bankwest_cheque(self):
+        self.assertEquals("bankwest", transform._sense_form(["", 12345, "01/01/2014", "description", "-1.0", "", "", "-1.0", "cheque"]))
+
+    def test__sense_form_bankwest_debit(self):
+        self.assertEquals("bankwest", transform._sense_form(["", 12345, "01/01/2014", "description", "", "1.0", "", "1.0", "debit"]))
+
+    def test__sense_form_bankwest_credit(self):
+        self.assertEquals("bankwest", transform._sense_form(["", 12345, "01/01/2014", "description", "", "", "-1.0", "-1.0", "credit"]))
 
 class WindowTest(unittest.TestCase):
     def test_gen_span_oracle_date_in_default(self):
