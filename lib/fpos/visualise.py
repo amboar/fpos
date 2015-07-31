@@ -519,20 +519,16 @@ def graph_xy_progressive_mean(months, dailies, m_income, groups, dates):
     plt.xlim([min(xs) - 1, max(xs) + 1])
     plt.show()
 
-def main(args=None):
+def visualise(table, current_date, graph=None, save=0):
     from .core import global_module, global_symbol
     global_symbol(globals(), "scipy", "polyfit")
     global_symbol(globals(), "scipy", "polyval")
     global_module(globals(), "scipy.stats", name="stats")
     global_module(globals(), "matplotlib.pyplot", name="plt")
     global_module(globals(), "numpy", name="np")
-    if args is None:
-        args = parse_args()
 
     # Core data, used across multiple plots
-
     period_grouper = PeriodGroup(extract_month, extract_week, extract_day)
-    table = list(csv.reader(args.database))
     for row in table:
         period_grouper.add(row)
     m_grouped, w_grouped, d_grouped = period_grouper.groups()
@@ -572,29 +568,36 @@ def main(args=None):
     first_transaction = datetime.strptime(m_grouped[months[0]][0][0], date_fmt)
     last_transaction = datetime.strptime(m_grouped[months[-1]][-1][0], date_fmt)
     span = [first_transaction, last_transaction]
-    if args.current_date:
+    if current_date:
         last_transaction = datetime.today()
     remaining = days_remaining(last_transaction)
 
-    if (should_graph(args.graph, "stacked_bar_expenses")):
+    if (should_graph(graph, "stacked_bar_expenses")):
         graph_stacked_bar_expenses(months, monthlies, expenses, m_income, remaining)
-    if (should_graph(args.graph, "bar_margin")):
-        graph_bar_margin(months, m_income, expenses, remaining, args.save)
-    if (should_graph(args.graph, "box_categories")):
+    if (should_graph(graph, "bar_margin")):
+        graph_bar_margin(months, m_income, expenses, remaining, save)
+    if (should_graph(graph, "box_categories")):
         graph_box_categories(months, categorized)
-    if (should_graph(args.graph, "xy_categories")):
+    if (should_graph(graph, "xy_categories")):
         graph_xy_categories(months, categorized, remaining)
-    if (should_graph(args.graph, "xy_weekly")):
+    if (should_graph(graph, "xy_weekly")):
         graph_xy_weekly(w_grouped)
-    if (should_graph(args.graph, "bar_targets")):
-        graph_bar_targets(months, monthlies, expenses, m_income, remaining, args.save)
-    if (should_graph(args.graph, "xy_progressive_mean")):
+    if (should_graph(graph, "bar_targets")):
+        graph_bar_targets(months, monthlies, expenses, m_income, remaining, save)
+    if (should_graph(graph, "xy_progressive_mean")):
         graph_xy_progressive_mean(months, d_grouped, m_income, description_groups, span)
-    if (should_graph(args.graph, "bar_cashflow")):
+    if (should_graph(graph, "bar_cashflow")):
         graph_bar_cashflow(description_groups, span)
-    if (should_graph(args.graph, "periodic_expenses")):
+    if (should_graph(graph, "periodic_expenses")):
         print_periodic_expenses(description_groups, last_transaction)
     plt.show()
+
+def main(args=None):
+    if args is None:
+        args = parse_args()
+
+    visualise(list(csv.reader(args.database)))
+
 
 if __name__ == "__main__":
     main()

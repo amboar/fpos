@@ -110,15 +110,12 @@ def _sense_form(row, debug=False):
         print(tt)
     return sense[tt]
 
-def _acquire_form(row, confirm):
+def _acquire_form(row):
     guess = None
     try:
         guess = _sense_form(row)
     except KeyError:
         pass
-    if not confirm:
-        assert guess is not None
-        return guess
     need = True
     form = None
     while need:
@@ -134,9 +131,10 @@ def _acquire_form(row, confirm):
             return raw
     return form
 
-def transform_auto(csv, args=None):
+def transform_auto(csv, confirm):
     first = next(csv)
-    return transform(_acquire_form(first, args.confirm), chain([first], csv))
+    form = _acquire_form(first, confirm) if confirm else _sense_form(first)
+    return transform(form, chain([first], csv))
 
 def transform_commbank(csv, args=None):
     # Commbank format:
@@ -201,16 +199,20 @@ def parse_args(subparser=None):
             help="The destination file to which the IR will be written")
     return [ parser ] if subparser else parser.parse_args()
 
-def transform(form, source, args=None):
+def transform(form, source, confirm=False):
     assert form in transform_choices, "form {} not in {}".format(form, transform_choices)
     t = globals()["transform_{}".format(form)]
-    return t((e for e in source if len(e) > 0 and not e[0].startswith("#")), args)
+    g = (e for e in source if len(e) > 0 and not e[0].startswith("#"))
+    if "auto" == form:
+        return t(g, confirm)
+    return t(g)
 
 def main(args=None):
     if args is None:
         args = parse_args()
     try:
-        csv.writer(args.outfile).writerows(transform(args.form, csv.reader(args.infile), args))
+        csv.writer(args.outfile).writerows(
+                transform(args.form, csv.reader(args.infile), args.confirm))
     finally:
         args.infile.close()
         args.outfile.close()

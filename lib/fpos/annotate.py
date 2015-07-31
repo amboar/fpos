@@ -126,38 +126,43 @@ def parse_args(subparser=None):
             help="Prompt for confirmation after each entry has been annotated with a category")
     return [ parser ] if subparser else parser.parse_args()
 
+def annotate(src, confirm=False):
+    annotated = []
+    t = _Tagger()
+    for row in src:
+        if 0 == len(row):
+            # Skip empty lines
+            continue
+        entry = Entry(*row[:3])
+        category = None
+        if 4 == len(row):
+            # Fourth column is category, check that it's known
+            try:
+                category = t.resolve_category(row[3])
+                t.add(entry, category)
+            except ValueError:
+                # Category isn't known, output remains empty to
+                # trigger user input
+                pass
+        if category is None:
+            # Haven't yet determined the category, require user input
+            category = t.categorize(entry, confirm)
+            assert None is not category
+            t.add(entry, category)
+            print()
+        output = []
+        output.extend(entry)
+        output.append(category)
+        annotated.append(output)
+    return annotated
+
 def main(args=None):
     if args is None:
         args = parse_args()
     try:
         r = csv.reader(args.infile, dialect='excel')
         w = csv.writer(args.outfile, dialect='excel')
-        t = _Tagger()
-        for row in r:
-            if 0 == len(row):
-                # Skip empty lines
-                continue
-            entry = Entry(*row[:3])
-            category = None
-            if 4 == len(row):
-                # Fourth column is category, check that it's known
-                try:
-                    category = t.resolve_category(row[3])
-                    t.add(entry, category)
-                except ValueError:
-                    # Category isn't known, output remains empty to
-                    # trigger user input
-                    pass
-            if category is None:
-                # Haven't yet determined the category, require user input
-                category = t.categorize(entry, confirm=args.confirm)
-                assert None is not category
-                t.add(entry, category)
-                print()
-            output = []
-            output.extend(entry)
-            output.append(category)
-            w.writerow(output)
+        w.writerows(annotate(r, args.confirm))
     finally:
         args.infile.close()
         args.outfile.close()

@@ -19,11 +19,11 @@
 import argparse
 import pystrgrp
 import csv
+import numpy as np
 from datetime import datetime, timedelta
-from matplotlib import pyplot as plt
 from itertools import chain, cycle, islice
 from .core import money
-import numpy as np
+import matplotlib.pyplot as plt
 
 cmd_description = \
         """Predict spending based on past habits"""

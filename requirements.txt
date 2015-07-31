@@ -1,3 +1,4 @@
+pyxdg
 python-dateutil
 numpy
 scipy

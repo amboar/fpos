@@ -51,7 +51,16 @@ file as a database for the information it graphs. Power users might be
 interested in tracking changes to their transaction database using [git](http://git-scm.com/) or
 similar tools.
 
-The relevant commands are:
+Somewhat similar to `git`, `fpos` has been split into porcelain and plumbing
+commands.
+
+The porcelain commands are:
+
+* `fpos init`: Creates and configures a database
+* `fpos update`: Handles the merge and annotation of bank export CSV files into the database
+* `fpos show`: Displays collated transactions as graphs and tables
+
+The plumbing commands are:
 
 * `fpos transform`: Converts each bank's CSV export document into an intermediate
   representation (IR) suitable for further processing
@@ -60,86 +69,48 @@ The relevant commands are:
 * `fpos visualise`: Displays collated transactions as graphs and tables
 * `fpos window`: Output document transactions between given dates
 
+The plumbing commands will remain unexplained for the moment.
 
-Use Cases
-=========
+Usage
+=====
 
-Some minimal help is available using the `--help` option for each subcommand.
-Make sure to read this! However, below we will explore the basic patterns and
-usecases. For the use cases we'll assume we have at least one NAB account. In
-examples with additional accounts other banks may be used to demonstrate other
-functionality. In the examples our freshly exported CSV file names will match
-the pattern "(nab|stgeorge|...)-export[0-9]\*\\.csv", e.g. export1.csv, export29.csv.
+Covering just the porcelain commands, `fpos` can be driven as outlined below.
+`fpos` currently supports CSV exports from the following banks:
 
-Starting Out: No History and a Single Account
----------------------------------------------
+* ANZ
+* Commonwealth Bank
+* St George
+* NAB
+* Bankwest
 
-Here's the simple case; it's the first time we've used fpos and we want to look
-at data from a single account.
+Create a Database
+-----------------
 
-    $ fpos transform nab-export.csv transformed.csv
-    $ fpos annotate transformed.csv database.csv
-      ...
-    $ fpos visualise database.csv
+    $ fpos init mydb ~/mydb.csv
 
-Starting Out: No History and Multiple NAB Accounts
---------------------------------------------------
+This registers the nickname 'mydb' with `fpos` and points it to the CSV file in
+which to record annotated transactions. `fpos init` only need be executed once
+per database - from there on the nickname can be used with the `update` and
+`show` subcommands.
 
-If we have multiple accounts we'd be missing information from the graphs if we
-didn't include transaction data from all of them. Here we have three NAB
-accounts; in the example presented here it's important that the exports are
-from the same bank.
+Add Transactions
+----------------
 
-    $ cat nab-export1.csv nab-export2.csv nab-export3.csv | fpos transform - transformed.csv
-    $ fpos annotate transformed.csv database.csv
-      ...
-    $ fpos visualise database.csv
+    $ fpos update mydb Transactions.csv ANZ.csv
 
-Starting Out: No History and Multiple Accounts with Different Banks
--------------------------------------------------------------------
+Note that the provided CSV files can be a mix from any of the banks listed
+above. `fpos update` automatically takes care of converting each export to the
+internal intermediate representation (unless it doesn't, in which case file an
+issue to add support). The `update` process will also take you through
+annotating the transactions.
 
-This is similar to no history with a single account; the difference is we will
-have multiple calls to the translate subcommand. Here we demonstrate managing a
-NAB and a St George account.
+Display Spending Graphs
+-----------------------
 
-    $ fpos transform nab-export.csv transformed1.csv
-    $ fpos transform stgeorge-export.csv transformed2.csv
-    $ fpos combine transformed1.csv transformed2.csv > combined.csv
-    $ fpos annotate combined.csv database.csv
-      ...
-    $ fpos visualise database.csv
+    $ fpos show mydb
 
-Creating a Transaction Database
--------------------------------
-
-There's not much to keeping a history of your transactions. The `database.csv`
-we created with `fpos annotate` and passed to `fpos visualise` is the beginning
-of your history. Updating your transaction database is a matter of calling
-`fpos combine` with database.csv as the first argument, where subsequent
-arguments are transformed CSV exports from your accounts. These exports should
-cover the period from the last update to `database.csv`. `fpos combine`
-performs deduplication of transactions, so overlapping exports can be used
-without concern.
-
-Updating an Existing Database
------------------------------
-
-We'll assume a `database.csv` exists as per the "Starting Out:" use cases
-above. We've seen how to manage merging multiple exports, from different banks,
-and thus will only demonstrate updating an existing `database.csv` with a
-single NAB 'update' export, named "nab-update-export.csv".
-
-    $ fpos transform nab-update-export.csv transformed.csv
-    $ fpos combine database.csv transformed.csv > combined.csv
-    $ fpos annotate combined.csv database.csv
-      ...
-    $ fpos visualise database.csv
-
-Here the annotations from the initial `database.csv` are carried over by `fpos
-combine` into `combined.csv`. `fpos annotate` then learns from these existing
-annotations to make suggestions for the uncategorised transactions added by
-`update-export.csv`. Multiple transformed CSV files can be passed to `fpos
-combine` to reduce the calls necessary.
+Currently this will show graphs for transactions spanning up to 12 months, even
+if the data in the database represents a greater time span.
 
 Dependencies
 ============
@@ -148,20 +119,17 @@ Build-time
 ----------
 
 0. Python 3
-1. C Compiler (GCC / Clang)
+1. C Compiler (GCC / Clang) with OpenMP support
 
 Run-time
 --------
 
-0. Python 3
-1. Numpy
-2. Scipy
-3. Matplotlib
+See `requirements.txt`
 
 Installation
 ============
 
-fpos can be installed in a virtualenv:
+`fpos` can be installed in a virtualenv:
 
     $ virtualenv ve
     $ source ve/bin/activate
