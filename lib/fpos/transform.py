@@ -193,7 +193,8 @@ def parse_args(subparser=None):
     parser = parser_init(name(), description=cmd_description, help=cmd_help)
     parser.add_argument("--form", metavar="FORM", choices=transform_choices, default="auto",
             help="The CSV schema used by the input file, named after associated banks")
-    parser.add_argument("--confirm", default=False, action="store_true")
+    parser.add_argument("--confirm", default=False, action="store_true",
+            help="In auto mode, prompt to confirm the selected transformation")
     parser.add_argument("infile", metavar="INPUT", type=argparse.FileType('r'), default=sys.stdin,
             help="The source file whose contents should be transformed to fpos IR")
     parser.add_argument("outfile", metavar="OUTPUT", type=argparse.FileType('w'), default=sys.stdout,
