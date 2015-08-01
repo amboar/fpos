@@ -77,7 +77,7 @@ def parse_args(subparser=None):
     aa("--start", default="01/2014")
     aa("--end", default="04/2014")
     aa("--no-annotate", default=True, dest="annotate", action="store_false")
-    return None if subparser else parser.parse_args()
+    return [ parser ] if subparser else parser.parse_args()
 
 def gen_days(days, period, stdev):
     rand = random.Random()

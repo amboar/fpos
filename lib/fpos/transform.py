@@ -199,7 +199,7 @@ def parse_args(subparser=None):
             help="The source file whose contents should be transformed to fpos IR")
     parser.add_argument("outfile", metavar="OUTPUT", type=argparse.FileType('w'), default=sys.stdout,
             help="The destination file to which the IR will be written")
-    return None if subparser else parser.parse_args()
+    return [ parser ] if subparser else parser.parse_args()
 
 def transform(form, source, args=None):
     assert form in transform_choices, "form {} not in {}".format(form, transform_choices)

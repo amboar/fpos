@@ -124,7 +124,7 @@ def parse_args(subparser=None):
             help="The IR document to which to write annotated transactions")
     parser.add_argument('--confirm', default=False, action="store_true",
             help="Prompt for confirmation after each entry has been annotated with a category")
-    return None if subparser else parser.parse_args()
+    return [ parser ] if subparser else parser.parse_args()
 
 def main(args=None):
     if args is None:

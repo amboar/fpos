@@ -28,18 +28,19 @@ from fpos import annotate, combine, generate, transform, visualise, window, pred
 _commands = (annotate, combine, generate, transform, visualise, window, predict, cdesc)
 
 def parse_args():
-    parser = argparse.ArgumentParser()
-    subparser = parser.add_subparsers(dest="command")
+    p = argparse.ArgumentParser()
+    subcmd = p.add_subparsers(dest="command")
     for cmd in _commands:
-        cmd.parse_args(subparser)
-    return parser.parse_args(), parser
+        for subcmdp in cmd.parse_args(subcmd):
+            subcmdp.set_defaults(subcmd=cmd.main)
+    return p.parse_args(), p
 
 def main():
     args, parser = parse_args()
     if None is args.command:
         parser.print_help()
     else:
-        dict((cmd.name(), cmd.main) for cmd in _commands)[args.command](args)
+        args.subcmd(args)
 
 if __name__ == "__main__":
     main()

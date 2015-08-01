@@ -33,7 +33,7 @@ def parse_args(subparser=None):
     parser = parser_init(name(), description=cmd_description, help=cmd_help)
     parser.add_argument('infile', metavar="INPUT", type=argparse.FileType('r'),
             help="The IR document containing un-categorised transactions")
-    return None if subparser else parser.parse_args()
+    return [ parser ] if subparser else parser.parse_args()
 
 def sanitise(value, strip=None):
     if strip is None:

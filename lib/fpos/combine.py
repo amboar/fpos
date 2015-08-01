@@ -49,7 +49,7 @@ def parse_args(subparser=None):
             help="An IR document to merge with DATABASE")
     parser.add_argument('--out', metavar="FILE", type=argparse.FileType('w'),
             default=sys.stdout, help="The destination for the merged document. Defaults to stdout")
-    return None if subparser else parser.parse_args()
+    return [ parser ] if subparser else parser.parse_args()
 
 def digest_entry(entry):
     s = hashlib.sha1()

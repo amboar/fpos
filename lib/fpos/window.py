@@ -48,7 +48,7 @@ def parse_args(subparser=None):
     parser.add_argument("--end", metavar="DATE", type=str,
             help="The end month and year (exclusive), in the form 'mm/yyyy'")
     # parser.add_argument("--length", type=int)
-    return None if subparser else parser.parse_args()
+    return [ parser ] if subparser else parser.parse_args()
 
 def gen_span_oracle(start, end):
     o_true = lambda x: True

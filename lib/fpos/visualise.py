@@ -146,7 +146,7 @@ def parse_args(subparser=None):
             help="Display a single graph rather than all")
     parser.add_argument("--current-date", default=False, action="store_true",
             help="Draw graphs based on the current date rather than the date of the last transaction")
-    return None if subparser else parser.parse_args()
+    return [ parser ] if subparser else parser.parse_args()
 
 def should_graph(name, graph):
     return None is name or name == graph
