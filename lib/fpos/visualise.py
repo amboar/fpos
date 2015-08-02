@@ -519,7 +519,7 @@ def graph_xy_progressive_mean(months, dailies, m_income, groups, dates):
     plt.xlim([min(xs) - 1, max(xs) + 1])
     plt.show()
 
-def visualise(table, current_date, graph=None, save=0):
+def visualise(table, current_date=False, graph=None, save=0):
     from .core import global_module, global_symbol
     global_symbol(globals(), "scipy", "polyfit")
     global_symbol(globals(), "scipy", "polyval")

@@ -44,18 +44,20 @@ def name():
 def db_init(args):
     config_dir = bd.save_config_path("fpos")
     config_file = os.path.join(config_dir, "fpos")
-    open(args.path, "w").close()
-    cpath = os.path.realpath(args.path)
     config = ConfigParser()
+    if os.path.exists(config_file):
+        config.read(config_file)
     if args.nickname in config:
         fmt = "Database with nickname '{}' already exists"
         raise ValueError(fmt.format(args.nickname))
+    db_file = os.path.realpath(args.path)
     config[args.nickname] = {}
-    config[args.nickname]["path"] = cpath
+    config[args.nickname]["path"] = db_file
     config[args.nickname]["version"] = "1"
-    with open(config_file, "w") as nick_file:
-        config.write(nick_file)
-    pass
+    with open(config_file, "w") as config_fo:
+        config.write(config_fo)
+    if not os.path.exists(db_file):
+        open(args.path, "w").close()
 
 def db_update(args):
     config_path = bd.load_first_config("fpos")
@@ -89,11 +91,11 @@ def db_show(args):
     config_file = os.path.join(config_path, "fpos")
     config = ConfigParser()
     config.read(config_file)
-    db_path = config[args.nickname]["path"]
+    db_file = config[args.nickname]["path"]
     start = (date.today() + rd(months=-12)).strftime("%m/%Y")
     end = None
-    with open(db_path, "r") as db:
-        visualise(list(window(start, end, csv.reader(db))), True, None, args.save)
+    with open(db_file, "r") as db:
+        visualise(list(window(start, end, csv.reader(db))), save=args.save)
 
 def parse_args(subparser):
     sc_init = subparser.add_parser("init")
