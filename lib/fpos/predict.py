@@ -299,7 +299,7 @@ def main(args=None):
     dates = [ None, None ]
     for r in reader:
         if len(r) >= 4 and not "Internal" == r[3]:
-            grouper.add(r[2], r)
+            grouper.add(r[2].upper(), r)
             dates[0] = pd(r[0]) if not dates[0] else min(pd(r[0]), dates[0])
             dates[1] = pd(r[0]) if not dates[1] else max(pd(r[0]), dates[1])
     graph_bar_cashflow([ list(i.data() for i in g) for g in grouper ], dates, 32)

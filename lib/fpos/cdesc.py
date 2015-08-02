@@ -90,7 +90,7 @@ def retain_unique_inter_tokens(groups):
 def cdesc(reader):
     grouper = pystrgrp.Strgrp()
     for r in reader:
-        grouper.add(" ".join(sanitise(r[2]).split()), r)
+        grouper.add(" ".join(sanitise(r[2]).split()).upper(), r)
     groups = [ [ [x.key(), x.value()] for x in g ] for g in grouper ]
     intra_common = []
     for g in groups:
@@ -98,13 +98,13 @@ def cdesc(reader):
     grouper2 = pystrgrp.Strgrp()
     for g in intra_common:
         for m in g:
-            grouper2.add(m[0], m[1])
+            grouper2.add(m[0].upper(), m[1])
     groups2 = [ [ g.key(), [ x.value() for x in g ] ] for g in grouper2 ]
     inter_unique = retain_unique_inter_tokens(groups2)
     grouper3 = pystrgrp.Strgrp()
     for g in inter_unique:
         for m in g[1]:
-            grouper3.add(g[0], m)
+            grouper3.add(g[0].upper(), m)
     groups3 = [ [ g.key(), [ x.value() for x in g ] ] for g in grouper3 ]
     return [ x[1] for x in groups3 ]
 
