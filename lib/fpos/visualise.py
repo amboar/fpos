@@ -596,7 +596,7 @@ def main(args=None):
     if args is None:
         args = parse_args()
 
-    visualise(list(csv.reader(args.database)))
+    visualise(list(csv.reader(args.database)), args.current_date, args.graph, args.save)
 
 
 if __name__ == "__main__":
