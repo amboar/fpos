@@ -82,7 +82,7 @@ def db_update(args):
         csv.writer(tf).writerows(
                 annotate(
                     combine(
-                        chain([csv.reader(db)], irdocs))))
+                        chain(irdocs, [csv.reader(db)]))))
         tf.close()
     shutil.move(tf.name, db_path)
 
