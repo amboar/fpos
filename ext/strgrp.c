@@ -22,12 +22,13 @@
 #include <string.h>
 #include "ccan/darray/darray.h"
 #include "ccan/talloc/talloc.h"
-#include "ccan/htable/htable.h"
-#include "ccan/hash/hash.h"
+#include "ccan/stringmap/stringmap.h"
 #include "strgrp.h"
 
 typedef darray(struct strgrp_grp *) darray_grp;
 typedef darray(struct strgrp_item *) darray_item;
+
+typedef stringmap(struct strgrp_grp *) stringmap_grp;
 
 struct grp_score {
     struct strgrp_grp *grp;
@@ -38,7 +39,7 @@ typedef darray(struct grp_score *) darray_score;
 
 struct strgrp {
     double threshold;
-    struct htable known;
+    stringmap_grp known;
     unsigned int n_grps;
     darray_grp grps;
     struct grp_score *scores;
@@ -64,11 +65,6 @@ struct strgrp_grp_iter {
 struct strgrp_item {
     char *key;
     void *value;
-};
-
-struct strgrp_map {
-    char *key;
-    struct strgrp_grp *grp;
 };
 
 #define ROWS 2
@@ -194,40 +190,19 @@ add_grp(struct strgrp *const ctx, const char *const str,
     return b;
 }
 
-static size_t
-rehash(const void *e, void *unused) {
-    return hash_string(((struct strgrp_map *)e)->key);
-}
-
-static bool
-hteq(const void *const e, void *const str) {
-    return strcmp(((struct strgrp_map *)e)->key, str) == 0;
-}
-
-static struct strgrp_map *
-lookup(struct strgrp *const ctx, const char *const str) {
-    return (struct strgrp_map *)htable_get(&ctx->known, hash_string(str), &hteq, str);
-}
-
 struct strgrp *
 strgrp_new(const double threshold) {
     struct strgrp *ctx = talloc_zero(NULL, struct strgrp);
     ctx->threshold = threshold;
-    htable_init(&ctx->known, rehash, NULL);
+    stringmap_init(ctx->known, NULL);
     darray_init(ctx->grps);
     return ctx;
 }
 
-static bool
+static void
 cache(struct strgrp *const ctx, struct strgrp_grp *const grp,
-        const char *const str, void *const data) {
-    if (lookup(ctx, str)) {
-        return true;
-    }
-    struct strgrp_map *d = talloc_zero(ctx, struct strgrp_map);
-    d->key = talloc_strdup(ctx, str);
-    d->grp = grp;
-    return htable_add(&ctx->known, hash_string(str), d);
+        const char *const str) {
+    *(stringmap_enter(ctx->known, str)) = grp;
 }
 
 struct strgrp_grp *
@@ -235,9 +210,11 @@ strgrp_grp_for(struct strgrp *const ctx, const char *const str) {
     if (!ctx->n_grps) {
         return NULL;
     }
-    const struct strgrp_map *const m = lookup(ctx, str);
-    if (m) {
-        return m->grp;
+    {
+        struct strgrp_grp **const grp = stringmap_lookup(ctx->known, str);
+        if (grp) {
+            return *grp;
+        }
     }
     int i;
     #pragma omp parallel for schedule(dynamic)
@@ -268,7 +245,7 @@ strgrp_add(struct strgrp *const ctx, const char *const str,
     }
     if (inserted) {
         assert(NULL != pick);
-        cache(ctx, pick, str, data);
+        cache(ctx, pick, str);
     }
     return pick;
 }
@@ -335,7 +312,7 @@ strgrp_item_value(const struct strgrp_item *const item) {
 void
 strgrp_free(struct strgrp *const ctx) {
     darray_free(ctx->grps);
-    htable_clear(&ctx->known);
+    stringmap_free(ctx->known);
     talloc_free(ctx);
 }
 

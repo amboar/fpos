@@ -7,11 +7,10 @@ LDFLAGS=-fopenmp
 #LDFLAGS=-pg -fprofile-arcs -ftest-coverage
 
 OBJS = strgrp.o \
-       lcs.o \
-       ccan/hash/hash.o \
-       ccan/htable/htable.o \
+       ccan/block_pool/block_pool.o \
        ccan/str/debug.o \
        ccan/str/str.o \
+       ccan/stringmap/stringmap.o \
        ccan/talloc/talloc.o
 
 BINS = strgrp

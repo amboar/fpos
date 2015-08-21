@@ -16,11 +16,11 @@ pystrgrp = Extension('pystrgrp',
     extra_compile_args = [ '-O2', '-fwrapv', '-Wall', '-Wstrict-prototypes', '-fopenmp' ],
     extra_link_args = [ '-fopenmp' ],
     sources = [
-        "ext/ccan/talloc/talloc.c",
+        "ext/ccan/block_pool/block_pool.c",
         "ext/ccan/str/str.c",
         "ext/ccan/str/debug.c",
-        "ext/ccan/htable/htable.c",
-        "ext/ccan/hash/hash.c",
+        "ext/ccan/stringmap/stringmap.c",
+        "ext/ccan/talloc/talloc.c",
         "ext/pystrgrp.c",
         "ext/strgrp.c"
         ]
