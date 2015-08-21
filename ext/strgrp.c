@@ -189,7 +189,7 @@ add_grp(struct strgrp *const ctx, const char *const str,
     }
     darray_push(ctx->grps, b);
     ctx->n_grps++;
-    ctx->scores = realloc(ctx->scores, sizeof(struct grp_score) * ctx->n_grps);
+    ctx->scores = talloc_realloc(ctx, ctx->scores, struct grp_score, ctx->n_grps);
     assert(ctx->scores);
     return b;
 }
@@ -334,7 +334,6 @@ strgrp_item_value(const struct strgrp_item *const item) {
 
 void
 strgrp_free(struct strgrp *const ctx) {
-    free(ctx->scores);
     darray_free(ctx->grps);
     htable_clear(&ctx->known);
     talloc_free(ctx);
