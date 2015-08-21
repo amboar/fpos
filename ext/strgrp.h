@@ -26,48 +26,47 @@ struct strgrp_bin_iter;
 struct strgrp_item;
 
 struct strgrp *
-strgrp_new(const double threshold);
+strgrp_new(double threshold);
 
 struct strgrp_bin *
-strgrp_bin_for(struct strgrp * const ctx, const char * const str);
+strgrp_bin_for(struct strgrp *ctx, const char *str);
 
 struct strgrp_bin *
-strgrp_add(struct strgrp * const ctx, const char * const str,
-        void * const data);
+strgrp_add(struct strgrp *ctx, const char *str, void *data);
 
 struct strgrp_iter *
-strgrp_iter_new(struct strgrp * const ctx);
+strgrp_iter_new(struct strgrp *ctx);
 
 struct strgrp_bin *
-strgrp_iter_next(struct strgrp_iter * const iter);
+strgrp_iter_next(struct strgrp_iter *iter);
 
 char *
-strgrp_bin_key(struct strgrp_bin * const bin);
+strgrp_bin_key(struct strgrp_bin *bin);
 
 void
-strgrp_iter_free(struct strgrp_iter * const iter);
+strgrp_iter_free(struct strgrp_iter *iter);
 
 struct strgrp_bin_iter *
-strgrp_bin_iter_new(struct strgrp_bin * const bin);
+strgrp_bin_iter_new(struct strgrp_bin *bin);
 
 struct strgrp_item *
-strgrp_bin_iter_next(struct strgrp_bin_iter * const iter);
+strgrp_bin_iter_next(struct strgrp_bin_iter *iter);
 
 void
-strgrp_bin_iter_free(struct strgrp_bin_iter * iter);
+strgrp_bin_iter_free(struct strgrp_bin_iter *iter);
 
 char *
-strgrp_item_key(const struct strgrp_item * const item);
+strgrp_item_key(const struct strgrp_item *item);
 
 void *
-strgrp_item_value(const struct strgrp_item * const item);
+strgrp_item_value(const struct strgrp_item *item);
 
 void
-strgrp_free(struct strgrp * const ctx);
+strgrp_free(struct strgrp *ctx);
 
 void
-strgrp_free_cb(struct strgrp * const ctx, void (*cb)(void *data));
+strgrp_free_cb(struct strgrp *ctx, void (*cb)(void *data));
 
 void
-strgrp_print(const struct strgrp * const ctx);
+strgrp_print(const struct strgrp *ctx);
 #endif
