@@ -205,8 +205,8 @@ cache(struct strgrp *const ctx, struct strgrp_grp *const grp,
     *(stringmap_enter(ctx->known, str)) = grp;
 }
 
-struct strgrp_grp *
-strgrp_grp_for(struct strgrp *const ctx, const char *const str) {
+static struct strgrp_grp *
+grp_for(struct strgrp *const ctx, const char *const str) {
     if (!ctx->n_grps) {
         return NULL;
     }
@@ -232,11 +232,16 @@ strgrp_grp_for(struct strgrp *const ctx, const char *const str) {
     return (max && max->score > ctx->threshold) ? max->grp : NULL;
 }
 
-struct strgrp_grp *
+const struct strgrp_grp *
+strgrp_grp_for(struct strgrp *const ctx, const char *const str) {
+    return grp_for(ctx, str);
+}
+
+const struct strgrp_grp *
 strgrp_add(struct strgrp *const ctx, const char *const str,
         void *const data) {
     bool inserted = false;
-    struct strgrp_grp *pick = strgrp_grp_for(ctx, str);
+    struct strgrp_grp *pick = grp_for(ctx, str);
     if (pick) {
         inserted = add_item(pick, str, data);
     } else {
@@ -261,7 +266,7 @@ strgrp_iter_new(struct strgrp *const ctx) {
     return iter;
 }
 
-struct strgrp_grp *
+const struct strgrp_grp *
 strgrp_iter_next(struct strgrp_iter *const iter) {
     return (iter->ctx->n_grps == iter->i) ?
         NULL : darray_item(iter->ctx->grps, iter->i++);
@@ -283,7 +288,7 @@ strgrp_grp_iter_new(struct strgrp_grp *const grp) {
     return iter;
 }
 
-struct strgrp_item *
+const struct strgrp_item *
 strgrp_grp_iter_next(struct strgrp_grp_iter *const iter) {
     return (iter->grp->n_items == iter->i) ?
         NULL : darray_item(iter->grp->items, iter->i++);
@@ -294,12 +299,12 @@ strgrp_grp_iter_free(struct strgrp_grp_iter *iter) {
     talloc_free(iter);
 }
 
-char *
+const char *
 strgrp_grp_key(struct strgrp_grp *const grp) {
     return grp->key;
 }
 
-char *
+const char *
 strgrp_item_key(const struct strgrp_item *const item) {
     return item->key;
 }
