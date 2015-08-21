@@ -11,12 +11,6 @@ if v < (3,):
     print("NOTE: Installation failed. Run setup.py using python3")
     sys.exit(1)
 
-pylcs = Extension('pylcs',
-    extra_compile_args = [ '-O2' ],
-    sources = [ "ext/pylcs.c",
-        "ext/lcs.c" ],
-    )
-
 pystrgrp = Extension('pystrgrp',
     include_dirs = ['ext'],
     extra_compile_args = [ '-O2', '-fwrapv', '-Wall', '-Wstrict-prototypes', '-fopenmp' ],
@@ -27,7 +21,6 @@ pystrgrp = Extension('pystrgrp',
         "ext/ccan/str/debug.c",
         "ext/ccan/htable/htable.c",
         "ext/ccan/hash/hash.c",
-        "ext/lcs.c",
         "ext/pystrgrp.c",
         "ext/strgrp.c"
         ]
@@ -43,5 +36,5 @@ setup(name='fpos',
         package_dir={'' : 'lib'},
         package_data={'fpos' : [ 'propernames' ]},
         scripts=['bin/fpos'],
-        ext_modules = [pylcs, pystrgrp],
+        ext_modules = [ pystrgrp ],
         license='GPLv3')

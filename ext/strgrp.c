@@ -17,13 +17,14 @@
 */
 #include <assert.h>
 #include <stdbool.h>
+#include <stdint.h>
+#include <stdlib.h>
 #include <string.h>
 #include "ccan/darray/darray.h"
 #include "ccan/talloc/talloc.h"
 #include "ccan/htable/htable.h"
 #include "ccan/hash/hash.h"
 #include "strgrp.h"
-#include "lcs.h"
 
 typedef darray(struct strgrp_bin *) darray_bin;
 typedef darray(struct strgrp_item *) darray_item;
@@ -69,6 +70,45 @@ struct strgrp_map {
     char * key;
     struct strgrp_bin * bin;
 };
+
+#define ROWS 2
+
+static inline int cmi(int i, int j) {
+    return ROWS * j + i;
+}
+
+static inline int16_t
+lcs(const char * const a, const char * const b) {
+    const int lb = strlen(b);
+    const int lbp1 = lb + 1;
+    int16_t * const lookup = calloc(ROWS * lbp1, sizeof(int16_t));
+    if (!lookup) {
+        return -1;
+    }
+    int ia, ib;
+    for (ia = (strlen(a) - 1); ia >= 0; ia--) {
+        const char iav = a[ia];
+        for (ib = lb - 1; ib >= 0; ib--) {
+            const char ibv = b[ib];
+            const int ial = (ia + 1) & 1; // ia last
+            const int iac = ia & 1; // ia current
+            const int ibl = ib + 1; // ib last
+            // don't need separate "ib current" as it's just ib
+            if (iav == ibv) {
+                lookup[cmi(iac, ib)] = 1 + lookup[cmi(ial, ibl)];
+            } else {
+                const int16_t valb = lookup[cmi(ial, ib)];
+                const int16_t vabl = lookup[cmi(iac, ibl)];
+                lookup[cmi(iac, ib)] = (valb > vabl) ? valb : vabl;
+            }
+        }
+    }
+    int16_t result = lookup[0];
+    free(lookup);
+    return result;
+}
+
+#undef ROWS
 
 static inline double
 nlcs(const char * const a, const char * const b) {
