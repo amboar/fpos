@@ -72,7 +72,7 @@ class _Tagger(object):
         return max(self._bin2hist(grpbin).items(), key=lambda x: x[1])[0]
 
     def classify(self, description):
-        grpbin = self._strgrp.bin_for(description)
+        grpbin = self._strgrp.grp_for(description)
         if grpbin is None:
              return None
         return self._tag_for(grpbin)

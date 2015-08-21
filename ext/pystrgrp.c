@@ -79,34 +79,34 @@ static PyTypeObject ItemType = {
 };
 
 //
-// strgrp_bin
+// strgrp_grp
 //
 
 typedef struct {
     PyObject_HEAD;
-    struct strgrp_bin *bin;
-    struct strgrp_bin_iter *iter;
-} BinObject;
+    struct strgrp_grp *grp;
+    struct strgrp_grp_iter *iter;
+} GrpObject;
 
 static void
-Bin_dealloc(PyObject *obj) {
-    BinObject *self = (BinObject *)obj;
+Grp_dealloc(PyObject *obj) {
+    GrpObject *self = (GrpObject *)obj;
     if (self->iter) {
-        strgrp_bin_iter_free(self->iter);
+        strgrp_grp_iter_free(self->iter);
     }
     Py_TYPE(self)->tp_free((PyObject *)self);
 }
 
 static PyObject *
-Bin_iter(PyObject *self) {
+Grp_iter(PyObject *self) {
     Py_INCREF(self);
     return self;
 }
 
 static PyObject *
-Bin_iternext(BinObject *self) {
+Grp_iternext(GrpObject *self) {
     if (!self->iter) {
-        self->iter = strgrp_bin_iter_new(self->bin);
+        self->iter = strgrp_grp_iter_new(self->grp);
         if (!self->iter) {
             return PyErr_NoMemory();
         }
@@ -115,7 +115,7 @@ Bin_iternext(BinObject *self) {
     if (!item) {
         return PyErr_NoMemory();
     }
-    item->item = strgrp_bin_iter_next(self->iter);
+    item->item = strgrp_grp_iter_next(self->iter);
     if (!item->item) {
         Item_dealloc((PyObject *)item);
         self->iter = NULL;
@@ -127,25 +127,25 @@ Bin_iternext(BinObject *self) {
 }
 
 static PyObject *
-Bin_key(BinObject *self) {
-    char *key = strgrp_bin_key(self->bin);
+Grp_key(GrpObject *self) {
+    char *key = strgrp_grp_key(self->grp);
     PyObject *py_key = Py_BuildValue("s", key);
     Py_XINCREF(py_key);
     return py_key;
 }
 
-static PyMethodDef Bin_methods[] = {
-    { "key", (PyCFunction)Bin_key, METH_NOARGS,
+static PyMethodDef Grp_methods[] = {
+    { "key", (PyCFunction)Grp_key, METH_NOARGS,
         "Fetch the description stored in the item" },
     {NULL}
 };
 
-static PyTypeObject BinType = {
+static PyTypeObject GrpType = {
     PyVarObject_HEAD_INIT(NULL, 0)
-    "strgrp.Bin",           /* tp_name */
-    sizeof(BinObject),      /* tp_basicsize */
+    "strgrp.Grp",           /* tp_name */
+    sizeof(GrpObject),      /* tp_basicsize */
     0,                         /* tp_itemsize */
-    &Bin_dealloc,            /* tp_dealloc */
+    &Grp_dealloc,            /* tp_dealloc */
     0,                         /* tp_print */
     0,                         /* tp_getattr */
     0,                         /* tp_setattr */
@@ -161,14 +161,14 @@ static PyTypeObject BinType = {
     0,                         /* tp_setattro */
     0,                         /* tp_as_buffer */
     Py_TPFLAGS_DEFAULT,        /* tp_flags */
-    "Bin object",           /* tp_doc */
+    "Grp object",           /* tp_doc */
     0,                         /* tp_traverse */
     0,                         /* tp_clear */
     0,                         /* tp_richcompare */
     0,                         /* tp_weaklistoffset */
-    (getiterfunc) &Bin_iter,                         /* tp_iter */
-    (iternextfunc) &Bin_iternext,                         /* tp_iternext */
-    Bin_methods,                         /* tp_methods */
+    (getiterfunc) &Grp_iter,                         /* tp_iter */
+    (iternextfunc) &Grp_iternext,                         /* tp_iternext */
+    Grp_methods,                         /* tp_methods */
     0,                         /* tp_members */
     0,                         /* tp_getset */
     0,                         /* tp_base */
@@ -229,22 +229,22 @@ Strgrp_dealloc(PyObject *obj) {
 }
 
 static PyObject *
-Strgrp_bin_for(StrgrpObject *self, PyObject *args, PyObject *kwds) {
+Strgrp_grp_for(StrgrpObject *self, PyObject *args, PyObject *kwds) {
     char *key;
     static char *kwlist[] = { "key", NULL };
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "s", kwlist, &key)) {
         return NULL;
     }
-    struct strgrp_bin * bin = strgrp_bin_for(self->grp, key);
-    if (!bin) {
+    struct strgrp_grp * grp = strgrp_grp_for(self->grp, key);
+    if (!grp) {
         Py_RETURN_NONE;
     }
-    BinObject * const binobj = (BinObject *)PyType_GenericNew(&BinType, NULL, NULL);
-    if (!binobj) {
+    GrpObject * const grpobj = (GrpObject *)PyType_GenericNew(&GrpType, NULL, NULL);
+    if (!grpobj) {
         return PyErr_NoMemory();
     }
-    binobj->bin = bin;
-    return (PyObject *)binobj;
+    grpobj->grp = grp;
+    return (PyObject *)grpobj;
 }
 
 static PyObject *
@@ -259,16 +259,16 @@ Strgrp_add(StrgrpObject *self, PyObject *args, PyObject *kwds) {
         return NULL;
     }
     Py_INCREF(data);
-    struct strgrp_bin * bin = strgrp_add(self->grp, key, data);
-    if (!bin) {
+    struct strgrp_grp * grp = strgrp_add(self->grp, key, data);
+    if (!grp) {
         return PyErr_NoMemory();
     }
-    BinObject * const binobj = (BinObject *)PyType_GenericNew(&BinType, NULL, NULL);
-    if (!binobj) {
+    GrpObject * const grpobj = (GrpObject *)PyType_GenericNew(&GrpType, NULL, NULL);
+    if (!grpobj) {
         return PyErr_NoMemory();
     }
-    binobj->bin = bin;
-    return (PyObject *)binobj;
+    grpobj->grp = grp;
+    return (PyObject *)grpobj;
 }
 
 static PyObject *
@@ -285,26 +285,26 @@ Strgrp_iternext(StrgrpObject *self) {
             return PyErr_NoMemory();
         }
     }
-    BinObject *bin = (BinObject *)PyType_GenericNew(&BinType, NULL, NULL);
-    if (!bin) {
+    GrpObject *grp = (GrpObject *)PyType_GenericNew(&GrpType, NULL, NULL);
+    if (!grp) {
         return PyErr_NoMemory();
     }
-    bin->bin = strgrp_iter_next(self->iter);
-    if (!bin->bin) {
-        Bin_dealloc((PyObject *)bin);
+    grp->grp = strgrp_iter_next(self->iter);
+    if (!grp->grp) {
+        Grp_dealloc((PyObject *)grp);
         self->iter = NULL;
         /* Raising of standard StopIteration exception with empty value. */
         PyErr_SetNone(PyExc_StopIteration);
         return NULL;
     }
-    return (PyObject *)bin;
+    return (PyObject *)grp;
 }
 
 static PyMethodDef Strgrp_methods[] = {
     { "add", (PyCFunction)Strgrp_add, (METH_VARARGS | METH_KEYWORDS),
-        "Classify a string into a bin" },
-    { "bin_for", (PyCFunction)Strgrp_bin_for, (METH_VARARGS | METH_KEYWORDS),
-        "Find a bin for a string, if one exists" },
+        "Cluster a string" },
+    { "grp_for", (PyCFunction)Strgrp_grp_for, (METH_VARARGS | METH_KEYWORDS),
+        "Find a cluster for a string, if one exists" },
     {NULL}
 };
 
@@ -352,7 +352,7 @@ static PyTypeObject StrgrpType = {
 static PyModuleDef StrgrpModule = {
     PyModuleDef_HEAD_INIT,
     "strgrp",
-    "Group similar strings into bins",
+    "Cluster strings based on longest common subsequence",
     -1,
     NULL, NULL, NULL, NULL, NULL
 };
@@ -367,8 +367,8 @@ PyInit_pystrgrp(void)
         return NULL;
     }
 
-    BinType.tp_new = &PyType_GenericNew;
-    if (PyType_Ready(&BinType) < 0) {
+    GrpType.tp_new = &PyType_GenericNew;
+    if (PyType_Ready(&GrpType) < 0) {
         return NULL;
     }
 

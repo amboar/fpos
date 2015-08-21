@@ -26,49 +26,49 @@
 #include "ccan/hash/hash.h"
 #include "strgrp.h"
 
-typedef darray(struct strgrp_bin *) darray_bin;
+typedef darray(struct strgrp_grp *) darray_grp;
 typedef darray(struct strgrp_item *) darray_item;
 
-struct bin_score {
-    struct strgrp_bin * bin;
+struct grp_score {
+    struct strgrp_grp *grp;
     double score;
 };
 
-typedef darray(struct bin_score *) darray_score;
+typedef darray(struct grp_score *) darray_score;
 
 struct strgrp {
     double threshold;
     struct htable known;
-    unsigned int n_bins;
-    darray_bin bins;
-    struct bin_score * scores;
+    unsigned int n_grps;
+    darray_grp grps;
+    struct grp_score *scores;
 };
 
 struct strgrp_iter {
-    struct strgrp * ctx;
+    struct strgrp *ctx;
     int i;
 };
 
-struct strgrp_bin {
-    char * key;
+struct strgrp_grp {
+    char *key;
     size_t key_len;
     darray_item items;
     int32_t n_items;
 };
 
-struct strgrp_bin_iter {
-    struct strgrp_bin * bin;
+struct strgrp_grp_iter {
+    struct strgrp_grp *grp;
     int i;
 };
 
 struct strgrp_item {
-    char * key;
-    void * value;
+    char *key;
+    void *value;
 };
 
 struct strgrp_map {
-    char * key;
-    struct strgrp_bin * bin;
+    char *key;
+    struct strgrp_grp *grp;
 };
 
 #define ROWS 2
@@ -78,10 +78,10 @@ static inline int cmi(int i, int j) {
 }
 
 static inline int16_t
-lcs(const char * const a, const char * const b) {
+lcs(const char *const a, const char *const b) {
     const int lb = strlen(b);
     const int lbp1 = lb + 1;
-    int16_t * const lookup = calloc(ROWS * lbp1, sizeof(int16_t));
+    int16_t *const lookup = calloc(ROWS * lbp1, sizeof(int16_t));
     if (!lookup) {
         return -1;
     }
@@ -111,16 +111,16 @@ lcs(const char * const a, const char * const b) {
 #undef ROWS
 
 static inline double
-nlcs(const char * const a, const char * const b) {
+nlcs(const char *const a, const char *const b) {
     const double lcss = lcs(a, b);
     return 2 * lcss / (strlen(a) + strlen(b));
 }
 
 static bool
-should_bin_score(const struct strgrp * const ctx, const struct strgrp_bin * const bin,
-        const char * const str) {
+should_grp_score(const struct strgrp *const ctx, const struct strgrp_grp *const grp,
+        const char *const str) {
     const size_t strl = strlen(str);
-    const size_t keyl = bin->key_len;
+    const size_t keyl = grp->key_len;
     double sr =  strl / keyl;
     if (1 < sr) {
         sr = 1 / sr;
@@ -129,13 +129,13 @@ should_bin_score(const struct strgrp * const ctx, const struct strgrp_bin * cons
 }
 
 static inline double
-bin_score(const struct strgrp_bin * const ctx, const char * const str) {
-    return nlcs(ctx->key, str);
+grp_score(const struct strgrp_grp *const grp, const char *const str) {
+    return nlcs(grp->key, str);
 }
 
 static struct strgrp_item *
-new_item(TALLOC_CTX * const tctx, const char * const str, void * const data) {
-    struct strgrp_item * i = talloc_zero(tctx, struct strgrp_item);
+new_item(TALLOC_CTX *const tctx, const char *const str, void *const data) {
+    struct strgrp_item *i = talloc_zero(tctx, struct strgrp_item);
     if (!i) {
         return NULL;
     }
@@ -145,9 +145,9 @@ new_item(TALLOC_CTX * const tctx, const char * const str, void * const data) {
 }
 
 static bool
-add_item(struct strgrp_bin * const ctx, const char * const str,
-        void * const data) {
-    struct strgrp_item * i = new_item(ctx, str, data);
+add_item(struct strgrp_grp *const ctx, const char *const str,
+        void *const data) {
+    struct strgrp_item *i = new_item(ctx, str, data);
     if (!i) {
         return false;
     }
@@ -157,14 +157,14 @@ add_item(struct strgrp_bin * const ctx, const char * const str,
 }
 
 static int
-free_bin(struct strgrp_bin * bin) {
-    darray_free(bin->items);
+free_grp(struct strgrp_grp *grp) {
+    darray_free(grp->items);
     return 0;
 }
 
-static struct strgrp_bin *
-new_bin(TALLOC_CTX * const tctx, const char * const str, void * const data) {
-    struct strgrp_bin * b = talloc_zero(tctx, struct strgrp_bin);
+static struct strgrp_grp *
+new_grp(TALLOC_CTX *const tctx, const char *const str, void *const data) {
+    struct strgrp_grp *b = talloc_zero(tctx, struct strgrp_grp);
     if (!b) {
         return NULL;
     }
@@ -172,7 +172,7 @@ new_bin(TALLOC_CTX * const tctx, const char * const str, void * const data) {
     b->key_len = strlen(str);
     b->n_items = 0;
     darray_init(b->items);
-    talloc_set_destructor(b, free_bin);
+    talloc_set_destructor(b, free_grp);
     if (!add_item(b, str, data)) {
         talloc_free(b);
         return NULL;
@@ -180,17 +180,17 @@ new_bin(TALLOC_CTX * const tctx, const char * const str, void * const data) {
     return b;
 }
 
-static struct strgrp_bin *
-add_bin(struct strgrp * const grp, const char * const str,
-        void * const data) {
-    struct strgrp_bin * b = new_bin(grp, str, data);
+static struct strgrp_grp *
+add_grp(struct strgrp *const ctx, const char *const str,
+        void *const data) {
+    struct strgrp_grp *b = new_grp(ctx, str, data);
     if (!b) {
         return NULL;
     }
-    darray_push(grp->bins, b);
-    grp->n_bins++;
-    grp->scores = realloc(grp->scores, sizeof(struct bin_score) * grp->n_bins);
-    assert(grp->scores);
+    darray_push(ctx->grps, b);
+    ctx->n_grps++;
+    ctx->scores = realloc(ctx->scores, sizeof(struct grp_score) * ctx->n_grps);
+    assert(ctx->scores);
     return b;
 }
 
@@ -200,70 +200,70 @@ rehash(const void *e, void *unused) {
 }
 
 static bool
-hteq(const void * const e, void * const str) {
+hteq(const void *const e, void *const str) {
     return strcmp(((struct strgrp_map *)e)->key, str) == 0;
 }
 
 static struct strgrp_map *
-lookup(struct strgrp * const ctx, const char * const str) {
+lookup(struct strgrp *const ctx, const char *const str) {
     return (struct strgrp_map *)htable_get(&ctx->known, hash_string(str), &hteq, str);
 }
 
 struct strgrp *
 strgrp_new(const double threshold) {
-    struct strgrp * ctx = talloc_zero(NULL, struct strgrp);
+    struct strgrp *ctx = talloc_zero(NULL, struct strgrp);
     ctx->threshold = threshold;
     htable_init(&ctx->known, rehash, NULL);
-    darray_init(ctx->bins);
+    darray_init(ctx->grps);
     return ctx;
 }
 
 static bool
-cache(struct strgrp * const grp, struct strgrp_bin * const bin,
-        const char * const str, void * const data) {
-    if (lookup(grp, str)) {
+cache(struct strgrp *const ctx, struct strgrp_grp *const grp,
+        const char *const str, void *const data) {
+    if (lookup(ctx, str)) {
         return true;
     }
-    struct strgrp_map * d = talloc_zero(grp, struct strgrp_map);
-    d->key = talloc_strdup(grp, str);
-    d->bin = bin;
-    return htable_add(&grp->known, hash_string(str), d);
+    struct strgrp_map *d = talloc_zero(ctx, struct strgrp_map);
+    d->key = talloc_strdup(ctx, str);
+    d->grp = grp;
+    return htable_add(&ctx->known, hash_string(str), d);
 }
 
-struct strgrp_bin *
-strgrp_bin_for(struct strgrp * const ctx, const char * const str) {
-    if (!ctx->n_bins) {
+struct strgrp_grp *
+strgrp_grp_for(struct strgrp *const ctx, const char *const str) {
+    if (!ctx->n_grps) {
         return NULL;
     }
-    const struct strgrp_map * const m = lookup(ctx, str);
+    const struct strgrp_map *const m = lookup(ctx, str);
     if (m) {
-        return m->bin;
+        return m->grp;
     }
     int i;
     #pragma omp parallel for schedule(dynamic)
-    for (i = 0; i < ctx->n_bins; i++) {
-        ctx->scores[i].bin = darray_item(ctx->bins, i);
-        const bool ss = should_bin_score(ctx, ctx->scores[i].bin, str);
-        ctx->scores[i].score = ss ? bin_score(ctx->scores[i].bin, str) : 0;
+    for (i = 0; i < ctx->n_grps; i++) {
+        ctx->scores[i].grp = darray_item(ctx->grps, i);
+        const bool ss = should_grp_score(ctx, ctx->scores[i].grp, str);
+        ctx->scores[i].score = ss ? grp_score(ctx->scores[i].grp, str) : 0;
     }
-    struct bin_score * max = NULL;
-    for (i = 0; i < ctx->n_bins; i++) {
+    struct grp_score *max = NULL;
+    for (i = 0; i < ctx->n_grps; i++) {
         if (!max || ctx->scores[i].score > max->score) {
             max = &(ctx->scores[i]);
         }
     }
-    return (max && max->score > ctx->threshold) ? max->bin : NULL;
+    return (max && max->score > ctx->threshold) ? max->grp : NULL;
 }
 
-struct strgrp_bin *
-strgrp_add(struct strgrp * const ctx, const char * const str,
-        void * const data) {
+struct strgrp_grp *
+strgrp_add(struct strgrp *const ctx, const char *const str,
+        void *const data) {
     bool inserted = false;
-    struct strgrp_bin * pick = strgrp_bin_for(ctx, str);
+    struct strgrp_grp *pick = strgrp_grp_for(ctx, str);
     if (pick) {
         inserted = add_item(pick, str, data);
     } else {
-        pick = add_bin(ctx, str, data);
+        pick = add_grp(ctx, str, data);
         inserted = (NULL != pick);
     }
     if (inserted) {
@@ -274,8 +274,8 @@ strgrp_add(struct strgrp * const ctx, const char * const str,
 }
 
 struct strgrp_iter *
-strgrp_iter_new(struct strgrp * const ctx) {
-    struct strgrp_iter * iter = talloc_zero(ctx, struct strgrp_iter);
+strgrp_iter_new(struct strgrp *const ctx) {
+    struct strgrp_iter *iter = talloc_zero(ctx, struct strgrp_iter);
     if (!iter) {
         return NULL;
     }
@@ -284,68 +284,68 @@ strgrp_iter_new(struct strgrp * const ctx) {
     return iter;
 }
 
-struct strgrp_bin *
-strgrp_iter_next(struct strgrp_iter * const iter) {
-    return (iter->ctx->n_bins == iter->i) ?
-        NULL : darray_item(iter->ctx->bins, iter->i++);
+struct strgrp_grp *
+strgrp_iter_next(struct strgrp_iter *const iter) {
+    return (iter->ctx->n_grps == iter->i) ?
+        NULL : darray_item(iter->ctx->grps, iter->i++);
 }
 
 void
-strgrp_iter_free(struct strgrp_iter * const iter) {
+strgrp_iter_free(struct strgrp_iter *const iter) {
     talloc_free(iter);
 }
 
-struct strgrp_bin_iter *
-strgrp_bin_iter_new(struct strgrp_bin * const bin) {
-    struct strgrp_bin_iter * iter = talloc_zero(bin, struct strgrp_bin_iter);
+struct strgrp_grp_iter *
+strgrp_grp_iter_new(struct strgrp_grp *const grp) {
+    struct strgrp_grp_iter *iter = talloc_zero(grp, struct strgrp_grp_iter);
     if (!iter) {
         return NULL;
     }
-    iter->bin = bin;
+    iter->grp = grp;
     iter->i = 0;
     return iter;
 }
 
 struct strgrp_item *
-strgrp_bin_iter_next(struct strgrp_bin_iter * const iter) {
-    return (iter->bin->n_items == iter->i) ?
-        NULL : darray_item(iter->bin->items, iter->i++);
+strgrp_grp_iter_next(struct strgrp_grp_iter *const iter) {
+    return (iter->grp->n_items == iter->i) ?
+        NULL : darray_item(iter->grp->items, iter->i++);
 }
 
 void
-strgrp_bin_iter_free(struct strgrp_bin_iter * iter) {
+strgrp_grp_iter_free(struct strgrp_grp_iter *iter) {
     talloc_free(iter);
 }
 
 char *
-strgrp_bin_key(struct strgrp_bin * const bin) {
-    return bin->key;
+strgrp_grp_key(struct strgrp_grp *const grp) {
+    return grp->key;
 }
 
 char *
-strgrp_item_key(const struct strgrp_item * const item) {
+strgrp_item_key(const struct strgrp_item *const item) {
     return item->key;
 }
 
 void *
-strgrp_item_value(const struct strgrp_item * const item) {
+strgrp_item_value(const struct strgrp_item *const item) {
     return item->value;
 }
 
 void
-strgrp_free(struct strgrp * const ctx) {
+strgrp_free(struct strgrp *const ctx) {
     free(ctx->scores);
-    darray_free(ctx->bins);
+    darray_free(ctx->grps);
     htable_clear(&ctx->known);
     talloc_free(ctx);
 }
 
 void
-strgrp_free_cb(struct strgrp * const ctx, void (*cb)(void * data)) {
-    struct strgrp_bin ** bin;
-    struct strgrp_item ** item;
-    darray_foreach(bin, ctx->bins) {
-        darray_foreach(item, (*bin)->items) {
+strgrp_free_cb(struct strgrp *const ctx, void (*cb)(void *data)) {
+    struct strgrp_grp **grp;
+    struct strgrp_item **item;
+    darray_foreach(grp, ctx->grps) {
+        darray_foreach(item, (*grp)->items) {
             cb((*item)->value);
         }
     }
@@ -355,25 +355,25 @@ strgrp_free_cb(struct strgrp * const ctx, void (*cb)(void * data)) {
 #include <stdio.h>
 
 static void
-print_item(const struct strgrp_item * item) {
+print_item(const struct strgrp_item *item) {
     printf("\t%s\n", item->key);
 }
 
 static void
-print_bin(const struct strgrp_bin * const bin) {
-    struct strgrp_item ** item;
-    printf("%s:\n", bin->key);
-    darray_foreach(item, bin->items) {
+print_grp(const struct strgrp_grp *const grp) {
+    struct strgrp_item **item;
+    printf("%s:\n", grp->key);
+    darray_foreach(item, grp->items) {
         print_item(*item);
     }
     printf("\n");
 }
 
 void
-strgrp_print(const struct strgrp * const ctx) {
-    struct strgrp_bin ** bin;
-    darray_foreach(bin, ctx->bins) {
-        print_bin(*bin);
+strgrp_print(const struct strgrp *const ctx) {
+    struct strgrp_grp **grp;
+    darray_foreach(grp, ctx->grps) {
+        print_grp(*grp);
     }
 }
 
@@ -381,11 +381,11 @@ strgrp_print(const struct strgrp * const ctx) {
 #include <stdlib.h>
 
 int
-main(int argc, char ** argv) {
-    FILE * const f = fdopen(0, "r");
+main(int argc, char **argv) {
+    FILE *const f = fdopen(0, "r");
 #define BUF_SIZE 512
-    char * buf = malloc(BUF_SIZE);
-    struct strgrp * grp = strgrp_new(0.85);
+    char *buf = malloc(BUF_SIZE);
+    struct strgrp *grp = strgrp_new(0.85);
     while(fgets(buf, BUF_SIZE, f)) {
         buf[strcspn(buf, "\r\n")] = '\0';
         if (!strgrp_add(grp, buf, NULL)) {

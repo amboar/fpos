@@ -21,39 +21,39 @@
 
 struct strgrp;
 struct strgrp_iter;
-struct strgrp_bin;
-struct strgrp_bin_iter;
+struct strgrp_grp;
+struct strgrp_grp_iter;
 struct strgrp_item;
 
 struct strgrp *
 strgrp_new(double threshold);
 
-struct strgrp_bin *
-strgrp_bin_for(struct strgrp *ctx, const char *str);
+struct strgrp_grp *
+strgrp_grp_for(struct strgrp *ctx, const char *str);
 
-struct strgrp_bin *
+struct strgrp_grp *
 strgrp_add(struct strgrp *ctx, const char *str, void *data);
 
 struct strgrp_iter *
 strgrp_iter_new(struct strgrp *ctx);
 
-struct strgrp_bin *
+struct strgrp_grp *
 strgrp_iter_next(struct strgrp_iter *iter);
 
 char *
-strgrp_bin_key(struct strgrp_bin *bin);
+strgrp_grp_key(struct strgrp_grp *grp);
 
 void
 strgrp_iter_free(struct strgrp_iter *iter);
 
-struct strgrp_bin_iter *
-strgrp_bin_iter_new(struct strgrp_bin *bin);
+struct strgrp_grp_iter *
+strgrp_grp_iter_new(struct strgrp_grp *grp);
 
 struct strgrp_item *
-strgrp_bin_iter_next(struct strgrp_bin_iter *iter);
+strgrp_grp_iter_next(struct strgrp_grp_iter *iter);
 
 void
-strgrp_bin_iter_free(struct strgrp_bin_iter *iter);
+strgrp_grp_iter_free(struct strgrp_grp_iter *iter);
 
 char *
 strgrp_item_key(const struct strgrp_item *item);
