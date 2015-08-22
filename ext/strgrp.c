@@ -199,7 +199,7 @@ strgrp_new(const double threshold) {
     return ctx;
 }
 
-static void
+static inline void
 cache(struct strgrp *const ctx, struct strgrp_grp *const grp,
         const char *const str) {
     *(stringmap_enter(ctx->known, str)) = grp;
