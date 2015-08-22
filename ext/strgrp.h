@@ -158,7 +158,7 @@ strgrp_iter_free(struct strgrp_iter *iter);
  * instance.
  */
 const char *
-strgrp_grp_key(struct strgrp_grp *grp);
+strgrp_grp_key(const struct strgrp_grp *grp);
 
 /**
  * Create an iterator over items in the provided group
@@ -171,7 +171,7 @@ strgrp_grp_key(struct strgrp_grp *grp);
  * returned pointer after the strgrp instance has been freed.
  */
 struct strgrp_grp_iter *
-strgrp_grp_iter_new(struct strgrp_grp *grp);
+strgrp_grp_iter_new(const struct strgrp_grp *grp);
 
 /**
  * Extract the next item from a item iterator

@@ -46,24 +46,24 @@ struct strgrp {
 };
 
 struct strgrp_iter {
-    struct strgrp *ctx;
+    const struct strgrp *ctx;
     int i;
 };
 
 struct strgrp_grp {
-    char *key;
+    const char *key;
     size_t key_len;
     darray_item items;
     int32_t n_items;
 };
 
 struct strgrp_grp_iter {
-    struct strgrp_grp *grp;
+    const struct strgrp_grp *grp;
     int i;
 };
 
 struct strgrp_item {
-    char *key;
+    const char *key;
     void *value;
 };
 
@@ -229,7 +229,7 @@ grp_for(struct strgrp *const ctx, const char *const str) {
             max = &(ctx->scores[i]);
         }
     }
-    return (max && max->score > ctx->threshold) ? max->grp : NULL;
+    return (max && max->score >= ctx->threshold) ? max->grp : NULL;
 }
 
 const struct strgrp_grp *
@@ -278,7 +278,7 @@ strgrp_iter_free(struct strgrp_iter *const iter) {
 }
 
 struct strgrp_grp_iter *
-strgrp_grp_iter_new(struct strgrp_grp *const grp) {
+strgrp_grp_iter_new(const struct strgrp_grp *const grp) {
     struct strgrp_grp_iter *iter = talloc_zero(grp, struct strgrp_grp_iter);
     if (!iter) {
         return NULL;
@@ -300,7 +300,7 @@ strgrp_grp_iter_free(struct strgrp_grp_iter *iter) {
 }
 
 const char *
-strgrp_grp_key(struct strgrp_grp *const grp) {
+strgrp_grp_key(const struct strgrp_grp *const grp) {
     return grp->key;
 }
 
