@@ -113,8 +113,8 @@ nlcs(const char *const a, const char *const b) {
 }
 
 static bool
-should_grp_score(const struct strgrp *const ctx, const struct strgrp_grp *const grp,
-        const char *const str) {
+should_grp_score(const struct strgrp *const ctx,
+        const struct strgrp_grp *const grp, const char *const str) {
     const size_t strl = strlen(str);
     const size_t keyl = grp->key_len;
     double sr =  strl / keyl;
