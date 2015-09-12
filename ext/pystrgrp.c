@@ -1,5 +1,5 @@
 #include <Python.h>
-#include "strgrp.h"
+#include "ccan/strgrp/strgrp.h"
 
 //
 // strgrp_item
@@ -7,7 +7,7 @@
 
 typedef struct {
     PyObject_HEAD;
-    struct strgrp_item *item;
+    const struct strgrp_item *item;
 } ItemObject;
 
 static void
@@ -17,7 +17,7 @@ Item_dealloc(PyObject *obj) {
 
 static PyObject *
 Item_key(ItemObject *self) {
-    char *key = strgrp_item_key(self->item);
+    const char *key = strgrp_item_key(self->item);
     PyObject *py_key = Py_BuildValue("s", key);
     Py_XINCREF(py_key);
     return py_key;
@@ -84,7 +84,7 @@ static PyTypeObject ItemType = {
 
 typedef struct {
     PyObject_HEAD;
-    struct strgrp_grp *grp;
+    const struct strgrp_grp *grp;
     struct strgrp_grp_iter *iter;
 } GrpObject;
 
@@ -128,7 +128,7 @@ Grp_iternext(GrpObject *self) {
 
 static PyObject *
 Grp_key(GrpObject *self) {
-    char *key = strgrp_grp_key(self->grp);
+    const char *key = strgrp_grp_key(self->grp);
     PyObject *py_key = Py_BuildValue("s", key);
     Py_XINCREF(py_key);
     return py_key;
@@ -235,7 +235,7 @@ Strgrp_grp_for(StrgrpObject *self, PyObject *args, PyObject *kwds) {
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "s", kwlist, &key)) {
         return NULL;
     }
-    struct strgrp_grp * grp = strgrp_grp_for(self->grp, key);
+    const struct strgrp_grp * grp = strgrp_grp_for(self->grp, key);
     if (!grp) {
         Py_RETURN_NONE;
     }
@@ -259,7 +259,7 @@ Strgrp_add(StrgrpObject *self, PyObject *args, PyObject *kwds) {
         return NULL;
     }
     Py_INCREF(data);
-    struct strgrp_grp * grp = strgrp_add(self->grp, key, data);
+    const struct strgrp_grp * grp = strgrp_add(self->grp, key, data);
     if (!grp) {
         return PyErr_NoMemory();
     }

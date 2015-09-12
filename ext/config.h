@@ -63,4 +63,5 @@
 #define HAVE_TYPEOF 1
 #define HAVE_UTIME 1
 #define HAVE_WARN_UNUSED_RESULT 1
+#define HAVE_OPENMP 1
 #endif /* CCAN_CONFIG_H */
