@@ -1,0 +1,45 @@
+#!/usr/bin/python
+
+import math
+from collections import namedtuple as nt
+
+pop = nt("pop", [ "char", "count" ] )
+
+def popcnt(chars):
+    ctr = [ 0 ] * len(chars)
+    for c in chars:
+        ctr[chars.find(c)] += 1
+    return [ pop(chars[i], ctr[i]) for i in range(len(chars)) if ctr[i] > 0 ]
+
+def charv(a, b):
+    ap = popcnt(a)
+    bp = popcnt(b)
+    ab = a + b
+    abl = len(ab)
+    av = [ 0 ] * abl
+    bv = [ 0 ] * abl
+    for p in ap:
+        av[ab.find(p.char)] = p.count
+    for p in bp:
+        bv[ab.find(p.char)] = p.count
+    return av, bv
+
+def vcos(a, b):
+    saibi = 0
+    sa2 = 0
+    sb2 = 0
+    for ai, bi in zip(a, b):
+        saibi += ai * bi
+        sa2 += ai * ai
+        sb2 += bi * bi
+    return saibi / (math.sqrt(sa2) * math.sqrt(sb2))
+
+def main():
+    test = [ "bob", "rob" ]
+    print([ popcnt(x) for x in test ])
+    print(charv(*test))
+    print(vcos(*charv(*test)))
+
+
+if __name__ == "__main__":
+    main()
