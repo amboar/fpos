@@ -1,4 +1,5 @@
 CFLAGS = -I. -O2
+CFLAGS += -ggdb
 LDFLAGS =
 LDLIBS = -lm
 
