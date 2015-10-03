@@ -59,11 +59,16 @@ _STRING = "string"
 
 sense = {}
 sense[(_DATE, _NUMBER, _STRING, _NUMBER)] = "commbank"
+
 sense[(_DATE, _NUMBER, _STRING)] = "anz"
+
 sense[(_DATE, _STRING, _EMPTY, _NUMBER, _NUMBER)] = "stgeorge"
 sense[(_DATE, _STRING, _NUMBER, _EMPTY, _NUMBER)] = "stgeorge"
+
 sense[(_DATE, _NUMBER, _NUMBER, _EMPTY, _STRING, _STRING, _NUMBER)] = "nab"
 sense[(_DATE, _NUMBER, _EMPTY, _EMPTY, _STRING, _STRING, _NUMBER, _EMPTY)] = "nab"
+sense[(_DATE, _NUMBER, _EMPTY, _EMPTY, _STRING, _EMPTY, _NUMBER, _EMPTY)] = "nab"
+
 sense[(_EMPTY, _NUMBER, _DATE, _STRING, _NUMBER, _EMPTY, _EMPTY, _NUMBER, _STRING)] = "bankwest"
 sense[(_EMPTY, _NUMBER, _DATE, _STRING, _EMPTY, _NUMBER, _EMPTY, _NUMBER, _STRING)] = "bankwest"
 sense[(_EMPTY, _NUMBER, _DATE, _STRING, _EMPTY, _EMPTY, _NUMBER, _NUMBER, _STRING)] = "bankwest"
