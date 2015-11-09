@@ -8,11 +8,6 @@ int main(void) {
     FILE *f;
     char *buf;
     struct strgrp *ctx;
-    struct strgrp_iter *iter;
-    const struct strgrp_grp *grp;
-    struct strgrp_grp_iter *grp_iter;
-    const struct strgrp_item *item;
-
     f = fdopen(0, "r");
 #define BUF_SIZE 512
     buf = malloc(BUF_SIZE);
@@ -23,9 +18,6 @@ int main(void) {
             printf("Failed to classify %s\n", buf);
         }
     }
-    strgrp_print(ctx);
-
-    strgrp_iter_free(iter);
     strgrp_free(ctx);
     free(buf);
     fclose(f);
