@@ -492,8 +492,8 @@ def graph_xy_progressive_mean(months, dailies, m_income, groups, dates):
     plt.figure(7)
     days_per_month = max(len(x) for x in pm.means.values())
     xs = list(range(1, days_per_month + 1))
-    tail = pm.tail()
-    for ys in list(tail.values()):
+    tvs = pm.tail().values()
+    for ys in list(tvs):
         plt.plot(xs[:len(ys)], ys, ls="None", marker="o", color="grey")
     d_current = pm.head()
     mr = calendar.monthrange(pm.prev.year, pm.prev.month)
@@ -505,8 +505,7 @@ def graph_xy_progressive_mean(months, dailies, m_income, groups, dates):
     forecast_plt.set_label("{} - forecast".format(months[-1]))
     current_plt, = plt.plot(xs[:dates[1].day], d_current, ls="-", marker="o", color="red")
     current_plt.set_label("{} - historic".format(months[-1]))
-    n_tail_days = sum(len(x) for x in tail.values())
-    mean_spend = sum(sum(v) for v in tail.values()) / n_tail_days
+    mean_spend = sum(v[-1] for v in tvs) / len(tvs)
     mean_plt, = plt.plot(xs, [ mean_spend ] * days_per_month)
     mean_plt.set_label("Typical daily spend")
     mean_income = np.mean([m_income[m] for m in months[:-1]])
