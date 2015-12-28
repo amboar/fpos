@@ -31,7 +31,9 @@ pystrgrp = Extension('pystrgrp',
         "ext/ccan/tal/tal.c",
         "ext/ccan/tal/talloc/talloc.c",
         "ext/pystrgrp.c"
-        ]
+        ],
+    depends = [ 'ext/config.h' ],
+    optional = False
     )
 
 setup(name='fpos',

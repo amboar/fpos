@@ -120,6 +120,7 @@ Build-time
 
 0. Python 3
 1. C Compiler (GCC / Clang) with OpenMP support
+2. GNU Make
 
 Run-time
 --------
@@ -129,17 +130,56 @@ See `requirements.txt`
 Installation
 ============
 
-`fpos` can be installed in a virtualenv:
+Despite being a Python-based project, installation of `fpos` is driven by
+`make`:
 
-    $ virtualenv ve
+    $ make install-user
+
+`make` is used to manage configuration of `ccan` modules used by `fpos`, and to
+then drive distutils for the remainder of the installation.
+
+The above command is enough if the system already provides the dependencies
+listed in `requirements.txt`. If these dependencies are not installed, then
+`make` can again be invoked to drive `pip` to install the required modules:
+
+    $ sudo make pip
+
+If installing the dependencies system-wide isn't desirable, then `fpos` can be
+installed in a virtualenv. The Makefile has several targets to help generate
+and install `fpos` with respect to the virtualenv. The default name for the
+virtualenv directory is 've', which can be changed through the `VE_NAME` make
+variable. The virtualenv is created in the current working directory:
+
+    $ make ve
     $ source ve/bin/activate
-    $ pip install -r requirements.txt
-    $ ./bin/fpos --help
+    $ make pip
+    $ make install-user
+    $ fpos --help
     ...
     $ deactivate
 
-This may take a while as fpos depends on numpy/scipy/matplotlib which are
-sizeable dependencies with native extensions.
+To create a virtualenv with a custom name, the first `make` invocation above
+becomes:
+
+    $ make foo VE_NAME=foo
+
+Generating the virtualenv may take a while as fpos depends on
+numpy/scipy/matplotlib which are sizeable dependencies with native extensions.
+
+Execution
+=========
+
+For a system installation:
+
+    $ fpos --help
+    ...
+
+For a virtualenv installation:
+
+    $ source ve/bin/activate
+    $ fpos --help
+    ...
+    $ deactivate
 
 Intermediate Representation
 ===========================

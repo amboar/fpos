@@ -18,6 +18,6 @@ before_install:
   - conda create -q -n test-environment python=$TRAVIS_PYTHON_VERSION numpy scipy matplotlib nose
 install:
   - source activate test-environment
-  - python setup.py install
+  - make install
 script:
   - nosetests
