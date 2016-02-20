@@ -273,6 +273,44 @@ def graph_bar_cashflow(groups, dates):
 
 gdt = namedtuple("gdt", [ "group", "deltas" ])
 
+fet = namedtuple("fet", ["distance", "previous", "next", "description", "n",
+    "period", "mean"])
+
+def print_forecast_expenses(groups, date):
+    gds = ( gdt(g, group_delta_bins(group_deltas(g)))
+            for g in groups if len(g) > 2)
+    keep = ( gd for gd in gds
+            if 0 < len(gd.deltas) and
+                period(gd.deltas) > (date - last(gd.group)).days)
+    table = {}
+    for gd in keep:
+        prev = last(gd.group)
+        delta = (date - prev).days
+        est = icmf(gd.deltas)
+        mean = sum(float(e[1]) for e in gd.group) / (sum(gd.deltas) + 1)
+        for d in range(est - delta, 31, est):
+            row = fet(distance=d,
+                    previous=prev.strftime("%d/%m/%y"),
+                    next=(date + timedelta(d)).strftime("%d/%m/%y"),
+                    description=gd.group[0][2],
+                    n=len(gd.group),
+                    period=est,
+                    mean=mean)
+            if d not in table:
+                table[d] = []
+            table[d].append(row)
+    print("Distance | Previous | Next | Description | N | Period | Mean Value | Sum Expense")
+    e, i = 0, 0
+    for k in sorted(x for x in table.keys() if x >= 0 and x <= 31):
+        for row in table[k]:
+            if row.mean < 0:
+                e += row.mean
+            else:
+                i += row.mean
+            strrow = [str(e) for e in row[:-1]]
+            strrow.append(money(row.mean))
+            strrow.append(money(e))
+            print(" | ".join(strrow))
 
 pet = namedtuple("pet", [ "description", "n", "period", "mean", "annual", "monthly" ])
 

@@ -25,8 +25,8 @@ import math
 from .core import categories, flexible, fixed
 from .core import money
 from .core import date_fmt, month_fmt
-import pystrgrp
 from .predict import forecast, graph_bar_cashflow, print_periodic_expenses
+from .predict import print_forecast_expenses
 from .cdesc import cdesc
 
 cmd_description = \
@@ -137,7 +137,7 @@ def parse_args(subparser=None):
     parser = parser_init(name(), description=cmd_description, help=cmd_help)
     graph_choices = [ "stacked_bar_expenses", "bar_margin", "box_categories",
             "xy_categories", "xy_weekly", "bar_targets", "xy_progressive_mean",
-            "bar_cashflow", "periodic_expenses" ]
+            "bar_cashflow", "periodic_expenses", "forecast_expenses" ]
     parser.add_argument("database", metavar="FILE", type=argparse.FileType('r'),
             help="The IR document of which to draw graphs")
     parser.add_argument("--save", type=float, default=0,
@@ -589,6 +589,8 @@ def visualise(table, current_date=False, graph=None, save=0):
         graph_bar_cashflow(description_groups, span)
     if (should_graph(graph, "periodic_expenses")):
         print_periodic_expenses(description_groups, last_transaction)
+    if (should_graph(graph, "forecast_expenses")):
+        print_forecast_expenses(description_groups, last_transaction)
     plt.show()
 
 def main(args=None):
