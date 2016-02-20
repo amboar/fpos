@@ -18,6 +18,7 @@ int main(void) {
             printf("Failed to classify %s\n", buf);
         }
     }
+    strgrp_print(ctx);
     strgrp_free(ctx);
     free(buf);
     fclose(f);
