@@ -253,6 +253,7 @@ void tal_talloc_set_backend_(void *(*alloc_fn)(size_t size),
 	assert(!resize_fn);
 	assert(!free_fn);
 	errorfn = error_fn;
+	talloc_set_abort_fn(error_fn);
 }
 
 bool tal_talloc_check_(const tal_t *ctx, const char *errorstr)
