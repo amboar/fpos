@@ -197,7 +197,7 @@ def group_forecast(members, date, debug=False):
     # ----------
     # 0123456789
     mass = pmf(bins)
-    interval = icmf(mass)
+    interval = icmf(bins)
     overlap = period(mass) - (interval + 1)
     merged_mass = mass[:]
     for i in range(overlap):
