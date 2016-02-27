@@ -10,15 +10,38 @@ scripts were hacked together out of laziness when the author got fed up with
 manually entering his data into the site.
 
 Example Output
-========
+==============
 
+[Expenditure by Category per Month](examples/figure_1.md)
+---------------------------------------------------------
 ![Expenditure by Category per Month](examples/figure_1.png)
+
+[Remaining Capital after Expenses](examples/figure_2.md)
+--------------------------------------------------------
 ![Remaining Capital after Expenses](examples/figure_2.png)
-![Box-plot of Expenses per Month](examples/figure_3.png)
-![XY Plots of Monthly Expenditure per Category](examples/figure_4.png)
-![XY Plot of Weekly Expenditure](examples/figure_5.png)
-![Bar Chart of Current Category Expenditure against Derived Budget](examples/figure_6.png)
+
+[Expenses per Month](examples/figure_3.md)
+------------------------------------------
+![Expenses per Month](examples/figure_3.png)
+
+[Monthly Expenditure per Category](examples/figure_4.md)
+--------------------------------------------------------
+![Monthly Expenditure per Category](examples/figure_4.png)
+
+[Weekly Expenditure](examples/figure_5.md)
+------------------------------------------
+![Weekly Expenditure](examples/figure_5.png)
+
+[Current Category Expenditure against Derived Budget](examples/figure_6.md)
+---------------------------------------------------------------------------
+![Current Category Expenditure against Derived Budget](examples/figure_6.png)
+
+[Monthly Progressive Mean Daily Spend](examples/figure_7.md)
+------------------------------------------------------------
 ![Monthly Progressive Mean Daily Spend](examples/figure_7.png)
+
+[30-day Cashflow Forecast](examples/figure_8.md)
+------------------------------------------------
 ![30-day Cashflow Forecast](examples/figure_8.png)
 
 Details
@@ -153,7 +176,7 @@ variable. The virtualenv is created in the current working directory:
     $ make ve
     $ source ve/bin/activate
     $ make pip
-    $ make install-user
+    $ make install
     $ fpos --help
     ...
     $ deactivate
