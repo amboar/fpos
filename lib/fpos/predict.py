@@ -20,6 +20,7 @@ import argparse
 import pystrgrp
 import csv
 import numpy as np
+from collections import namedtuple
 from datetime import datetime, timedelta
 from itertools import chain, cycle, islice
 from .core import money
@@ -270,26 +271,33 @@ def graph_bar_cashflow(groups, dates):
     plt.legend((be, bi), ("Forecast Expenditure", "Forecast Income"))
     plt.show()
 
+gdt = namedtuple("gdt", [ "group", "deltas" ])
+
+
+pet = namedtuple("pet", [ "description", "n", "period", "mean", "annual", "monthly" ])
+
 def print_periodic_expenses(groups, date):
-    required_group_size = ( g for g in groups if len(g) > 2 )
-    group_bins = ( (g, group_delta_bins(group_deltas(g)))
-            for g in required_group_size )
-    required_bins_size = ( gb for gb in group_bins
-            if 0 < len(gb[1]) )
-    keep = ( gb for gb in required_bins_size
-            if period(gb[1]) > (date - last(gb[0])).days )
-    table = ( (gb[0][0][2],
-        len(gb[0]),
-        #period(gb[1]),
-        icmf(gb[1]),
-        sum(float(e[1]) for e in gb[0]) / (sum(gb[1]) + 1))
-            for gb in keep )
-    ordered = sorted(list(table), key=lambda x: (365 / x[2]) * x[3])
+    gds = ( gdt(g, group_delta_bins(group_deltas(g)))
+            for g in groups if len(g) > 2 )
+    keep = ( gd for gd in gds if 0 < len(gd.deltas) and
+                period(gd.deltas) > (date - last(gd.group)).days )
+    table = []
+    for gd in keep:
+        mean = sum(float(e[1]) for e in gd.group) / (sum(gd.deltas) + 1)
+        est = icmf(gd.deltas)
+        annual = (365 / est) * mean
+        monthly = annual / 12
+        row = pet(description=gd.group[0][2],
+                n=len(gd.group),
+                period=est,
+                mean=money(mean),
+                annual=money(annual),
+                monthly=money(monthly))
+        table.append(row)
+    ordered = sorted(list(table), key=lambda x: x.annual)
     print("Description | N | Period | Mean Value | Annual Value | Monthly Value")
     for row in ordered:
-        annual = (365 / row[2]) * row[3]
-        print("{} | {} | {} | {} | {} | {}".format(row[0], row[1], row[2],
-            money(row[3]), money(annual), money(annual / 12)))
+        print(" | ".join(str(x) for x in row))
 
 def main(args=None):
     if args is None:
