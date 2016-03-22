@@ -105,6 +105,7 @@ Covering just the porcelain commands, `fpos` can be driven as outlined below.
 * St George
 * NAB
 * Bankwest
+* Woolworths Money (2016 format)
 
 Create a Database
 -----------------

@@ -79,6 +79,14 @@ class TransformTest(unittest.TestCase):
             [ "01-Jan-14", "-1.00", "2", None, None, "Negative", "0.00", None ] ])
         self.assertEquals(self.expected, list(transform.transform("nab", nab)))
 
+    def test_transform_woolworths(self):
+        woolies = iter([
+            ["01 Jan 2014", "Positive", "", "1.00", "NaN", "String", "String", None],
+            ["01 Jan 2014", "Negative", "1.00", "", "NaN", "String", "String", None],
+            ])
+        self.assertEquals(self.expected, list(transform.transform("woolworths", woolies)))
+
+
     def test__is_empty_None(self):
         self.assertTrue(transform._is_empty(None))
 
@@ -141,6 +149,15 @@ class TransformTest(unittest.TestCase):
 
     def test__sense_form_bankwest_credit(self):
         self.assertEquals("bankwest", transform._sense_form(["", 12345, "01/01/2014", "description", "", "", "-1.0", "-1.0", "credit"]))
+
+    def test__sense_form_woolworths_debit(self):
+        self.assertEquals("woolworths", transform._sense_form("20 Mar 2016,Pie,3.14,,,Food & Drink,Groceries,".split(',')))
+
+    def test__sense_form_woolworths_debit_nan(self):
+        self.assertEquals("woolworths", transform._sense_form("19 Mar 2016,Natural log,2.71,,NaN,Food & Drink,Groceries,".split(',')))
+
+    def test__sense_form_woolworths_credit(self):
+        self.assertEquals("woolworths", transform._sense_form("01 Mar 2016,Avogadros number - space -,,60221409,NaN,Financial,BPAY Payments,".split(',')))
 
 class WindowTest(unittest.TestCase):
     def test_gen_span_oracle_date_in_default(self):

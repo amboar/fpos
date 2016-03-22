@@ -25,7 +25,7 @@ from .core import money
 from .core import date_fmt
 from itertools import chain
 
-transform_choices = sorted([ "auto", "anz", "commbank", "stgeorge", "nab", "bankwest" ])
+transform_choices = sorted([ "auto", "anz", "commbank", "stgeorge", "nab", "bankwest", "woolworths" ])
 cmd_description = \
         """Not all bank CSV exports are equal. fpos defines an intermediate
         representation (IR) which each of the tools expect as input to eventually
@@ -72,6 +72,10 @@ sense[(_DATE, _NUMBER, _EMPTY, _EMPTY, _STRING, _EMPTY, _NUMBER, _EMPTY)] = "nab
 sense[(_EMPTY, _NUMBER, _DATE, _STRING, _NUMBER, _EMPTY, _EMPTY, _NUMBER, _STRING)] = "bankwest"
 sense[(_EMPTY, _NUMBER, _DATE, _STRING, _EMPTY, _NUMBER, _EMPTY, _NUMBER, _STRING)] = "bankwest"
 sense[(_EMPTY, _NUMBER, _DATE, _STRING, _EMPTY, _EMPTY, _NUMBER, _NUMBER, _STRING)] = "bankwest"
+
+sense[(_DATE, _STRING, _EMPTY, _NUMBER, _NUMBER, _STRING, _STRING, _EMPTY)] = "woolworths"
+sense[(_DATE, _STRING, _NUMBER, _EMPTY, _NUMBER, _STRING, _STRING, _EMPTY)] = "woolworths"
+sense[(_DATE, _STRING, _NUMBER, _EMPTY, _EMPTY, _STRING, _STRING, _EMPTY)] = "woolworths"
 
 def _is_empty(x):
     return x is None or "" == x
@@ -186,6 +190,26 @@ def transform_bankwest(csv, args=None):
     def _gen():
         for l in csv:
             yield [l[2], money((-1.0 * float(l[5])) if l[5] else float(l[6])), l[3][1:-1]]
+    return _gen()
+
+def transform_woolworths(csv, args=None):
+    # Woolworths Money format:
+    #
+    # Transaction Date,Description,Debit,Credit,Balance,Category,Subcategory,Notes
+    # 20 Mar 2016,WOOLWORTHS 5518 TORRENSVILLE,46.4,,,Food & Drink,Groceries,
+    # 19 Mar 2016,WOOLWORTHS 5518 TORRENSVILLE,6.15,,NaN,Food & Drink,Groceries,
+    _woolies_date_fmt = "%d %b %Y"
+
+    def _gen():
+        for line in csv:
+            if len(line[2]) > 0:
+                # Debit
+                amount = money(-float(line[2]))
+            else:
+                # Credit
+                amount = money(float(line[3]))
+            date = datetime.strptime(line[0], _woolies_date_fmt).strftime(date_fmt)
+            yield [date, amount, line[1]]
     return _gen()
 
 def name():
