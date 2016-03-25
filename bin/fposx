@@ -1,0 +1,117 @@
+#!/bin/bash -x
+
+set -eu
+
+PY_URL="https://www.python.org/ftp/python/3.5.1/python-3.5.1-macosx10.6.pkg"
+GIT_URL="http://jaist.dl.sourceforge.net/project/git-osx-installer/git-2.6.4-intel-universal-mavericks.dmg"
+
+url2file() {
+	local url="$1"
+	local no_opts="${url%\?*}"
+	echo ${no_opts##*/}
+}
+
+dmg2volume() {
+	echo /Volumes/"${1%.dmg}"
+}
+
+dmg2pkg() {
+	local base="${1%.dmg}"
+	echo /Volumes/"$base"/"$base".pkg
+}
+
+maybe_dl() {
+	local outfile="$(url2file "$1")"
+	curl --continue-at - -o "$outfile" "$1" || [ -e "$outfile" ]
+}
+
+install_pkg() {
+	sudo installer -pkg "$1" -target /
+}
+
+install_dmg() {
+	local ret=0
+	sudo hdiutil attach -mountpoint "$(dmg2volume "$1")" "$1"
+	if ! sudo installer -package "$(dmg2pkg "$1")" -target /;
+	then
+		echo Installation of $1 failed
+		ret=1
+	fi
+	sudo hdiutil detach "$(dmg2volume "$1")"
+	return $ret
+}
+
+if ! python3 --version > /dev/null
+then
+	maybe_dl "${PY_URL}"
+	install_pkg "$(url2file "${PY_URL}")"
+	sudo easy_install pip
+fi
+pip3 install --upgrade pip
+
+if ! git --version > /dev/null
+then
+	maybe_dl "${GIT_URL}"
+	install_dmg "$(url2file "${GIT_URL}")"
+fi
+
+if ! brew --version > /dev/null
+then
+	/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+fi
+
+if test ! -e fpos -a ! -e bin/fpos ||
+	! git status > /dev/null &&
+	! GIT_WORK_TREE=fpos GIT_DIR=fpos/.git git status > /dev/null
+then
+	git clone https://github.com/amboar/fpos.git
+fi
+
+if ! /Library/Frameworks/Python.framework/Versions/3.5/bin/virtualenv --version
+then
+	pip3 install virtualenv
+fi
+
+if ! clang-omp --version > /dev/null
+then
+	brew install clang-omp
+fi
+
+fpos() {
+	$PYTHON $PYTHONHOME/bin/fpos $@
+}
+
+export -f fpos
+
+DEST=""
+case $( basename $PWD ) in
+	bin) DEST=".." ;;
+	fpos) DEST="." ;;
+	*) DEST="fpos" ;;
+esac
+cd $DEST
+set +eu
+case $1 in
+	install)
+		CC=clang-omp
+		export CC
+		make VIRTUALENV=/Library/Frameworks/Python.framework/Versions/3.5/bin/virtualenv ve
+		. ve/bin/activate
+		make pip
+		make install
+		deactivate
+		;;
+	run)
+		. ve/bin/activate
+		PYTHONHOME=ve
+		PYTHON=/usr/local/bin/python3
+		export PYTHONHOME
+		export PYTHON
+		$SHELL
+		deactivate
+		;;
+	*)
+		echo \'$1\' unknown: Invoke with either 'install' or 'run'
+		exit 1
+		;;
+esac
