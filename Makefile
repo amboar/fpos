@@ -16,7 +16,11 @@ pip:
 install-user: SETUP_FLAGS+=--user
 install-user: install
 
-check upload:
+check:
+	$(PYTHON) setup.py $@ $(SETUP_FLAGS)
+	nosetests
+
+upload:
 	$(PYTHON) setup.py $@ $(SETUP_FLAGS)
 
 clean: SETUP_FLAGS+=--all
