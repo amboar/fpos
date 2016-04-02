@@ -2,62 +2,54 @@
 
 set -eu
 
-PY_URL="https://www.python.org/ftp/python/3.5.1/python-3.5.1-macosx10.6.pkg"
-GIT_URL="http://jaist.dl.sourceforge.net/project/git-osx-installer/git-2.6.4-intel-universal-mavericks.dmg"
-
-url2file() {
-	local url="$1"
-	local no_opts="${url%\?*}"
-	echo ${no_opts##*/}
-}
-
-dmg2volume() {
-	echo /Volumes/"${1%.dmg}"
-}
-
-dmg2pkg() {
-	local base="${1%.dmg}"
-	echo /Volumes/"$base"/"$base".pkg
-}
-
-maybe_dl() {
-	local outfile="$(url2file "$1")"
-	curl --continue-at - -o "$outfile" "$1" || [ -e "$outfile" ]
-}
-
-install_pkg() {
-	sudo installer -pkg "$1" -target /
-}
-
-install_dmg() {
-	local ret=0
-	sudo hdiutil attach -mountpoint "$(dmg2volume "$1")" "$1"
-	if ! sudo installer -package "$(dmg2pkg "$1")" -target /;
-	then
-		echo Installation of $1 failed
-		ret=1
-	fi
-	sudo hdiutil detach "$(dmg2volume "$1")"
-	return $ret
-}
-
-if ! python3 --version > /dev/null
+: ${FPOSX_CONF:=~/.config/fpos/fposx}
+if [ -f $FPOSX_CONF ]
 then
-	maybe_dl "${PY_URL}"
-	install_pkg "$(url2file "${PY_URL}")"
-	sudo easy_install pip
+	. $FPOSX_CONF
 fi
-pip3 install --upgrade pip
 
-if ! git --version > /dev/null
-then
-	maybe_dl "${GIT_URL}"
-	install_dmg "$(url2file "${GIT_URL}")"
-fi
+fposx_set() {
+	echo $1=y >> $FPOSX_CONF
+	. $FPOSX_CONF
+}
 
 if ! brew --version > /dev/null
 then
 	/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+	fposx_set fposx_manage_brew
+fi
+
+if ! python3 --version > /dev/null
+then
+	# Work around a failure of pip3 to find the HTTPSHandler in OpenSSL:
+	# https://stackoverflow.com/questions/20688034/importerror-cannot-import-name-httpshandler-using-pip
+	brew install openssl
+	brew link openssl --force
+	fposx_set fposx_manage_openssl
+
+	brew install python3
+	fposx_set fposx_manage_python3
+
+	pip3 install --upgrade pip setuptools
+	brew unlink openssl
+fi
+
+if ! virtualenv --version > /dev/null
+then
+	pip3 install virtualenv
+	fposx_set fposx_manage_virtualenv
+fi
+
+if ! git --version > /dev/null
+then
+	brew install git
+	fposx_set fposx_manage_git
+fi
+
+if ! clang-omp --version > /dev/null
+then
+	brew install clang-omp
+	fposx_set fposx_manage_clang_omp
 fi
 
 if test ! -e fpos -a ! -e bin/fpos ||
@@ -65,16 +57,6 @@ if test ! -e fpos -a ! -e bin/fpos ||
 	! GIT_WORK_TREE=fpos GIT_DIR=fpos/.git git status > /dev/null
 then
 	git clone https://github.com/amboar/fpos.git
-fi
-
-if ! /Library/Frameworks/Python.framework/Versions/3.5/bin/virtualenv --version
-then
-	pip3 install virtualenv
-fi
-
-if ! clang-omp --version > /dev/null
-then
-	brew install clang-omp
 fi
 
 fpos() {
@@ -89,13 +71,15 @@ case $( basename $PWD ) in
 	fpos) DEST="." ;;
 	*) DEST="fpos" ;;
 esac
+
 cd $DEST
+
 set +eu
 case $1 in
 	install)
 		CC=clang-omp
 		export CC
-		make VIRTUALENV=/Library/Frameworks/Python.framework/Versions/3.5/bin/virtualenv ve
+		make ve
 		. ve/bin/activate
 		make pip
 		make install
