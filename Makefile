@@ -11,7 +11,7 @@ $(VE_NAME):
 	$(VIRTUALENV) --python=$(PYTHON) $(VE_NAME)
 
 pip:
-	$(PIP) install -r requirements.txt
+	$(PIP) install --upgrade -r requirements.txt
 
 install-user: SETUP_FLAGS+=--user
 install-user: install

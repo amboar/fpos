@@ -57,6 +57,7 @@ if test ! -e fpos -a ! -e bin/fpos ||
 	! GIT_WORK_TREE=fpos GIT_DIR=fpos/.git git status > /dev/null
 then
 	git clone https://github.com/amboar/fpos.git
+	fposx_set fposx_manage_fpos
 fi
 
 fpos() {
@@ -94,8 +95,30 @@ case $1 in
 		$SHELL
 		deactivate
 		;;
+	upgrade)
+		[ -n ${fposx_manage_brew+y} ] &&
+			brew update &&
+			brew doctor
+		[ -n ${fposx_manage_openssl+y} ] &&
+			brew upgrade openssl
+		if [ -n ${fposx_manage_python+y} ]
+		then
+			brew upgrade python3
+			pip3 install --upgrade pip
+		fi
+		[ -n ${fposx_manage_virtualenv+y} ] &&
+			pip3 install --upgrade virtualenv
+		[ -n ${fposx_manage_git+y} ] &&
+			brew upgrade git
+		[ -n ${fposx_manage_clang_omp+y} ] &&
+			brew upgrade clang-omp
+		[ -n ${fposx_manage_fpos+y} ] &&
+			git fetch origin &&
+			git checkout origin/master
+		exec $0 install
+		;;
 	*)
-		echo \'$1\' unknown: Invoke with either 'install' or 'run'
+		echo \'$1\' unknown: Run with \'install\', \'run\' or \'upgrade\'
 		exit 1
 		;;
 esac
