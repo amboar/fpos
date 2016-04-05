@@ -9,6 +9,10 @@ Office on their [MoneySmart website](https://www.moneysmart.gov.au/). These
 scripts were hacked together out of laziness when the author got fed up with
 manually entering his data into the site.
 
+The scripts are primarily [developed and run on Linux](#everything-else),
+though [OSX is also supported](#osx-the-easy-way). Windows is uncharted
+territory.
+
 Example Output
 ==============
 
@@ -136,23 +140,53 @@ Display Spending Graphs
 Currently this will show graphs for transactions spanning up to 12 months, even
 if the data in the database represents a greater time span.
 
-Dependencies
+Installation
 ============
 
-Build-time
-----------
+OSX The Easy Way
+----------------
+
+`fpos` can be installed and managed on OSX with the `bin/fposx` script. Run the
+following in Terminal:
+
+    $ curl -fsSL https://raw.githubusercontent.com/amboar/fpos/master/bin/fposx
+    $ bash fposx install
+
+A shell set up for `fpos` can then be launched with:
+
+    $ bash fposx run
+
+Similary, `fpos` and its build and runtime dependencies can be updated as time
+rolls by with:
+
+    $ bash fposx upgrade
+
+Note that the above will install a number of tools onto your system to
+bootstrap and run `fpos`. For the record, these tools include the following:
+
+* [homebrew](https://brew.sh/)
+* [git](https://git-scm.com)
+* [python3](https://www.python.org)
+* [virtualenv](https://pypi.python.org/pypi/virtualenv)
+* [clang-omp](http://clang.llvm.org/)
+
+All installations are managed with homebrew, and the tools are only installed
+or upgraded if you hadn't previously installed them on the system.
+
+Everything Else
+---------------
+
+*Build-time Dependencies*
 
 0. Python 3
 1. C Compiler (GCC / Clang) with OpenMP support
 2. GNU Make
 
-Run-time
---------
+*Run-time Dependencies*
 
 See `requirements.txt`
 
-Installation
-============
+*Installation*
 
 Despite being a Python-based project, installation of `fpos` is driven by
 `make`:
@@ -160,7 +194,7 @@ Despite being a Python-based project, installation of `fpos` is driven by
     $ make install-user
 
 `make` is used to manage configuration of `ccan` modules used by `fpos`, and to
-then drive distutils for the remainder of the installation.
+then drive `distutils` for the remainder of the installation.
 
 The above command is enough if the system already provides the dependencies
 listed in `requirements.txt`. If these dependencies are not installed, then
@@ -169,9 +203,9 @@ listed in `requirements.txt`. If these dependencies are not installed, then
     $ sudo make pip
 
 If installing the dependencies system-wide isn't desirable, then `fpos` can be
-installed in a virtualenv. The Makefile has several targets to help generate
+installed in a virtualenv. The `Makefile` has several targets to help generate
 and install `fpos` with respect to the virtualenv. The default name for the
-virtualenv directory is 've', which can be changed through the `VE_NAME` make
+virtualenv directory is `ve`, which can be changed through the `VE_NAME` make
 variable. The virtualenv is created in the current working directory:
 
     $ make ve
