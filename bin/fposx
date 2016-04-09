@@ -1,64 +1,224 @@
-#!/bin/bash -x
+#!/bin/bash
 
 set -eu
 
+: ${FPOS_UPSTREAM_REPO:=https://github.com/amboar/fpos.git}
+: ${FPOS_UPSTREAM_BRANCH:=origin/master}
+: ${FPOS_REPO_DIR:=~/.local/usr/src/fpos}
+: ${FPOSX_BREW_INSTALL_URL:=https://raw.githubusercontent.com/Homebrew/install/master/install}
+: ${FPOSX_BREW_UNINSTALL_URL:=https://raw.githubusercontent.com/Homebrew/install/master/uninstall}
 : ${FPOSX_CONF:=~/.config/fpos/fposx}
+
+FPOSX_DIR="$( dirname $FPOSX_CONF )"
+[ -d $FPOSX_DIR ] || mkdir -p $FPOSX_DIR
+[ -d $FPOS_REPO_DIR ] || mkdir -p $FPOS_REPO_DIR
+
 if [ -f $FPOSX_CONF ]
 then
 	. $FPOSX_CONF
 fi
 
 fposx_set() {
-	echo $1=y >> $FPOSX_CONF
+	grep "$1=y" $FPOSX_CONF 2>&1 > /dev/null || echo $1=y >> $FPOSX_CONF
 	. $FPOSX_CONF
 }
 
-if ! brew --version > /dev/null
-then
-	/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
-	fposx_set fposx_manage_brew
-fi
+fposx_unset() {
+	[ -f $FPOSX_CONF ] && sed -i ".tmp" "/$1=y/d" $FPOSX_CONF && rm ${FPOSX_CONF}{.tmp,}
+	unset $1
+}
 
-if ! python3 --version > /dev/null
-then
-	# Work around a failure of pip3 to find the HTTPSHandler in OpenSSL:
-	# https://stackoverflow.com/questions/20688034/importerror-cannot-import-name-httpshandler-using-pip
-	brew install openssl
-	brew link openssl --force
-	fposx_set fposx_manage_openssl
+fposx_upgrade() {
+	# If we've downloaded the script via e.g. curl, replace our process with the
+	# script in the repository if it exists
+	if [ -f ${FPOSX_REPO_DIR}/bin/fposx ]
+	then
+		# Upgrade script in-place
+		cp ${FPOS_REPO_DIR}/bin/fposx $( which $0 )
+	fi
+}
 
-	brew install python3
-	fposx_set fposx_manage_python3
+enable_brew() {
+	if ! brew --version 2>&1 > /dev/null
+	then
+		/usr/bin/ruby -e "$(curl -fsSL ${FPOSX_BREW_INSTALL_URL})" ||
+                        exit 1
+		fposx_set fposx_manage_brew
+	fi
+}
 
-	pip3 install --upgrade pip setuptools
-	brew unlink openssl
-fi
+upgrade_managed_brew() {
+	if [ -n "${fposx_manage_brew+y}" ]
+	then
+		brew update && brew doctor || exit 1
+	fi
+}
 
-if ! virtualenv --version > /dev/null
-then
-	pip3 install virtualenv
-	fposx_set fposx_manage_virtualenv
-fi
+remove_managed_brew() {
+	if [ -n "${fposx_manage_brew+y}" ]
+	then
+		/usr/bin/ruby -e "$(curl -fsSL ${FPOSX_BREW_UNINSTALL_URL})" ||
+                        exit 1
+		fposx_unset fposx_manage_brew
+	fi
+}
 
-if ! git --version > /dev/null
-then
-	brew install git
-	fposx_set fposx_manage_git
-fi
+enable_git() {
+	if ! git --version 2>&1 > /dev/null
+	then
+		brew install git || exit 1
+		fposx_set fposx_manage_git
+	fi
+}
 
-if ! clang-omp --version > /dev/null
-then
-	brew install clang-omp
-	fposx_set fposx_manage_clang_omp
-fi
+upgrade_managed_git() {
+	if [ -n "${fposx_manage_git+y}" ]
+	then
+		brew outdated git > /dev/null ||
+			brew upgrade git ||
+			exit 1
+	fi
+}
 
-if test ! -e fpos -a ! -e bin/fpos ||
-	! git status > /dev/null &&
-	! GIT_WORK_TREE=fpos GIT_DIR=fpos/.git git status > /dev/null
-then
-	git clone https://github.com/amboar/fpos.git
-	fposx_set fposx_manage_fpos
-fi
+remove_managed_git() {
+	if [ -n "${fposx_manage_git+y}" ]
+	then
+		brew uninstall git || exit 1
+		fposx_unset fposx_manage_git
+	fi
+}
+
+enable_fpos() {
+	if [ -d "${FPOS_REPO_DIR}" ] ||
+		GIT_WORK_TREE=${FPOS_REPO_DIR} \
+		GIT_DIR=${FPOS_REPO_DIR}/.git \
+		git status 2>&1 /dev/null
+	then
+		( cd ${FPOS_REPO_DIR} &&
+			git fetch --all &&
+			git checkout ${FPOS_UPSTREAM_BRANCH} > /dev/null ) ||
+			exit 1
+	else
+		git clone ${FPOS_UPSTREAM_REPO} ${FPOS_REPO_DIR} || exit 1
+		fposx_set fposx_manage_fpos
+		( cd ${FPOS_REPO_DIR} &&
+			git checkout ${FPOS_UPSTREAM_BRANCH} > /dev/null ) ||
+			exit 1
+	fi
+}
+
+upgrade_managed_fpos() {
+	if [ -n "${fposx_manage_fpos+y}" ]
+	then
+		( cd ${FPOS_REPO_DIR} &&
+			git fetch --all &&
+			git checkout ${FPOS_UPSTREAM_BRANCH} ) ||
+		exit 1
+	fi
+}
+
+remove_managed_fpos() {
+        if [ -n "${fposx_manage_fpos+y}" ]
+        then
+                # Todo: remove repo
+                fposx_unset fposx_manage_fpos
+        fi
+}
+
+enable_python3() {
+	if ! python3 --version 2>&1 > /dev/null
+	then
+		# Work around a failure of pip3 to find the HTTPSHandler in OpenSSL:
+		# https://stackoverflow.com/questions/20688034/importerror-cannot-import-name-httpshandler-using-pip
+		brew install openssl || exit 1
+		brew link openssl --force || exit 1
+		fposx_set fposx_manage_openssl
+
+		brew install python3 || exit 1
+		fposx_set fposx_manage_python3
+
+		pip3 install --upgrade pip setuptools || exit 1
+		brew unlink openssl
+	fi
+}
+
+upgrade_managed_python3() {
+	if [ -n "${fposx_manage_openssl+y}" ]
+	then
+		brew outdated openssl > /dev/null ||
+			brew upgrade openssl ||
+			exit 1
+	fi
+	if [ -n "${fposx_manage_python3+y}" ]
+	then
+		brew outdated python3 > /dev/null ||
+			brew upgrade python3 ||
+			exit 1
+		pip3 install --upgrade pip || exit 1
+	fi
+}
+
+remove_managed_python3() {
+	if [ -n "${fposx_manage_openssl+y}" ]
+        then
+                brew uninstall openssl || exit 1
+                fposx_unset fposx_manage_openssl
+        fi
+	if [ -n "${fposx_manage_python3+y}" ]
+        then
+                brew uninstall python3 || exit 1
+                fposx_unset fposx_manage_python3
+        fi
+}
+
+enable_virtualenv() {
+	if ! virtualenv --version 2>&1 > /dev/null
+	then
+		pip3 install virtualenv || exit 1
+		fposx_set fposx_manage_virtualenv
+	fi
+}
+
+upgrade_managed_virtualenv() {
+	if [ -n "${fposx_manage_virtualenv+y}" ]
+	then
+		pip3 install --upgrade virtualenv || exit 1
+	fi
+ }
+
+
+remove_managed_virtualenv() {
+	if [ -n "${fposx_manage_virtualenv+y}" ]
+        then
+                pip3 uninstall virtualenv || exit 1
+                fposx_unset fposx_manage_virtualenv
+        fi
+}
+
+enable_clang_omp() {
+	if ! clang-omp --version 2>&1 > /dev/null
+	then
+		brew install clang-omp || exit 1
+		fposx_set fposx_manage_clang_omp
+	fi
+}
+
+upgrade_managed_clang_omp() {
+	if [ -n "${fposx_manage_clang_omp+y}" ]
+	then
+		brew outdated clang-omp > /dev/null ||
+			brew upgrade clang-omp ||
+			exit 1
+	fi
+}
+
+remove_managed_clang_omp() {
+	if [ -n "${fposx_manage_clang_omp+y}" ]
+        then
+                brew uninstall clang-omp || exit 1
+                fposx_unset fposx_manage_clang_omp
+        fi
+}
 
 fpos() {
 	$PYTHON $PYTHONHOME/bin/fpos $@
@@ -66,18 +226,33 @@ fpos() {
 
 export -f fpos
 
-DEST=""
-case $( basename $PWD ) in
-	bin) DEST=".." ;;
-	fpos) DEST="." ;;
-	*) DEST="fpos" ;;
-esac
+enter_repo_dir() {
+	pushd ${FPOS_REPO_DIR}
+}
 
-cd $DEST
+exit_repo_dir() {
+	popd
+}
 
 set +eu
 case $1 in
-	install)
+        install)
+		enable_brew
+		enable_git
+		enable_fpos
+		fposx_upgrade
+		exec $( which $0 ) install-1
+		;;
+	install-1)
+		enable_python3
+		enable_virtualenv
+		enable_clang_omp
+		# Split install here to support 'upgrade' installing an
+		# upgraded fpos
+		exec $( which $0 ) install-2
+		;;
+	install-2)
+                enter_repo_dir
 		CC=clang-omp
 		export CC
 		make ve
@@ -85,40 +260,56 @@ case $1 in
 		make pip
 		make install
 		deactivate
+		exit_repo_dir
 		;;
 	run)
-		. ve/bin/activate
-		PYTHONHOME=ve
-		PYTHON=/usr/local/bin/python3
-		export PYTHONHOME
-		export PYTHON
+		. ${FPOS_REPO_DIR}/ve/bin/activate
+		export PYTHONHOME=${FPOS_REPO_DIR}/ve
+		export PYTHON=/usr/local/bin/python3
+
+                echo Ready for fpos. A quick guide lives here:
+                echo
+                echo -e "\thttps://github.com/amboar/fpos/tree/readme-update#usage"
+                echo
+                echo When you\'re finished, tidy up by running:
+                echo
+                echo -e "\texit"
+                echo
+
 		$SHELL
 		deactivate
 		;;
 	upgrade)
-		[ -n ${fposx_manage_brew+y} ] &&
-			brew update &&
-			brew doctor
-		[ -n ${fposx_manage_openssl+y} ] &&
-			brew upgrade openssl
-		if [ -n ${fposx_manage_python+y} ]
-		then
-			brew upgrade python3
-			pip3 install --upgrade pip
-		fi
-		[ -n ${fposx_manage_virtualenv+y} ] &&
-			pip3 install --upgrade virtualenv
-		[ -n ${fposx_manage_git+y} ] &&
-			brew upgrade git
-		[ -n ${fposx_manage_clang_omp+y} ] &&
-			brew upgrade clang-omp
-		[ -n ${fposx_manage_fpos+y} ] &&
-			git fetch origin &&
-			git checkout origin/master
-		exec $0 install
+		upgrade_managed_fpos
+		fposx_upgrade
+		exec $( which $0 ) upgrade-1
+		;;
+	upgrade-1)
+		upgrade_managed_brew
+		upgrade_managed_git
+		upgrade_managed_python3
+		upgrade_managed_virtualenv
+		upgrade_managed_clang_omp
+		exec $( which $0 ) install-2
+		;;
+	uninstall)
+                if ! brew --version 2>&1 > /dev/null &&
+                    ! pip3 --version 2>&1 /dev/null
+                then
+                        echo Missing tools required for cleanup. Did something fail?
+                        echo
+                        echo Cowardly exiting for you to clean up manually
+                        exit 1
+                fi
+		remove_managed_fpos
+		remove_managed_clang_omp
+		remove_managed_virtualenv
+		remove_managed_python3
+		remove_managed_git
+		remove_managed_brew
 		;;
 	*)
-		echo \'$1\' unknown: Run with \'install\', \'run\' or \'upgrade\'
+		echo Unknown subcommand \'$1\': Run with \'install\', \'run\', \'upgrade\' or \'uninstall\'
 		exit 1
 		;;
 esac
