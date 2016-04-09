@@ -66,43 +66,16 @@ Transactions are put in one of the following categories:
 * Transport - Car registration, insurance, fuel, bus fares, etc
 * Utilities - Electricity, gas, phone, internet, etc
 
-fpos is intended to track transaction data over long periods of time; that is,
-it's expected that users will want to gradually add transactions to a central
-database over time. fpos includes the tools for merging and deduplicating
+`fpos` is intended to track transaction data over long periods of time; that is,
+it's expected that users will want to incrementally add transactions to a
+central database. `fpos` includes the tools for merging and deduplicating
 transactions automatically, and learns from your previous interactions with it
 to ease the burden of categorising your expenses.
 
-fpos is currently a commandline tool, and so is not for the faint-of-heart. Out
-of a want for simplicity (again, read as laziness), fpos uses a simple text
-file as a database for the information it graphs. Power users might be
-interested in tracking changes to their transaction database using [git](http://git-scm.com/) or
-similar tools.
+Supported Banks
+---------------
 
-Somewhat similar to `git`, `fpos` has been split into porcelain and plumbing
-commands.
-
-The porcelain commands are:
-
-* `fpos init`: Creates and configures a database
-* `fpos update`: Handles the merge and annotation of bank export CSV files into the database
-* `fpos show`: Displays collated transactions as graphs and tables
-
-The plumbing commands are:
-
-* `fpos transform`: Converts each bank's CSV export document into an intermediate
-  representation (IR) suitable for further processing
-* `fpos combine`: Merges multiple IR documents into one time-ordered document
-* `fpos annotate`: Annotates an IR document with transaction types.
-* `fpos visualise`: Displays collated transactions as graphs and tables
-* `fpos window`: Output document transactions between given dates
-
-The plumbing commands will remain unexplained for the moment.
-
-Usage
-=====
-
-Covering just the porcelain commands, `fpos` can be driven as outlined below.
-`fpos` currently supports CSV exports from the following banks:
+A CSV transaction export from any of the following banks can be processed by `fpos`
 
 * ANZ
 * Commonwealth Bank
@@ -111,8 +84,23 @@ Covering just the porcelain commands, `fpos` can be driven as outlined below.
 * Bankwest
 * Woolworths Money (2016 format)
 
-Create a Database
------------------
+If your bank is not supported please get in touch! Either create an issue on
+github or email `andrew at aj dot id dot au`.
+
+Usage
+=====
+
+`fpos` has been split into "porcelain" (general use) and "plumbing" (internal,
+but sometimes useful) commands, similar to `git` if that helps.
+
+The porcelain commands are:
+
+* `fpos init`: Creates and configures a database
+* `fpos update`: Handles the merge and annotation of bank export CSV files into the database
+* `fpos show`: Displays collated transactions as graphs and tables
+
+Creating a Database
+-------------------
 
     $ fpos init mydb ~/mydb.csv
 
@@ -121,8 +109,8 @@ which to record annotated transactions. `fpos init` only need be executed once
 per database - from there on the nickname can be used with the `update` and
 `show` subcommands.
 
-Add Transactions
-----------------
+Adding Transactions
+-------------------
 
     $ fpos update mydb Transactions.csv ANZ.csv
 
@@ -132,36 +120,60 @@ internal intermediate representation (unless it doesn't, in which case file an
 issue to add support). The `update` process will also take you through
 annotating the transactions.
 
-Display Spending Graphs
------------------------
+Displaying Graphs
+-----------------
 
     $ fpos show mydb
 
 Currently this will show graphs for transactions spanning up to 12 months, even
 if the data in the database represents a greater time span.
 
-Installation
-============
+If you're just a user and not a hacker of `fpos`, these three commands are all
+you'll need to use regularly.
+
+Plumbing Commands
+-----------------
+
+If you're hacking `fpos` the following "plumbing" commands might be useful. At
+this point in time the source is the best documentation - this section just
+exists to give a brief overview:
+
+* `fpos transform`: Converts each bank's CSV export document into an intermediate
+  representation (IR) suitable for further processing
+* `fpos combine`: Merges multiple IR documents into one time-ordered document
+* `fpos annotate`: Annotates an IR document with transaction types.
+* `fpos visualise`: Displays collated transactions as graphs and tables
+* `fpos window`: Output document transactions between given dates
+
+Installing and Running
+======================
 
 OSX The Easy Way
 ----------------
 
-`fpos` can be installed and managed on OSX with the `bin/fposx` script. Run the
-following in Terminal:
+`fpos` can be installed and managed on OSX without a lot of effort, though
+installation does require admin privileges unless you're feeling adventurous.
+To install it, open the Terminal app and run (copy/paste) the following two
+lines:
 
-    $ curl -fsSL https://raw.githubusercontent.com/amboar/fpos/master/bin/fposx
-    $ bash fposx install
+    curl -fsSL -o fposx https://raw.githubusercontent.com/amboar/fpos/master/bin/fposx && chmod +x fposx
 
-A shell set up for `fpos` can then be launched with:
+and
 
-    $ bash fposx run
+    ./fposx install
 
-Similary, `fpos` and its build and runtime dependencies can be updated as time
-rolls by with:
+Once that's complete an environment for `fpos` can then be launched with:
 
-    $ bash fposx upgrade
+    ./fposx run
 
-Note that the above will install a number of tools onto your system to
+See [Usage](#usage) for the details of how to drive `fpos`.
+
+Finally, `fpos` and its build- and run-time dependencies can be updated at any
+point by running:
+
+    ./fposx upgrade
+
+Note that the commands above will install a number of tools onto your system to
 bootstrap and run `fpos`. For the record, these tools include the following:
 
 * [homebrew](https://brew.sh/)
@@ -212,8 +224,6 @@ variable. The virtualenv is created in the current working directory:
     $ source ve/bin/activate
     $ make pip
     $ make install
-    $ fpos --help
-    ...
     $ deactivate
 
 To create a virtualenv with a custom name, the first `make` invocation above
@@ -224,23 +234,23 @@ becomes:
 Generating the virtualenv may take a while as fpos depends on
 numpy/scipy/matplotlib which are sizeable dependencies with native extensions.
 
-Execution
-=========
-
-For a system installation:
-
-    $ fpos --help
-    ...
-
-For a virtualenv installation:
+Once this is complete we're ready to run `fpos`. If using a virtualenv,
+remember to activate and deactivate before and after your session:
 
     $ source ve/bin/activate
     $ fpos --help
     ...
     $ deactivate
 
+See [Usage](#usage) for the details of how to drive `fpos`.
+
 Intermediate Representation
 ===========================
+
+Out of a want for simplicity (laziness) `fpos` uses a simple text file as a
+database for the information it graphs. Power users might be interested in
+tracking changes to their transaction database using [git](http://git-scm.com/)
+or similar tools.
 
 The intermediate representation and database format is CSV. The columns are:
 
