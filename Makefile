@@ -34,7 +34,6 @@ ext/config.h: ext/configurator
 	$< > ext/config.h
 
 ext/configurator: CFLAGS=-g3 -ggdb -Wall -Wstrict-prototypes -Wold-style-definition -Wmissing-prototypes -Wmissing-declarations -Wpointer-arith -Wwrite-strings -Wundef -DCCAN_STR_DEBUG=1
-ext/configurator: LDLIBS=-lrt
 ext/configurator: ext/configurator.o
 
 .PHONY: dependencies clean pip
