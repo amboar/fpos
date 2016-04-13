@@ -1,6 +1,6 @@
 SETUP_FLAGS:=
 PYTHON:=python3
-PIP:=pip
+PIP:=pip3
 VIRTUALENV:=virtualenv
 VE_NAME:=ve
 
