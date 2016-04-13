@@ -193,6 +193,11 @@ Everything Else
 0. Python 3
 1. C Compiler (GCC / Clang) with OpenMP support
 2. GNU Make
+3. BLAS / LAPACK Libraries
+
+On Ubuntu 15.10:
+
+    $ sudo apt-get install python3 gcc make libblas-dev liblapack-dev gfortran
 
 *Run-time Dependencies*
 
