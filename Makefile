@@ -1,6 +1,8 @@
 SETUP_FLAGS:=
 PYTHON:=python3
 PIP:=pip3
+NOSETESTS_NAMES:=nosetests-3.5 nosetests-3.4 nosetests-3.3 nosetests3 nosetests
+NOSETESTS:=$(firstword $(foreach exec,$(NOSETESTS_NAMES),$(shell which $(exec))))
 VIRTUALENV:=virtualenv
 VE_NAME:=ve
 
@@ -18,7 +20,8 @@ install-user: install
 
 check:
 	$(PYTHON) setup.py $@ $(SETUP_FLAGS)
-	nosetests
+	$(if $(NOSETESTS),,$(error NOSETESTS is not defined, couldn\'t find any of $(NOSETESTS_NAMES)))
+	$(NOSETESTS)
 
 upload:
 	$(PYTHON) setup.py $@ $(SETUP_FLAGS)
