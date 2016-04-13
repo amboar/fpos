@@ -25,7 +25,7 @@ upload:
 
 clean: SETUP_FLAGS+=--all
 clean:
-	rm -f ext/config.h
+	$(RM) ext/config.h
 	$(PYTHON) setup.py $@ $(SETUP_FLAGS)
 
 configure: ext/config.h
