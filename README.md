@@ -221,11 +221,12 @@ listed in `requirements.txt`. If these dependencies are not installed, then
 
     $ sudo make pip
 
-If installing the dependencies system-wide isn't desirable, then `fpos` can be
-installed in a virtualenv. The `Makefile` has several targets to help generate
-and install `fpos` with respect to the virtualenv. The default name for the
-virtualenv directory is `ve`, which can be changed through the `VE_NAME` make
-variable. The virtualenv is created in the current working directory:
+If installing the dependencies system-wide isn't desirable, then `fpos` can
+also be installed in a virtualenv. The `Makefile` has several targets to help
+generate and install `fpos` with respect to the virtualenv. The default name
+for the virtualenv directory is `ve`, which can be changed through the
+`VE_NAME` make variable. The virtualenv is created in the current working
+directory:
 
     $ make ve
     $ source ve/bin/activate
