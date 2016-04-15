@@ -211,7 +211,9 @@ Despite being a Python-based project, installation of `fpos` is driven by
     $ make install-user
 
 `make` is used to manage configuration of `ccan` modules used by `fpos`, and to
-then drive `distutils` for the remainder of the installation.
+then drive `distutils` for the remainder of the installation. On Linux distros
+this will install `fpos` and other scripts into `~/.local/bin`, so make sure
+this is listed in your `$PATH`.
 
 The above command is enough if the system already provides the dependencies
 listed in `requirements.txt`. If these dependencies are not installed, then
