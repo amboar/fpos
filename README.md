@@ -112,7 +112,7 @@ The porcelain commands are:
 Creating a Database
 -------------------
 
-    $ fpos init mydb ~/mydb.csv
+    $ fpos init example ~/fpos-example.csv
 
 This registers the nickname 'mydb' with `fpos` and points it to the CSV file in
 which to record tagged transactions. `fpos init` only need be executed once
@@ -122,7 +122,7 @@ per database - from there on the nickname can be used with the `update` and
 Adding Transactions
 -------------------
 
-    $ fpos update mydb Transactions.csv ANZ.csv
+    $ fpos update example examples/transactions.csv
 
 Note that the provided CSV files can be a mix from any of the banks listed
 above. `fpos update` automatically takes care of converting each export to the
@@ -130,10 +130,60 @@ internal intermediate representation (unless it doesn't, in which case file an
 issue to add support). The `update` process will also take you through
 tagging the transactions.
 
+Here's a sample run on the example database:
+
+    $ fpos update example examples/transactions.csv
+    Spent $70.14 on 02/01/2014: Tommy Kerry Prakash Louis Werner
+    Category [?]: ?
+
+    Cash
+    Commitment
+    Dining
+    Education
+    Entertainment
+    Health
+    Home
+    Income
+    Internal
+    Shopping
+    Transport
+    Utilities
+
+    Category [?]: Entertainment
+    ...
+
+Typing '?' at the prompt will print the list of valid categories, and then
+prompt again for category input.
+
+    ...
+    Spent $109.42 on 05/01/2014: VISA DEBIT PURCHASE CARD Cathryn Isaac Wesley Hohn Clarissa [72307398]
+    Category [?]: sshhoopp
+    Couldn't determine category from sshhoopp
+    Category [?]: shop
+    ...
+
+Unrecognised category inputs cause an error to be printed and `fpos` will
+prompt again for a valid category to be provided. Here we also see that the
+category matching is case-insensitive and will match on prefixes that are short
+enough to be unique (in this case just 's' should be enough as there are no
+other categories starting with 's', but 'shop' was used to clarity)
+
+    ...
+    Spent $56.10 on 06/01/2014: Tommy Kerry Prakash Louis Werner
+    Category [Entertainment]:
+    ...
+
+Here in the square brackets we see "Entertainment" - this is the category
+`fpos` suggests for the transaction. Here the transaction's description is the
+same as the first transaction we tagged, where we said it was "Entertainment".
+If it's correct, simply hit Enter/Return to select the suggested category.
+
+This process continues until all new transactions are categorised.
+
 Displaying Graphs
 -----------------
 
-    $ fpos show mydb
+    $ fpos show example
 
 Currently this will show graphs for transactions spanning up to 12 months, even
 if the data in the database represents a greater time span.
