@@ -48,10 +48,23 @@ Example Output
 ------------------------------------------------
 ![30-day Cashflow Forecast](examples/figure_8.png)
 
-Details
-=======
+How It Works
+============
 
-Transactions are put in one of the following categories:
+The Mechanics
+-------------
+
+Feeding `fpos` a database and your exported CSV transaction data, it will
+automatically:
+
+* Detect the banks from which you've exported the transactions (so it can
+  understand the data),
+* Deduplicate transactions (so you can export transactions in overlapping
+  time periods without problems), and
+* Provide you with an easy way to tag each transaction with a spending
+  category (guessing the category for you based on previous answers)
+
+The spending categories used are:
 
 * Cash - Withdrawals from ATMs, given its own category as it's hard to track
 * Commitment - Rent, mortgages, car repayments, etc
@@ -66,11 +79,8 @@ Transactions are put in one of the following categories:
 * Transport - Car registration, insurance, fuel, bus fares, etc
 * Utilities - Electricity, gas, phone, internet, etc
 
-`fpos` is intended to track transaction data over long periods of time; that is,
-it's expected that users will want to incrementally add transactions to a
-central database. `fpos` includes the tools for merging and deduplicating
-transactions automatically, and learns from your previous interactions with it
-to ease the burden of categorising your expenses.
+`fpos` can then provide you with graphs like above (once your transactions are
+categorised) helping you to understand your spending habits.
 
 Supported Banks
 ---------------
@@ -105,7 +115,7 @@ Creating a Database
     $ fpos init mydb ~/mydb.csv
 
 This registers the nickname 'mydb' with `fpos` and points it to the CSV file in
-which to record annotated transactions. `fpos init` only need be executed once
+which to record tagged transactions. `fpos init` only need be executed once
 per database - from there on the nickname can be used with the `update` and
 `show` subcommands.
 
@@ -118,7 +128,7 @@ Note that the provided CSV files can be a mix from any of the banks listed
 above. `fpos update` automatically takes care of converting each export to the
 internal intermediate representation (unless it doesn't, in which case file an
 issue to add support). The `update` process will also take you through
-annotating the transactions.
+tagging the transactions.
 
 Displaying Graphs
 -----------------
@@ -141,7 +151,7 @@ exists to give a brief overview:
 * `fpos transform`: Converts each bank's CSV export document into an intermediate
   representation (IR) suitable for further processing
 * `fpos combine`: Merges multiple IR documents into one time-ordered document
-* `fpos annotate`: Annotates an IR document with transaction types.
+* `fpos annotate`: tags transactions with spending category information
 * `fpos visualise`: Displays collated transactions as graphs and tables
 * `fpos window`: Output document transactions between given dates
 
@@ -267,11 +277,11 @@ The intermediate representation and database format is CSV. The columns are:
 3. Description, a human readable message provided by the bank
 4. Category, describes the type of transaction
 
-Note that transform must output IR with at least the first three columns.
-combine will use data in the first three columns but will not strip the fourth
-if present. annotate learns from rows containing the category to guess at the
+Note that `transform` must output IR with at least the first three columns.
+`combine` will use data in the first three columns but will not strip the fourth
+if present. `annotate` learns from rows containing the category to guess at the
 category for rows lacking it and as such the document output by annotate will
-have all four columns. visualise requires all four fields to function.
+have all four columns. `visualise` requires all four fields to function.
 
 Example IR Document
 -------------------
