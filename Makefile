@@ -10,7 +10,7 @@ build build_py build_ext build_clib build_scripts install install_lib install_he
 	$(PYTHON) setup.py $@ $(SETUP_FLAGS)
 
 $(VE_NAME):
-	$(VIRTUALENV) --python=$(PYTHON) $(VE_NAME)
+	$(VIRTUALENV) --python=$(PYTHON) --system-site-packages $(VE_NAME)
 
 pip:
 	$(PIP) install --upgrade -r requirements.txt
