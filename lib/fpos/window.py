@@ -19,7 +19,7 @@
 import argparse
 import csv
 from datetime import datetime as dt
-from collections import defaultdict
+from collections import defaultdict, deque
 from .core import date_fmt, month_fmt
 
 cmd_description = \
@@ -47,7 +47,8 @@ def parse_args(subparser=None):
             help="The start month and year, in the form 'mm/yyyy'")
     parser.add_argument("--end", metavar="DATE", type=str,
             help="The end month and year (exclusive), in the form 'mm/yyyy'")
-    # parser.add_argument("--length", type=int)
+    parser.add_argument("--span", metavar="NUMBER", type=int,
+            help="The number of months to cover from the most recent transaction")
     return [ parser ] if subparser else parser.parse_args()
 
 def gen_span_oracle(start, end):
@@ -61,13 +62,29 @@ def gen_span_oracle(start, end):
         oracle["end"] = lambda x: x < dt.strptime(end, month_fmt)
     return lambda x: oracle["start"](x) and oracle["end"](x)
 
-def window(start, end, source):
+def day2month(datestr):
+    return dt.strftime(dt.strptime(datestr, date_fmt), month_fmt)
+
+def window(source, start=None, end=None, relspan=None):
+    if relspan and not (start or end):
+        def _gen_span():
+            months = defaultdict(lambda : [])
+            for row in source:
+                months[day2month(row[0])].append(row)
+            dq = deque([], relspan)
+            for k in sorted(dt.strptime(dstr, month_fmt)
+                    for dstr in months.keys()):
+                dq.append(months[dt.strftime(k, month_fmt)])
+            for m in dq:
+                for e in m:
+                    yield e
+        return _gen_span()
     in_span = gen_span_oracle(start, end)
-    def _gen():
+    def _gen_se():
         for e in source:
             if in_span(dt.strptime(e[0], date_fmt)):
                 yield e
-    return _gen()
+    return _gen_se()
 
 def main(args=None):
     if args is None:
@@ -75,7 +92,7 @@ def main(args=None):
     try:
         r = csv.reader(args.infile)
         w = csv.writer(args.outfile)
-        w.writerows(window(args.start, args.end, r))
+        w.writerows(window(r, args.start, args.end, args.span))
     finally:
         args.outfile.close()
 

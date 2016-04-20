@@ -19,8 +19,6 @@
 from .annotate import annotate
 from .combine import combine
 from configparser import ConfigParser
-from datetime import date
-from dateutil.relativedelta import relativedelta as rd
 from itertools import chain
 from .transform import transform
 from .window import window
@@ -92,10 +90,8 @@ def db_show(args):
     config = ConfigParser()
     config.read(config_file)
     db_file = config[args.nickname]["path"]
-    start = (date.today() + rd(months=-12)).strftime("%m/%Y")
-    end = None
     with open(db_file, "r") as db:
-        visualise(list(window(start, end, csv.reader(db))), save=args.save)
+        visualise(list(window(csv.reader(db), relspan=12)), save=args.save)
 
 def parse_args(subparser):
     sc_init = subparser.add_parser("init")

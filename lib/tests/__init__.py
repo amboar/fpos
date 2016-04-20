@@ -183,26 +183,39 @@ class WindowTest(unittest.TestCase):
     def test_unbounded_start_unbounded_end(self):
         ir =  [ [ "01/01/2014", "-1.00", "Description" ],
                 [ "01/02/2014", "-1.00", "Description" ] ]
-        self.assertEquals(ir, list(window.window(None, None, ir)))
+        self.assertEquals(ir, list(window.window(ir, None, None)))
 
     def test_bounded_start_unbounded_end(self):
         ir =  [ [ "01/01/2014", "-1.00", "Description" ],
                 [ "01/02/2014", "-1.00", "Description" ] ]
         expected = [ ir[1] ]
-        self.assertEquals(expected, list(window.window("02/2014", None, ir)))
+        self.assertEquals(expected, list(window.window(ir, "02/2014", None)))
 
     def test_unbounded_start_bounded_end(self):
         ir =  [ [ "01/01/2014", "-1.00", "Description" ],
                 [ "01/02/2014", "-1.00", "Description" ] ]
         expected = [ ir[0] ]
-        self.assertEquals(expected, list(window.window(None, "02/2014", ir)))
+        self.assertEquals(expected, list(window.window(ir, None, "02/2014")))
 
     def test_bounded_start_bounded_end(self):
         ir =  [ [ "31/12/2013", "-1.00", "Description" ],
                 [ "31/01/2014", "-1.00", "Description" ],
                 [ "01/02/2014", "-1.00", "Description" ] ]
         expected = [ ir[1] ]
-        self.assertEquals(expected, list(window.window("01/2014", "02/2014", ir)))
+        self.assertEquals(expected, list(window.window(ir, "01/2014", "02/2014")))
+
+    def test_span_1(self):
+        ir =  [ [ "01/01/2014", "-1.00", "Description" ],
+                [ "01/02/2014", "-1.00", "Description" ] ]
+        expected = [ ir[1] ]
+        self.assertEquals(expected, list(window.window(ir, relspan=1)))
+
+    def test_span_2(self):
+        ir =  [ [ "31/12/2013", "-1.00", "Description" ],
+                [ "31/01/2014", "-1.00", "Description" ],
+                [ "01/02/2014", "-1.00", "Description" ] ]
+        expected = ir[1:]
+        self.assertEquals(expected, list(window.window(ir, relspan=2)))
 
 class VisualiseTest(unittest.TestCase):
     def test_group_period_empty(self):
