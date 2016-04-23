@@ -1,0 +1,57 @@
+#!/usr/bin/expect -f
+
+# Hack here - we invoke bash to run fpos: This is required in the virtualenv on
+# OSX where the "framework" Python needs to be executed. The fposx script
+# exports a bash function into the environment (export -f) which does the magic
+# fpos incantation, but obviously requires a bash process to be activated.
+spawn bash -c "fpos update [lindex $argv 0] [lindex $argv 1]"
+while (true) {
+    expect {
+        -re "Aimee Andries Jinny Joube \\\[\[0-9\]+\\\]" {
+            set category "commit"
+        }
+        "Brooke Whitney Duke Kathy" {
+            set category "trans"
+        }
+        -re "Cathryn Isaac Wesley Hohn Clarissa \\\[\[0-9\]+\\\]" {
+            set category "enter"
+        }
+        "Jeffrey Shaw Pierette Nov" {
+            set category "income"
+        }
+        "Jerome Hwa Tai Benson" {
+            set category "health"
+        }
+        "Jinny Malcolm Dustin" {
+            set category "util"
+        }
+        -re "Kit Phiroze Gerard Nicola Tait \\\[\[0-9\]+\\\]" {
+            set category "edu"
+        }
+        "Marty Jesse Jacobson" {
+            set category "dining"
+        }
+        -re "Matt Hirotoshi Mechael Pa \\\[\[0-9\]+\\\]" {
+            set category "shop"
+        }
+        "Stanislaw Carisa Candida  Jessica" {
+            set category "home"
+        }
+        -re "Tommy Kerry Prakash Louis Werner" {
+            set category "cash"
+        }
+        -re "(cash|home|shop|dining|edu|util|health|enter|trans|income|commit)(\[\r\n\])+" {
+            exp_continue
+        }
+        -re "\r\nCategory \\\[\[A-Z\]\[a-z\]+\\\]: " {
+            send "\n"
+        }
+        -re "\r\nCategory \\\[\\\?\\\]: " {
+            send $category
+                send "\n"
+        }
+        eof {
+            exit
+        }
+    }
+}
