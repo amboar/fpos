@@ -37,7 +37,7 @@ pystrgrp = Extension('pystrgrp',
     )
 
 setup(name='fpos',
-        version='0.1',
+        version='0.2.1',
         description='Financial Position',
         author='Andrew Jeffery',
         author_email='andrew@aj.id.au',
