@@ -2,7 +2,7 @@ SETUP_FLAGS:=
 PYTHON:=python3
 PIP:=pip3
 NOSETESTS_NAMES:=nosetests-3.5 nosetests-3.4 nosetests-3.3 nosetests3 nosetests
-NOSETESTS:=$(firstword $(foreach exec,$(NOSETESTS_NAMES),$(shell which $(exec))))
+NOSETESTS:=$(firstword $(foreach exec,$(NOSETESTS_NAMES),$(shell which $(exec) 2> /dev/null)))
 VIRTUALENV:=virtualenv
 VE_NAME:=ve
 
