@@ -32,7 +32,7 @@ fposx_unset() {
 fposx_upgrade() {
 	# If we've downloaded the script via e.g. curl, replace our process with the
 	# script in the repository if it exists
-	if [ -f "${FPOSX_REPO_DIR}"/bin/fposx ]
+	if [ -f "${FPOS_REPO_DIR}"/bin/fposx ]
 	then
 		# Upgrade script in-place
 		cp "${FPOS_REPO_DIR}"/bin/fposx "$( which "$0" )"
