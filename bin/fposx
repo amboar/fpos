@@ -4,14 +4,15 @@ set -eu
 
 : ${FPOS_UPSTREAM_REPO:=https://github.com/amboar/fpos.git}
 : ${FPOS_UPSTREAM_BRANCH:=origin/master}
-: ${FPOS_REPO_DIR:=~/.local/usr/src/fpos}
+: ${SRC_DIR:=~/.local/usr/src}
+: ${FPOS_REPO_DIR:="${SRC_DIR}"/fpos}
 : ${FPOSX_BREW_INSTALL_URL:=https://raw.githubusercontent.com/Homebrew/install/master/install}
 : ${FPOSX_BREW_UNINSTALL_URL:=https://raw.githubusercontent.com/Homebrew/install/master/uninstall}
 : ${FPOSX_CONF:=~/.config/fpos/fposx}
 
 FPOSX_DIR="$( dirname "$FPOSX_CONF" )"
 [ -d "$FPOSX_DIR" ] || mkdir -p "$FPOSX_DIR"
-[ -d "$FPOS_REPO_DIR" ] || mkdir -p "$FPOS_REPO_DIR"
+[ -d "$SRC_DIR" ] || mkdir -p "$SRC_DIR"
 
 if [ -f "$FPOSX_CONF" ]
 then
