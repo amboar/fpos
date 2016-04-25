@@ -93,7 +93,7 @@ enable_fpos() {
 	if [ -d "${FPOS_REPO_DIR}" ] ||
 		GIT_WORK_TREE="${FPOS_REPO_DIR}" \
 		GIT_DIR="${FPOS_REPO_DIR}"/.git \
-		git status 2>&1 /dev/null
+		git status 2>&1 > /dev/null
 	then
 		( cd "${FPOS_REPO_DIR}" &&
 			git fetch --all &&
@@ -123,7 +123,7 @@ remove_managed_fpos() {
 		[ -d "${FPOS_REPO_DIR}" ] &&
 		GIT_WORK_TREE="${FPOS_REPO_DIR}" \
 		GIT_DIR="${FPOS_REPO_DIR}"/.git \
-		git status 2>&1 /dev/null;
+		git status 2>&1 > /dev/null;
 	then
 		# TODO: Check if any unmanaged files have wound up in the
 		# working tree
