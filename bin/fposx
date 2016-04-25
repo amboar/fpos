@@ -9,32 +9,32 @@ set -eu
 : ${FPOSX_BREW_UNINSTALL_URL:=https://raw.githubusercontent.com/Homebrew/install/master/uninstall}
 : ${FPOSX_CONF:=~/.config/fpos/fposx}
 
-FPOSX_DIR="$( dirname $FPOSX_CONF )"
-[ -d $FPOSX_DIR ] || mkdir -p $FPOSX_DIR
-[ -d $FPOS_REPO_DIR ] || mkdir -p $FPOS_REPO_DIR
+FPOSX_DIR="$( dirname "$FPOSX_CONF" )"
+[ -d "$FPOSX_DIR" ] || mkdir -p "$FPOSX_DIR"
+[ -d "$FPOS_REPO_DIR" ] || mkdir -p "$FPOS_REPO_DIR"
 
-if [ -f $FPOSX_CONF ]
+if [ -f "$FPOSX_CONF" ]
 then
-	. $FPOSX_CONF
+	. "$FPOSX_CONF"
 fi
 
 fposx_set() {
-	grep "$1=y" $FPOSX_CONF 2>&1 > /dev/null || echo $1=y >> $FPOSX_CONF
-	. $FPOSX_CONF
+	grep "$1=y" "$FPOSX_CONF" 2>&1 > /dev/null || echo $1=y >> "$FPOSX_CONF"
+	. "$FPOSX_CONF"
 }
 
 fposx_unset() {
-	[ -f $FPOSX_CONF ] && sed -i ".tmp" "/$1=y/d" $FPOSX_CONF && rm ${FPOSX_CONF}{.tmp,}
+	[ -f "$FPOSX_CONF" ] && sed -i ".tmp" "/$1=y/d" "$FPOSX_CONF" && rm "${FPOSX_CONF}"{.tmp,}
 	unset $1
 }
 
 fposx_upgrade() {
 	# If we've downloaded the script via e.g. curl, replace our process with the
 	# script in the repository if it exists
-	if [ -f ${FPOSX_REPO_DIR}/bin/fposx ]
+	if [ -f "${FPOSX_REPO_DIR}"/bin/fposx ]
 	then
 		# Upgrade script in-place
-		cp ${FPOS_REPO_DIR}/bin/fposx $( which $0 )
+		cp "${FPOS_REPO_DIR}"/bin/fposx "$( which "$0" )"
 	fi
 }
 
@@ -90,19 +90,19 @@ remove_managed_git() {
 
 enable_fpos() {
 	if [ -d "${FPOS_REPO_DIR}" ] ||
-		GIT_WORK_TREE=${FPOS_REPO_DIR} \
-		GIT_DIR=${FPOS_REPO_DIR}/.git \
+		GIT_WORK_TREE="${FPOS_REPO_DIR}" \
+		GIT_DIR="${FPOS_REPO_DIR}"/.git \
 		git status 2>&1 /dev/null
 	then
-		( cd ${FPOS_REPO_DIR} &&
+		( cd "${FPOS_REPO_DIR}" &&
 			git fetch --all &&
-			git checkout ${FPOS_UPSTREAM_BRANCH} > /dev/null ) ||
+			git checkout "${FPOS_UPSTREAM_BRANCH}" > /dev/null ) ||
 			exit 1
 	else
-		git clone ${FPOS_UPSTREAM_REPO} ${FPOS_REPO_DIR} || exit 1
+		git clone "${FPOS_UPSTREAM_REPO}" "${FPOS_REPO_DIR}" || exit 1
 		fposx_set fposx_manage_fpos
-		( cd ${FPOS_REPO_DIR} &&
-			git checkout ${FPOS_UPSTREAM_BRANCH} > /dev/null ) ||
+		( cd "${FPOS_REPO_DIR}" &&
+			git checkout "${FPOS_UPSTREAM_BRANCH}" > /dev/null ) ||
 			exit 1
 	fi
 }
@@ -110,9 +110,9 @@ enable_fpos() {
 upgrade_managed_fpos() {
 	if [ -n "${fposx_manage_fpos+y}" ]
 	then
-		( cd ${FPOS_REPO_DIR} &&
+		( cd "${FPOS_REPO_DIR}" &&
 			git fetch --all &&
-			git checkout ${FPOS_UPSTREAM_BRANCH} ) ||
+			git checkout "${FPOS_UPSTREAM_BRANCH}" ) ||
 		exit 1
 	fi
 }
@@ -221,13 +221,13 @@ remove_managed_clang_omp() {
 }
 
 fpos() {
-	$PYTHON $PYTHONHOME/bin/fpos $@
+	"$PYTHON" "$PYTHONHOME"/bin/fpos "$@"
 }
 
 export -f fpos
 
 enter_repo_dir() {
-	pushd ${FPOS_REPO_DIR}
+	pushd "${FPOS_REPO_DIR}"
 }
 
 exit_repo_dir() {
@@ -241,7 +241,7 @@ case $1 in
 		enable_git
 		enable_fpos
 		fposx_upgrade
-		exec $( which $0 ) install-1
+		exec "$( which "$0" )" install-1
 		;;
 	install-1)
 		enable_python3
@@ -249,7 +249,7 @@ case $1 in
 		enable_clang_omp
 		# Split install here to support 'upgrade' installing an
 		# upgraded fpos
-		exec $( which $0 ) install-2
+		exec "$( which "$0" )" install-2
 		;;
 	install-2)
                 enter_repo_dir
@@ -263,8 +263,8 @@ case $1 in
 		exit_repo_dir
 		;;
 	run)
-		. ${FPOS_REPO_DIR}/ve/bin/activate
-		export PYTHONHOME=${FPOS_REPO_DIR}/ve
+		. "${FPOS_REPO_DIR}"/ve/bin/activate
+		export PYTHONHOME="${FPOS_REPO_DIR}"/ve
 		export PYTHON=/usr/local/bin/python3
 
                 echo Ready for fpos. A quick guide lives here:
@@ -282,7 +282,7 @@ case $1 in
 	upgrade)
 		upgrade_managed_fpos
 		fposx_upgrade
-		exec $( which $0 ) upgrade-1
+		exec "$( which "$0" )" upgrade-1
 		;;
 	upgrade-1)
 		upgrade_managed_brew
@@ -290,7 +290,7 @@ case $1 in
 		upgrade_managed_python3
 		upgrade_managed_virtualenv
 		upgrade_managed_clang_omp
-		exec $( which $0 ) install-2
+		exec "$( which "$0" )" install-2
 		;;
 	uninstall)
                 if ! brew --version 2>&1 > /dev/null &&
