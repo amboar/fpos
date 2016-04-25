@@ -119,11 +119,17 @@ upgrade_managed_fpos() {
 }
 
 remove_managed_fpos() {
-        if [ -n "${fposx_manage_fpos+y}" ]
-        then
-                # Todo: remove repo
-                fposx_unset fposx_manage_fpos
-        fi
+	if [ -n "${fposx_manage_fpos+y}" ] &&
+		[ -d "${FPOS_REPO_DIR}" ] &&
+		GIT_WORK_TREE="${FPOS_REPO_DIR}" \
+		GIT_DIR="${FPOS_REPO_DIR}"/.git \
+		git status 2>&1 /dev/null;
+	then
+		# TODO: Check if any unmanaged files have wound up in the
+		# working tree
+		rm -rf "${FPOS_REPO_DIR}"
+		fposx_unset fposx_manage_fpos
+	fi
 }
 
 enable_python3() {
