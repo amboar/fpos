@@ -141,6 +141,15 @@ class TransformTest(unittest.TestCase):
     def test__sense_form_nab(self):
         self.assertEquals("nab", transform._sense_form(["01/01/2014", "-1.0", "12345", "", "description", "my merchant", "1.0"]))
 
+    def test__sense_form_nab_gh_issue23_0(self):
+        self.assertEquals("nab", transform._sense_form("01-May-16,-70.33,071555684686,,CREDIT CARD PURCHASE,FREWVILLE FOODLAND       FREWVILLE,-131.26,".split(',')))
+
+    def test__sense_form_nab_gh_issue23_1(self):
+        self.assertEquals("nab", transform._sense_form("29-Mar-16,5.30,000125555398,,MISCELLANEOUS CREDIT,CASHBACK,-60.93,".split(',')))
+
+    def test__sense_form_nab_gh_issue23_2(self):
+        self.assertEquals("nab", transform._sense_form("20-Mar-16,-66.23,,,CREDIT CARD PURCHASE,PASADENA FOODLAND,-66.23,".split(',')))
+
     def test__sense_form_bankwest_cheque(self):
         self.assertEquals("bankwest", transform._sense_form(["", 12345, "01/01/2014", "description", "-1.0", "", "", "-1.0", "cheque"]))
 
