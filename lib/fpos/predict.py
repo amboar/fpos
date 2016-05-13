@@ -31,7 +31,8 @@ cmd_description = \
 cmd_help = cmd_description
 
 def pd(datestr):
-    return datetime.strptime(datestr, "%d/%m/%Y")
+    return datestr if isinstance(datestr, datetime) \
+        else datetime.strptime(datestr, "%d/%m/%Y")
 
 def group_deltas(group):
     """ group_deltas(group) -> list(int)

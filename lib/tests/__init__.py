@@ -19,9 +19,10 @@
 import matplotlib
 matplotlib.use('Agg')
 from datetime import datetime as dt
+from datetime import timedelta as td
 from itertools import islice, cycle
 import unittest
-from fpos import annotate, combine, core, transform, visualise, window, predict, db
+from fpos import annotate, combine, core, transform, visualise, window, predict, db, psave
 
 money = visualise.money
 
@@ -691,3 +692,241 @@ class AsTomlTest(unittest.TestCase):
         os.remove(tf.name)
         self.assertRaises(TypeError, db.as_toml, [ tf.name ])
         tf.close()
+
+class PsaveTest(unittest.TestCase):
+    def test_save_from_month_one_month(self):
+        then = dt.strptime("01/07/2016", core.date_fmt).date()
+        b = psave.Balance(then, 200, -100)
+        now = dt.strptime("01/08/2016", core.date_fmt).date()
+        h = psave.History(now, { b.month : b } )
+
+        self.assertEquals(100,
+                psave.save_from_month(h, {}, then, 100))
+
+    def test_save_from_month_one_month_zero_balance(self):
+        then = dt.strptime("01/07/2016", core.date_fmt).date()
+        b = psave.Balance(then, 200, -200)
+        now = dt.strptime("01/08/2016", core.date_fmt).date()
+        h = psave.History(now, { b.month : b } )
+
+        self.assertEquals(0,
+                psave.save_from_month(h, {}, then, 100))
+
+    def test_save_from_month_one_month_negative_balance(self):
+        then = dt.strptime("01/07/2016", core.date_fmt).date()
+        b = psave.Balance(then, 200, -300)
+        now = dt.strptime("01/08/2016", core.date_fmt).date()
+        h = psave.History(now, { b.month : b } )
+
+        self.assertEquals(0,
+                psave.save_from_month(h, {}, then, 100))
+
+    def test_save_from_month_overspent_one_commitment(self):
+        then = dt.strptime("01/07/2016", core.date_fmt).date()
+        b = psave.Balance(then, 200, -150)
+        now = dt.strptime("01/08/2016", core.date_fmt).date()
+        h = psave.History(now, { b.month : b } )
+
+        self.assertEquals(50,
+                psave.save_from_month(h, {}, then, 100))
+
+    def test_save_from_month_overspent_two_commitments(self):
+        then = dt.strptime("01/07/2016", core.date_fmt).date()
+        b = psave.Balance(then, 200, -50)
+        now = dt.strptime("01/08/2016", core.date_fmt).date()
+        h = psave.History(now, { b.month : b } )
+        s = {}
+        self.assertEquals(100,
+                psave.save_from_month(h, s, then, 100))
+        self.assertEquals(50,
+                psave.save_from_month(h, s, then, 100))
+
+    def test_save_from_month_two_months(self):
+        then1 = dt.strptime("01/07/2016", core.date_fmt).date()
+        b1 = psave.Balance(then1, 200, -100)
+        then2 = dt.strptime("01/08/2016", core.date_fmt).date()
+        b2 = psave.Balance(then2, 200, -100)
+        now = dt.strptime("01/09/2016", core.date_fmt).date()
+        h = psave.History(now, { b1.month : b1, b2.month : b2 } )
+
+        s = {}
+        self.assertEquals(50,
+                psave.save_from_month(h, s, then1, 50))
+        self.assertEquals(50,
+                psave.save_from_month(h, s, then2, 50))
+
+    def test_calculate_position_exact(self):
+        then1 = dt.strptime("01/07/2016", core.date_fmt).date()
+        b1 = psave.Balance(then1, 200, -151)
+        then2 = dt.strptime("01/08/2016", core.date_fmt).date()
+        b2 = psave.Balance(then2, 200, -150)
+        now = dt.strptime("01/09/2016", core.date_fmt).date()
+        b3 = psave.Balance(now, 0, 0)
+        h = psave.History(now, { b1.month : b1, b2.month : b2,
+            b3.month : b3 } )
+
+        tr = psave.Transaction(then1, -100.0, "Test description",
+                "test")
+        g = psave.Group("Test description", [ tr ])
+        c = psave.Commitment(g, g.transactions[-1].value,
+                g.transactions[-1].date, td(62, 0, 0))
+        ta = psave.Target(c, c.last + c.period)
+        s = {}
+        self.assertEquals(50,
+                psave.calculate_position(h, ta, s).saved)
+
+    def test_calculate_position_overspent(self):
+        then1 = dt.strptime("01/07/2016", core.date_fmt).date()
+        b1 = psave.Balance(then1, 200, -151)
+        then2 = dt.strptime("01/08/2016", core.date_fmt).date()
+        b2 = psave.Balance(then2, 200, -151)
+        now = dt.strptime("01/09/2016", core.date_fmt).date()
+        b3 = psave.Balance(now, 0, 0)
+        h = psave.History(now, { b1.month : b1, b2.month : b2,
+            b3.month : b3 } )
+
+        tr = psave.Transaction(then1, -100.0, "Test description",
+                "test")
+        g = psave.Group("Test description", [ tr ])
+        c = psave.Commitment(g, g.transactions[-1].value,
+                g.transactions[-1].date, td(62, 0, 0))
+        ta = psave.Target(c, c.last + c.period)
+        s = {}
+        self.assertEquals(49,
+                psave.calculate_position(h, ta, s).saved)
+
+    def test_calculate_position_underspent(self):
+        then1 = dt.strptime("01/07/2016", core.date_fmt).date()
+        b1 = psave.Balance(then1, 200, -149)
+        then2 = dt.strptime("01/08/2016", core.date_fmt).date()
+        b2 = psave.Balance(then2, 200, -150)
+        now = dt.strptime("01/09/2016", core.date_fmt).date()
+        b3 = psave.Balance(now, 0, 0)
+        h = psave.History(now, { b1.month : b1, b2.month : b2,
+            b3.month : b3 } )
+
+        tr = psave.Transaction(then1, -100.0, "Test description",
+                "test")
+        g = psave.Group("Test description", [ tr ])
+        c = psave.Commitment(g, g.transactions[-1].value,
+                g.transactions[-1].date, td(62, 0, 0))
+        ta = psave.Target(c, c.last + c.period)
+        s = {}
+        self.assertEquals(50,
+                psave.calculate_position(h, ta, s).saved)
+
+    def test_calculate_positions_exact(self):
+        then1 = dt.strptime("01/07/2016", core.date_fmt).date()
+        b1 = psave.Balance(then1, 200, -100)
+        then2 = dt.strptime("01/08/2016", core.date_fmt).date()
+        b2 = psave.Balance(then2, 200, -100)
+        now = dt.strptime("01/09/2016", core.date_fmt).date()
+        b3 = psave.Balance(now, 0, 0)
+        h = psave.History(now, { b1.month : b1, b2.month : b2,
+            b3.month : b3 } )
+
+        tr = psave.Transaction(then1, -100.0, "Test description",
+                "test")
+        g = psave.Group("Test description", [ tr ])
+        c = psave.Commitment(g, g.transactions[-1].value,
+                g.transactions[-1].date, td(62, 0, 0))
+        ta = psave.Target(c, c.last + c.period)
+        p1, p2 = list(psave.calculate_positions(h, [ ta, ta ]))
+        self.assertEquals(50, p1[0].saved)
+        self.assertEquals(50, p1[1].saved)
+
+    def test_calculate_positions_overspent(self):
+        then1 = dt.strptime("01/07/2016", core.date_fmt).date()
+        b1 = psave.Balance(then1, 200, -100)
+        then2 = dt.strptime("01/08/2016", core.date_fmt).date()
+        b2 = psave.Balance(then2, 200, -101)
+        now = dt.strptime("01/09/2016", core.date_fmt).date()
+        b3 = psave.Balance(now, 0, 0)
+        h = psave.History(now, { b1.month : b1, b2.month : b2,
+            b3.month : b3 } )
+
+        tr = psave.Transaction(then1, -100.0, "Test description",
+                "test")
+        g = psave.Group("Test description", [ tr ])
+        c = psave.Commitment(g, g.transactions[-1].value,
+                g.transactions[-1].date, td(62, 0, 0))
+        ta = psave.Target(c, c.last + c.period)
+        p1, p2 = list(psave.calculate_positions(h, [ ta, ta ]))
+        self.assertEquals(50, p1[0].saved)
+        self.assertEquals(49, p1[1].saved)
+
+    def test_calculate_positions_underspent(self):
+        then1 = dt.strptime("01/07/2016", core.date_fmt).date()
+        b1 = psave.Balance(then1, 200, -100)
+        then2 = dt.strptime("01/08/2016", core.date_fmt).date()
+        b2 = psave.Balance(then2, 200, -99)
+        now = dt.strptime("01/09/2016", core.date_fmt).date()
+        b3 = psave.Balance(now, 0, 0)
+        h = psave.History(now, { b1.month : b1, b2.month : b2,
+            b3.month : b3 } )
+
+        tr = psave.Transaction(then1, -100.0, "Test description",
+                "test")
+        g = psave.Group("Test description", [ tr ])
+        c = psave.Commitment(g, g.transactions[-1].value,
+                g.transactions[-1].date, td(62, 0, 0))
+        ta = psave.Target(c, c.last + c.period)
+        p1, p2 = list(psave.calculate_positions(h, [ ta, ta ]))
+        self.assertEquals(50, p1[0].saved)
+        self.assertEquals(50, p1[1].saved)
+
+    def test_balance_history_none(self):
+        self.assertEquals({},
+                psave.balance_history(None, td(1, 0, 0)))
+
+    def test_balance_history_empty(self):
+        now = dt.strptime("01/08/2016", core.date_fmt).date()
+        h = psave.History(now, {})
+        self.assertEquals({},
+                psave.balance_history(h, td(1, 0, 0)))
+
+    def test_balance_history_one_positive(self):
+        then1 = dt.strptime("01/07/2016", core.date_fmt).date()
+        b1 = psave.Balance(then1, 1, 0)
+        now = dt.strptime("01/08/2016", core.date_fmt).date()
+        h = psave.History(now, { b1.month : b1 })
+        state = psave.balance_history(h, td(1, 0, 0))
+        expected = { }
+        self.assertEquals(expected, state)
+
+    def test_balance_history_one_negative(self):
+        then1 = dt.strptime("01/07/2016", core.date_fmt).date()
+        b1 = psave.Balance(then1, 0, -1)
+        then2 = dt.strptime("01/08/2016", core.date_fmt).date()
+        b2 = psave.Balance(then2, 0, -1)
+        now = dt.strptime("01/09/2016", core.date_fmt).date()
+        h = psave.History(now, { b1.month : b1, b2.month : b2 })
+        with self.assertRaises(ValueError):
+            self.assertNotEquals({}, psave.balance_history(h, td(1, 0, 0)))
+
+    def test_balance_history_two_equal(self):
+        then1 = dt.strptime("01/07/2016", core.date_fmt).date()
+        b1 = psave.Balance(then1, 1, 0)
+        then2 = dt.strptime("01/08/2016", core.date_fmt).date()
+        b2 = psave.Balance(then2, 0, -1)
+        now = dt.strptime("01/09/2016", core.date_fmt).date()
+        h = psave.History(now, { b1.month : b1, b2.month : b2 })
+        state = psave.balance_history(h, td(31, 0, 0))
+        expected = { then1 : psave.Balance(then1, 0, -1),
+                then2 : psave.Balance(then2, 1, 0)}
+        self.assertEquals(expected, state)
+
+    def test_balance_history_three(self):
+        then1 = dt.strptime("01/07/2016", core.date_fmt).date()
+        b1 = psave.Balance(then1, 2, 0)
+        then2 = dt.strptime("01/08/2016", core.date_fmt).date()
+        b2 = psave.Balance(then2, 0, -1)
+        then3 = dt.strptime("01/09/2016", core.date_fmt).date()
+        b3 = psave.Balance(then3, 0, -1)
+        now = dt.strptime("01/10/2016", core.date_fmt).date()
+        h = psave.History(now, { b1.month : b1, b2.month : b2, b3.month : b3 })
+        state = psave.balance_history(h, td(31, 0, 0))
+        expected = { then1 : psave.Balance(then1, 0, -2),
+                then2 : psave.Balance(then2, 1, 0),
+                then3 : psave.Balance(then3, 1, 0)}
+        self.assertEquals(expected, state)
