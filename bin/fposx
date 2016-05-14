@@ -264,8 +264,8 @@ case $1 in
 		export CC
 		make ve
 		. ve/bin/activate
-		make pip
-		make install
+		make pip-ve
+		make install-ve
 		deactivate
 		exit_repo_dir
 		;;

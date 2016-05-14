@@ -6,17 +6,25 @@ NOSETESTS:=$(firstword $(foreach exec,$(NOSETESTS_NAMES),$(shell which $(exec) 2
 VIRTUALENV:=virtualenv
 VE_NAME:=ve
 
-build build_py build_ext build_clib build_scripts install install_lib install_headers install_scripts install_data sdist register bdist bdist_dumb bdist_wininst: configure
+build build_py build_ext build_clib build_scripts install_lib install_headers install_scripts install_data sdist register bdist bdist_dumb bdist_wininst: configure
 	$(PYTHON) setup.py $@ $(SETUP_FLAGS)
+
+install_internal: configure
+	$(PYTHON) setup.py install $(SETUP_FLAGS)
 
 $(VE_NAME):
 	$(VIRTUALENV) --python=$(PYTHON) --system-site-packages $(VE_NAME)
 
 pip:
+	$(PIP) install --user --upgrade -r requirements.txt
+
+pip-$(VE_NAME):
 	$(PIP) install --upgrade -r requirements.txt
 
-install-user: SETUP_FLAGS+=--user
-install-user: install
+install: SETUP_FLAGS+=--user
+install: install_internal
+
+install-$(VE_NAME): install_internal
 
 check:
 	$(PYTHON) setup.py $@ $(SETUP_FLAGS)
@@ -39,4 +47,4 @@ ext/config.h: ext/configurator
 ext/configurator: CFLAGS=-g3 -ggdb -Wall -Wstrict-prototypes -Wold-style-definition -Wmissing-prototypes -Wmissing-declarations -Wpointer-arith -Wwrite-strings -Wundef -DCCAN_STR_DEBUG=1
 ext/configurator: ext/configurator.o
 
-.PHONY: dependencies clean pip
+.PHONY: clean pip pip-$(VE_NAME) install install-user install-$(VE_NAME)

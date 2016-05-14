@@ -266,38 +266,32 @@ See `requirements.txt`
 *Installation*
 
 Despite being a Python-based project, installation of `fpos` is driven by
-`make`:
+`make`. `make` is used to manage configuration of `ccan` modules used by
+`fpos`, and to then drive `distutils` for the remainder of the installation. On
+Linux distros the following steps will install `fpos` and other scripts into
+`~/.local/bin`, so make sure this is listed in your `$PATH`.
 
-    $ make install-user
+If the system already provides the dependencies listed in `requirements.txt`
+then the following step can be skipped. However if the dependencies are not
+installed, then `make` can be invoked to drive `pip` to install the required
+modules:
 
-`make` is used to manage configuration of `ccan` modules used by `fpos`, and to
-then drive `distutils` for the remainder of the installation. On Linux distros
-this will install `fpos` and other scripts into `~/.local/bin`, so make sure
-this is listed in your `$PATH`.
+    $ make pip
 
-The above command is enough if the system already provides the dependencies
-listed in `requirements.txt`. If these dependencies are not installed, then
-`make` can again be invoked to drive `pip` to install the required modules:
+Once the dependencies are available on the system, install `fpos`:
 
-    $ sudo make pip
+    $ make install
 
-If installing the dependencies system-wide isn't desirable, then `fpos` can
-also be installed in a virtualenv. The `Makefile` has several targets to help
-generate and install `fpos` with respect to the virtualenv. The default name
-for the virtualenv directory is `ve`, which can be changed through the
-`VE_NAME` make variable. The virtualenv is created in the current working
-directory:
+Further, `fpos` can be installed in a virtualenv. The `Makefile` has several
+targets to help generate and install `fpos` with respect to the virtualenv. The
+default name for the virtualenv directory is `ve` and it is created in the
+current working directory:
 
     $ make ve
     $ source ve/bin/activate
-    $ make pip
-    $ make install
+    $ make pip-ve
+    $ make install-ve
     $ deactivate
-
-To create a virtualenv with a custom name, the first `make` invocation above
-becomes:
-
-    $ make foo VE_NAME=foo
 
 Generating the virtualenv may take a while as fpos depends on
 numpy/scipy/matplotlib which are sizeable dependencies with native extensions.
