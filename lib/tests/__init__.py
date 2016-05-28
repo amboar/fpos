@@ -21,7 +21,7 @@ matplotlib.use('Agg')
 from datetime import datetime as dt
 from itertools import islice, cycle
 import unittest
-from fpos import annotate, combine, core, transform, visualise, window, predict
+from fpos import annotate, combine, core, transform, visualise, window, predict, db
 
 money = visualise.money
 
@@ -644,3 +644,50 @@ class PredictTest(unittest.TestCase):
 
     def test_bottoms_two(self):
         self.assertSequenceEqual([ 0, -10 ], predict.bottoms([ -10, -20 ]))
+
+import tempfile
+import toml
+import configparser
+import os
+
+class AsTomlTest(unittest.TestCase):
+    def test_no_upgrade(self):
+        data = { "a" : 0, "b" : { "c" : 1, "d" : { "e" : 2 } } }
+        tf = tempfile.NamedTemporaryFile("w", delete=False)
+        loaded = None
+        try:
+            toml.dump(data, tf)
+            tf.close()
+            loaded = db.as_toml(tf.name)
+        finally:
+            os.remove(tf.name)
+        self.assertEqual(data, loaded)
+
+    def test_do_upgrade(self):
+        data = { "a" : { "b" : 0 } }
+        tf = tempfile.NamedTemporaryFile("w", delete=False)
+        loaded = None
+        try:
+            cp = configparser.ConfigParser()
+            cp.read_dict(data)
+            cp.write(tf)
+            tf.close()
+            loaded = db.as_toml(tf.name)
+        finally:
+            os.remove(tf.name)
+        self.assertEqual(data, loaded)
+
+    def test_fail_upgrade(self):
+        tf = tempfile.NamedTemporaryFile("w", delete=False)
+        try:
+            tf.write("Not valid INI\n")
+            tf.close()
+            self.assertRaises(TypeError, db.as_toml, [ tf.name ])
+        finally:
+            os.remove(tf.name)
+
+    def test_fail_open(self):
+        tf = tempfile.NamedTemporaryFile("w", delete=False)
+        os.remove(tf.name)
+        self.assertRaises(TypeError, db.as_toml, [ tf.name ])
+        tf.close()

@@ -30,21 +30,47 @@ import os
 import shutil
 import sys
 import tempfile
+import toml
 
 cmd_description = \
         """Manage fpos CSV databases"""
 
 cmd_help = cmd_description
 
+def find_config(config_dir=None):
+    if not config_dir:
+        config_dir = bd.save_config_path("fpos")
+    return os.path.join(config_dir, "fpos")
+
+def as_toml(path, mode="r"):
+    with open(path, mode) as handle:
+        try:
+            return toml.load(handle)
+        except:
+            pass
+    print("Upgrading '{}' from INI to TOML".format(path))
+    try:
+        config = ConfigParser()
+        config.read(path)
+        tf = tempfile.NamedTemporaryFile("w", delete=False)
+        toml.dump(config._sections, tf)
+        tf.close()
+        print("Succesfully upgraded '{}' to TOML".format(path))
+    except:
+        print("Failed to upgrade '{}' to TOML".format(path))
+        raise TypeError("Couldn't convert to TOML")
+    else:
+        shutil.move(tf.name, path)
+        return as_toml(path)
+
 def name():
     return __name__.split(".")[-1]
 
 def db_init(args):
-    config_dir = bd.save_config_path("fpos")
-    config_file = os.path.join(config_dir, "fpos")
-    config = ConfigParser()
+    config = {}
+    config_file = find_config()
     if os.path.exists(config_file):
-        config.read(config_file)
+        config = as_toml(config_file)
     if args.nickname in config:
         fmt = "Database with nickname '{}' already exists"
         raise ValueError(fmt.format(args.nickname))
@@ -53,15 +79,12 @@ def db_init(args):
     config[args.nickname]["path"] = db_file
     config[args.nickname]["version"] = "1"
     with open(config_file, "w") as config_fo:
-        config.write(config_fo)
+        toml.dump(config, config_fo)
     if not os.path.exists(db_file):
         open(args.path, "w").close()
 
 def db_update(args):
-    config_path = bd.load_first_config("fpos")
-    config_file = os.path.join(config_path, "fpos")
-    config = ConfigParser()
-    config.read(config_file)
+    config = as_toml(find_config())
     if args.nickname not in config:
         fmt = "Unknown database '{}'"
         raise ValueError(fmt.format(args.nickname))
@@ -85,10 +108,7 @@ def db_update(args):
     shutil.move(tf.name, db_path)
 
 def db_show(args):
-    config_path = bd.load_first_config("fpos")
-    config_file = os.path.join(config_path, "fpos")
-    config = ConfigParser()
-    config.read(config_file)
+    config = as_toml(find_config())
     db_file = config[args.nickname]["path"]
     with open(db_file, "r") as db:
         visualise(list(window(csv.reader(db), relspan=12)), save=args.save)
