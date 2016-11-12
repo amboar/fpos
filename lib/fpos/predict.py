@@ -284,12 +284,16 @@ def expense_offset(delta, period, dist):
             return start + i
     return None
 
-def print_forecast_expenses(groups, date):
+def prune_groups(groups, date, keep=None, cmax=None):
+    if not cmax:
+        cmax = len
     gds = ( gdt(g, group_delta_bins(group_deltas(g)))
-            for g in groups if len(g) > 2)
-    keep = ( gd for gd in gds
-            if 0 < len(gd.deltas) and
-                len(gd.deltas) > (date - last(gd.group)).days)
+            for g in groups if len(g) > 2 or (keep and keep(g[0][2])))
+    return ( gd for gd in gds if 0 < len(gd.deltas) and
+                cmax(gd.deltas) > (date - last(gd.group)).days )
+
+def print_forecast_expenses(groups, date):
+    keep = prune_groups(groups, date)
     table = {}
     for gd in keep:
         prev = last(gd.group)
@@ -325,11 +329,8 @@ def print_forecast_expenses(groups, date):
 
 pet = namedtuple("pet", [ "description", "n", "period", "mean", "annual", "monthly" ])
 
-def print_periodic_expenses(groups, date):
-    gds = ( gdt(g, group_delta_bins(group_deltas(g)))
-            for g in groups if len(g) > 2 )
-    keep = ( gd for gd in gds if 0 < len(gd.deltas) and
-                period(gd.deltas) > (date - last(gd.group)).days )
+def calculate_periodic_expenses(groups, date):
+    keep = prune_groups(groups, date)
     table = []
     for gd in keep:
         mean = sum(float(e[1]) for e in gd.group) / (sum(gd.deltas) + 1)
@@ -339,14 +340,27 @@ def print_periodic_expenses(groups, date):
         row = pet(description=gd.group[0][2],
                 n=len(gd.group),
                 period=est,
-                mean=money(mean),
-                annual=money(annual),
-                monthly=money(monthly))
+                mean=mean,
+                annual=annual,
+                monthly=monthly)
         table.append(row)
-    ordered = sorted(list(table), key=lambda x: float(x.annual))
+    return sorted(list(table), key=lambda x: float(x.annual))
+
+def print_periodic_expenses(groups, date):
+    table = calculate_periodic_expenses(groups, date)
+    ordered = sorted(table, key=lambda x: float(x.annual))
     print("Description | N | Period | Mean Value | Annual Value | Monthly Value")
     for row in ordered:
-        print(" | ".join(str(x) for x in row))
+        p0 = (str(x) for x in row[:3])
+        p1 = (money(x) for x in row[3:])
+        print(" | ".join(chain(p0, p1)))
+
+def print_commitment_targets(groups, date, m_income, monthlies):
+    si = sum(v for v in m_income.values())
+    print("sum income: {}".format(si))
+    se = sum(sum(v) for v in monthlies)
+    print("sum expenses: {}".format(se))
+    keep = prune_groups(groups, date)
 
 def main(args=None):
     if args is None:

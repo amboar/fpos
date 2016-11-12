@@ -31,7 +31,7 @@ import numpy as np
 from .core import categories, flexible, fixed
 from .core import money
 from .core import date_fmt, month_fmt
-from .predict import forecast, graph_bar_cashflow, print_periodic_expenses
+from .predict import forecast, graph_bar_cashflow, print_periodic_expenses, print_commitment_targets
 from .predict import print_forecast_expenses
 from .cdesc import cdesc
 
@@ -143,7 +143,7 @@ def parse_args(subparser=None):
     parser = parser_init(name(), description=cmd_description, help=cmd_help)
     graph_choices = [ "stacked_bar_expenses", "bar_margin", "box_categories",
             "xy_categories", "xy_weekly", "bar_targets", "xy_progressive_mean",
-            "bar_cashflow", "periodic_expenses", "forecast_expenses" ]
+            "bar_cashflow", "periodic_expenses", "forecast_expenses", "commitment_targets" ]
     parser.add_argument("database", metavar="FILE", type=argparse.FileType('r'),
             help="The IR document of which to draw graphs")
     parser.add_argument("--save", type=float, default=0,
@@ -524,7 +524,7 @@ def graph_xy_progressive_mean(months, dailies, m_income, groups, dates):
     plt.xlim([min(xs) - 1, max(xs) + 1])
     plt.show()
 
-def visualise(table, current_date=False, graph=None, save=0):
+def visualise(table, current_date=False, graph=None, save=0, span=0):
     # Core data, used across multiple plots
     period_grouper = PeriodGroup(extract_month, extract_week, extract_day)
     for row in table:
@@ -590,6 +590,8 @@ def visualise(table, current_date=False, graph=None, save=0):
         print_periodic_expenses(description_groups, last_transaction)
     if (should_graph(graph, "forecast_expenses")):
         print_forecast_expenses(description_groups, last_transaction)
+    if (should_graph(graph, "commitment_targets")):
+        print_commitment_targets(description_groups, last_transaction, m_income, monthlies)
     plt.show()
 
 def main(args=None):
