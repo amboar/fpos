@@ -6,3 +6,4 @@ matplotlib
 nose
 toml
 MonthDelta
+xdg
