@@ -4,10 +4,11 @@ Overview
 ========
 
 Accumulate and analyse your CSV transaction data to visualise your income and
-expenditure.  The categories are based on those used by the Australian Tax
-Office on their [MoneySmart website](https://www.moneysmart.gov.au/). These
-scripts were hacked together out of laziness when the author got fed up with
-manually entering his data into the site.
+expenditure. The categories are loosely based on those used by the Australian
+Securities and Investments Commission on their [MoneySmart
+website](https://www.moneysmart.gov.au/). These scripts were hacked together
+out of laziness when the author got fed up with manually entering his data into
+the site.
 
 The scripts are primarily [developed and run on Linux](#everything-else),
 though [OSX is also supported](#osx-the-easy-way). Windows is uncharted
