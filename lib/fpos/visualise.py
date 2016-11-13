@@ -22,6 +22,12 @@ import calendar
 from datetime import datetime, timedelta
 import itertools
 import math
+
+from scipy import polyfit, polyval
+import scipy.stats as stats
+import matplotlib.pyplot as plt
+import numpy as np
+
 from .core import categories, flexible, fixed
 from .core import money
 from .core import date_fmt, month_fmt
@@ -519,13 +525,6 @@ def graph_xy_progressive_mean(months, dailies, m_income, groups, dates):
     plt.show()
 
 def visualise(table, current_date=False, graph=None, save=0):
-    from .core import global_module, global_symbol
-    global_symbol(globals(), "scipy", "polyfit")
-    global_symbol(globals(), "scipy", "polyval")
-    global_module(globals(), "scipy.stats", name="stats")
-    global_module(globals(), "matplotlib.pyplot", name="plt")
-    global_module(globals(), "numpy", name="np")
-
     # Core data, used across multiple plots
     period_grouper = PeriodGroup(extract_month, extract_week, extract_day)
     for row in table:

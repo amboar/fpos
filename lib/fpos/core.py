@@ -27,13 +27,6 @@ month_fmt = "%m/%Y"
 def money(value):
     return "{:.2f}".format(value)
 
-def global_module(env, module, package=None, name=None):
-    env[module if name is None else name] = importlib.import_module(module, package)
-
-def global_symbol(env, module, symbol, package=None, name=None):
-    p = importlib.import_module(module, package)
-    env[symbol if name is None else name] = getattr(p, symbol)
-
 def lcs(a, b):
     assert isinstance(a, str)
     assert isinstance(b, str)
