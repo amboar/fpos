@@ -277,25 +277,35 @@ gdt = namedtuple("gdt", [ "group", "deltas" ])
 fet = namedtuple("fet", ["distance", "previous", "next", "description", "n",
     "period", "mean"])
 
+def expense_offset(delta, period, dist):
+    start = max(delta, period)
+    for i, v in enumerate(dist[start:]):
+        if 0 < v:
+            return start + i
+    return None
+
 def print_forecast_expenses(groups, date):
     gds = ( gdt(g, group_delta_bins(group_deltas(g)))
             for g in groups if len(g) > 2)
     keep = ( gd for gd in gds
             if 0 < len(gd.deltas) and
-                period(gd.deltas) > (date - last(gd.group)).days)
+                len(gd.deltas) > (date - last(gd.group)).days)
     table = {}
     for gd in keep:
         prev = last(gd.group)
         delta = (date - prev).days
-        est = icmf(gd.deltas)
+        period = icmf(gd.deltas)
+        f = expense_offset(delta, period, gd.deltas)
+        if not f:
+            continue
         mean = sum(float(e[1]) for e in gd.group) / (sum(gd.deltas) + 1)
-        for d in range(est - delta, 31, est):
+        for d in range(f - delta, 31, period):
             row = fet(distance=d,
                     previous=prev.strftime("%d/%m/%y"),
                     next=(date + timedelta(d)).strftime("%d/%m/%y"),
                     description=gd.group[0][2],
                     n=len(gd.group),
-                    period=est,
+                    period=period,
                     mean=mean)
             if d not in table:
                 table[d] = []
