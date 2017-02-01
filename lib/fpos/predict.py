@@ -343,7 +343,7 @@ def print_periodic_expenses(groups, date):
                 annual=money(annual),
                 monthly=money(monthly))
         table.append(row)
-    ordered = sorted(list(table), key=lambda x: x.annual)
+    ordered = sorted(list(table), key=lambda x: float(x.annual))
     print("Description | N | Period | Mean Value | Annual Value | Monthly Value")
     for row in ordered:
         print(" | ".join(str(x) for x in row))
