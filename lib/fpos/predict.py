@@ -314,7 +314,7 @@ def print_forecast_expenses(groups, date):
             if d not in table:
                 table[d] = []
             table[d].append(row)
-    print("Distance | Previous | Next | Description | N | Period | Mean Value | Sum Expense")
+    print("Distance,Previous,Next,Description,N,Period,Mean Value,Sum Expense")
     e, i = 0, 0
     for k in sorted(x for x in table.keys() if x >= 0 and x <= 31):
         for row in table[k]:
@@ -325,7 +325,7 @@ def print_forecast_expenses(groups, date):
             strrow = [str(e) for e in row[:-1]]
             strrow.append(money(row.mean))
             strrow.append(money(e))
-            print(" | ".join(strrow))
+            print(",".join(strrow))
 
 pet = namedtuple("pet", [ "description", "n", "period", "mean", "annual", "monthly" ])
 
@@ -349,11 +349,11 @@ def calculate_periodic_expenses(groups, date):
 def print_periodic_expenses(groups, date):
     table = calculate_periodic_expenses(groups, date)
     ordered = sorted(table, key=lambda x: float(x.annual))
-    print("Description | N | Period | Mean Value | Annual Value | Monthly Value")
+    print("Description,N,Period,Mean Value,Annual Value,Monthly Value")
     for row in ordered:
         p0 = (str(x) for x in row[:3])
         p1 = (money(x) for x in row[3:])
-        print(" | ".join(chain(p0, p1)))
+        print(",".join(chain(p0, p1)))
 
 def print_commitment_targets(groups, date, m_income, monthlies):
     si = sum(v for v in m_income.values())
