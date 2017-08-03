@@ -193,7 +193,7 @@ def graph_stacked_bar_expenses(months, monthlies, expenses, m_income, remaining)
     # Add colours for metadata rows total, income and surplus
     plt.figure(1)
     for i, row in enumerate(monthlies):
-        plt.bar(np.arange(n_months) + 0.3, row, bar_width, bottom=y_offset, color=palette[i])
+        plt.bar(np.arange(n_months) + 0.5, row, bar_width, bottom=y_offset, color=palette[i])
         y_offset = y_offset + row
         cell_text.append([money(float(x)) for x in row])
     cell_text.append([money(sum(expenses[m].values())) for m in months])
@@ -394,20 +394,21 @@ def graph_bar_targets(months, monthlies, expenses, m_income, remaining, want_sav
     fs.update(dict((k, abs(ms[k] / fas) * cash) for k in flexible))
     budget = [ abs(fs[k]) for k in whitelist ]
     r_whitelist = np.arange(len(whitelist))
-    b1 = plt.bar(r_whitelist + 0.1,
+    b1 = plt.bar(r_whitelist,
             budget,
             [ 0.6 ] * len(r_whitelist),
             alpha=0.4)
-    b2 = plt.bar(r_whitelist + 0.1,
+    b2 = plt.bar(r_whitelist,
             [ abs(curr_expenses[k]) for k in whitelist ],
             [ 0.6 ] * len(r_whitelist),
             color='r', alpha=0.6)
-    b3 = plt.bar(r_whitelist + 0.8,
+    b3 = plt.bar(r_whitelist,
             [ abs(v) for v in mean_prev_monthlies ],
             [ 0.1 ] * len(r_whitelist),
             yerr=error_prev_monthlies, color='k', alpha=0.6)
     plt.axhline(0, color="black")
     plt.xticks([])
+    # plt.xticks(np.arange(len(r_whitelist)), (x[:3] for x in whitelist))
     plt.ylabel("Position Against Budget / Mean Expense ($)")
     save_text = ( "\nSaving \${}"
             .format(money(can_save), money(mean_income)) )
