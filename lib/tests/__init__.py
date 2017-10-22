@@ -22,7 +22,7 @@ from datetime import datetime as dt
 from datetime import timedelta as td
 from itertools import islice, cycle
 import unittest
-from fpos import annotate, combine, core, transform, visualise, window, predict, db, psave
+from fpos import annotate, combine, core, transform, visualise, window, predict, db, psave, groups
 
 money = visualise.money
 
@@ -930,3 +930,151 @@ class PsaveTest(unittest.TestCase):
                 then2 : psave.Balance(then2, 1, 0),
                 then3 : psave.Balance(then3, 1, 0)}
         self.assertEquals(expected, state)
+
+import tempfile
+
+class SqlGroupCollectionTest(unittest.TestCase):
+    def contain(self, func):
+        with tempfile.TemporaryDirectory() as test_dir:
+            with groups.SqlGroupCollection(test_dir) as sgc:
+                func(self, sgc)
+
+    def test_associate_identity(self):
+        def test(tc, gc):
+            cdid = groups.gen_id("foo", groups.salt)
+            gc.associate(cdid, cdid)
+        self.contain(test)
+
+    def test_associate_distinct(self):
+        def test(tc, gc):
+            cdid = groups.gen_id("foo", groups.salt)
+            adid = groups.gen_id("bar", groups.salt)
+            gc.associate(cdid, adid)
+        self.contain(test)
+
+    def test_have_association_identity(self):
+        def test(tc, gc):
+            cdid = groups.gen_id("foo", groups.salt)
+            gc.associate(cdid, cdid)
+            self.assertTrue(gc.have_association(cdid))
+        self.contain(test)
+
+    def test_have_association_distinct(self):
+        def test(tc, gc):
+            cdid = groups.gen_id("foo", groups.salt)
+            adid = groups.gen_id("bar", groups.salt)
+            gc.associate(cdid, adid)
+            self.assertTrue(gc.have_association(adid))
+        self.contain(test)
+
+    def test_get_canonical_identity(self):
+        def test(tc, gc):
+            cdid = groups.gen_id("foo", groups.salt)
+            gc.associate(cdid, cdid)
+            self.assertEquals(cdid, gc.get_canonical(cdid))
+        self.contain(test)
+
+    def test_get_canonical_distinct(self):
+        def test(tc, gc):
+            cdid = groups.gen_id("foo", groups.salt)
+            adid = groups.gen_id("bar", groups.salt)
+            gc.associate(cdid, adid)
+            self.assertEquals(cdid, gc.get_canonical(adid))
+        self.contain(test)
+
+class DynamicGroupsTest(unittest.TestCase):
+    def contain(self, func, threshold=0.85, size=4):
+        with tempfile.TemporaryDirectory() as test_dir:
+            gc = groups.SqlGroupCollection(test_dir)
+            with groups.DynamicGroups(threshold, size, gc) as dg:
+                func(self, dg)
+
+    def test_find_group_empty(self):
+        def test(tc, dg):
+            self.assertIsNone(dg.find_group("foo"))
+        self.contain(test)
+
+    def test_insert_group_one(self):
+        def test(tc, dg):
+            dg.insert("a" * 10, 'a')
+        self.contain(test)
+
+    def test_find_group_empty(self):
+        def test(tc, dg):
+            self.assertIsNone(dg.find_group("a" * 10))
+        self.contain(test)
+
+    def test_find_group_static_exact(self):
+        def test(tc, dg):
+            inserted = dg.insert("a" * 10, 'a')
+            self.assertIsNotNone(inserted)
+            found = dg.find_group("a" * 10)
+            self.assertIsNotNone(found)
+            self.assertEquals(inserted.key(), found.key())
+        self.contain(test, size=3)
+
+    def test_find_group_static_fuzzy(self):
+        def test(tc, dg):
+            inserted = dg.insert("a" * 10, 'a')
+            self.assertIsNotNone(inserted)
+            found = dg.find_group("a" * 9 + "b")
+            self.assertIsNotNone(found)
+            self.assertEquals(inserted.key(), found.key())
+        self.contain(test, size=0)
+
+    def test_find_group_static_fuzzy_old(self):
+        def test(tc, dg):
+            one = dg.insert("a" * 10, 'a')
+            self.assertIsNotNone(one)
+            two = dg.insert("a" * 9 + "b", 'b', one)
+            self.assertIsNotNone(two)
+            found = dg.find_group("a" * 9 + "b")
+            self.assertEquals(one.key(), found.key())
+        self.contain(test, size=3)
+
+    def test_find_group_dynamic_exact(self):
+        def test(tc, dg):
+            inserted = dg.insert("a" * 10, 'a')
+            self.assertTrue(inserted == dg.insert("a" * 9 + "b", 'b', inserted))
+            found = dg.find_group("a" * 10)
+            self.assertIsNotNone(found)
+            self.assertEquals(inserted.key(), found.key())
+        self.contain(test, size=2)
+
+    def test_find_group_dynamic_fuzzy(self):
+        def test(tc, dg):
+            inserted = dg.insert("a" * 10, 'a')
+            self.assertIsNotNone(inserted)
+            self.assertTrue(inserted == dg.insert("a" * 9 + "b", 'b', inserted))
+            found = dg.find_group("a" * 9 + "c")
+            self.assertIsNotNone(found)
+            self.assertEquals(inserted.key(), found.key())
+        self.contain(test, size=2)
+
+    def test_find_group_dynamic_fuzzy_multi(self):
+        def test(tc, dg):
+            inserted = dg.insert("b" * 10, 'b')
+            self.assertIsNotNone(inserted)
+            inserted = dg.insert("a" * 10, 'a')
+            self.assertIsNotNone(inserted)
+            self.assertTrue(inserted == dg.insert("a" * 9 + "b", 'b', inserted))
+            found = dg.find_group("a" * 9 + "c")
+            self.assertIsNotNone(found)
+            self.assertEquals(inserted.key(), found.key())
+        self.contain(test, size=2)
+
+    def test_add_non_canonical_no_group(self):
+        def test(tc, dg):
+            inserted = dg.insert("a" * 10, 'a')
+            self.assertIsNotNone(inserted)
+            one = dg.insert("a" * 9 + "b", 'b', inserted)
+            self.assertIsNotNone(one)
+            two = dg.insert("a" * 9 + "b", 'b', None)
+            self.assertIsNotNone(two)
+            self.assertEquals(inserted.key(), one.key())
+            self.assertEquals(one.key(), two.key())
+            pass
+        self.contain(test, size=1)
+
+if __name__ == '__main__':
+    unittest.main()

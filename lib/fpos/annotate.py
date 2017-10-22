@@ -19,10 +19,10 @@
 import argparse
 import csv
 import collections
-from pystrgrp import Strgrp
 import math
 from .core import categories
 from .core import money
+from .groups import DynamicGroups
 
 cmd_description = \
         """Annotates transactions in an IR document with category information.
@@ -36,10 +36,16 @@ cmd_help = \
 Entry = collections.namedtuple("Entry", ("date", "amount", "description"))
 TaggedEntry = collections.namedtuple("TaggedEntry", ("entry", "tag"))
 
-
 class _Tagger(object):
-    def __init__(self, fuzzer=None):
-        self._strgrp = Strgrp()
+    def __init__(self):
+        self.grouper = DynamicGroups()
+
+    def __enter__(self):
+        self.grouper.__enter__()
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        return self.grouper.__exit__(exc_type, exc_value, traceback)
 
     @staticmethod
     def find_category(needle, haystack):
@@ -72,12 +78,12 @@ class _Tagger(object):
         return max(self._bin2hist(grpbin).items(), key=lambda x: x[1])[0]
 
     def classify(self, description):
-        grpbin = self._strgrp.grp_for(description)
-        if grpbin is None:
-             return None
-        return self._tag_for(grpbin)
+        return self._tag_for(self.find_group(description))
 
-    def categorize(self, entry, confirm=False):
+    def find_group(self, description):
+        return self.grouper.find_group(description)
+
+    def categorize(self, entry, group, confirm=False):
         need = True
         category = None
         fmtargs = ("Spent" if 0 > float(entry.amount) else "Earnt",
@@ -87,7 +93,7 @@ class _Tagger(object):
         print("{} ${!s} on {!s}: {!s}".format(*fmtargs))
         while need:
             guess = None
-            guess = self.classify(entry.description)
+            guess = self._tag_for(group)
             prompt = "Category [{!s}]: ".format("?" if guess is None else guess)
             raw = input(prompt).strip()
             if "" == raw:
@@ -109,8 +115,12 @@ class _Tagger(object):
                 need = "y" != confirmation.lower()
         return category
 
-    def add(self, entry, category):
-        self._strgrp.add(entry.description, TaggedEntry(entry, category))
+    def insert(self, entry, category, group=None):
+        te = TaggedEntry(entry, category)
+        self.grouper.insert(entry.description, te, group)
+
+    def dump(self):
+        return [ [ g.key(), [ i.value() for i in g ] ] for g in self.grouper ]
 
 def name():
     return __name__.split(".")[-1]
@@ -126,34 +136,45 @@ def parse_args(subparser=None):
             help="Prompt for confirmation after each entry has been annotated with a category")
     return [ parser ] if subparser else parser.parse_args()
 
+import re
+
 def annotate(src, confirm=False):
     annotated = []
-    t = _Tagger()
-    for row in src:
-        if 0 == len(row):
-            # Skip empty lines
-            continue
-        entry = Entry(*row[:3])
-        category = None
-        if 4 == len(row):
-            # Fourth column is category, check that it's known
-            try:
-                category = t.resolve_category(row[3])
-                t.add(entry, category)
-            except ValueError:
-                # Category isn't known, output remains empty to
-                # trigger user input
-                pass
-        if category is None:
-            # Haven't yet determined the category, require user input
-            category = t.categorize(entry, confirm)
-            assert None is not category
-            t.add(entry, category)
-            print()
-        output = []
-        output.extend(entry)
-        output.append(category)
-        annotated.append(output)
+    with _Tagger() as t:
+        try:
+            for row in src:
+                if 0 == len(row):
+                    # Skip empty lines
+                    continue
+                # Cook the description to make it easier on strgrp and the NNs.
+                # Mainly, reduce multiple spaces to one
+                # cooked = Entry(row[0], row[1], re.sub(r"\s{2,}", " ", row[2]))
+                cooked = Entry(row[0], row[1], row[2])
+                category = None
+                if 4 == len(row):
+                    # Fourth column is category, check that it's known
+                    try:
+                        group = t.find_group(cooked.description)
+                        category = t.resolve_category(row[3])
+                        t.insert(cooked, category, group)
+                    except ValueError:
+                        # Category isn't known, output remains empty to
+                        # trigger user input
+                        pass
+                if category is None:
+                    # Haven't yet determined the category, require user input
+                    group = t.find_group(cooked.description)
+                    category = t.categorize(cooked, group, confirm)
+                    assert None is not category
+                    t.insert(cooked, category, group)
+                    print()
+                output = []
+                # Retain the raw description string in the output
+                output.extend(row[:3])
+                output.append(category)
+                annotated.append(output)
+        except EOFError:
+            pass
     return annotated
 
 def main(args=None):
