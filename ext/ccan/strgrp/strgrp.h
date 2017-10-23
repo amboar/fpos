@@ -3,6 +3,7 @@
 #ifndef STRGRP_H
 #define STRGRP_H
 #include <stdbool.h>
+#include "ccan/heap/heap.h"
 
 struct strgrp;
 struct strgrp_iter;
@@ -36,6 +37,18 @@ strgrp_new(double threshold);
  */
 const struct strgrp_grp *
 strgrp_grp_for(struct strgrp *ctx, const char *str);
+
+/* If a group with a literal string match exist then return it, otherwise NULL */
+const struct strgrp_grp *
+strgrp_grp_exact(struct strgrp *ctx, const char *str);
+
+/* Unconditionally score all groups, and provide a heap using the scores */
+const struct heap *
+strgrp_grp_heap(struct strgrp *ctx, const char *str);
+
+/* Implicitly accept()s */
+bool
+strgrp_grp_add(struct strgrp_grp *grp, const char *str, void *data);
 
 /**
  * Add a string key and arbitrary data value (together, an item) to the

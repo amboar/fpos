@@ -306,6 +306,65 @@ strgrp_grp_for(struct strgrp *const ctx, const char *const str) {
 }
 
 const struct strgrp_grp *
+strgrp_grp_exact(struct strgrp *const ctx, const char *const str) {
+    struct strgrp_grp **const grp = stringmap_lookup(ctx->known, str);
+    if (!grp) {
+        return NULL;
+    }
+    return *grp;
+}
+
+static bool score_gt(const struct strgrp_grp *a, const struct strgrp_grp *b) {
+    return a->score > b->score;
+}
+
+static bool __score_gt(const void *a, const void *b) {
+    return score_gt(a, b);
+}
+
+const struct heap *
+strgrp_grp_heap(struct strgrp *const ctx, const char *const str) {
+    int i;
+
+    assert(ctx->n_grps);
+    // Ensure ctx->pop is always populated. Returning null here indicates a new
+    // group should be created, at which point add_grp() copies ctx->pop into
+    // the new group's struct.
+    strpopcnt(str, ctx->pop);
+    // Keep ccanlint happy in reduced feature mode
+#if HAVE_OPENMP
+    #pragma omp parallel for schedule(dynamic)
+#endif
+    for (i = 0; i < ctx->n_grps; i++) {
+        struct strgrp_grp *grp = darray_item(ctx->grps, i);
+        grp->score = 0.0;
+        if (should_grp_score_len(ctx, grp, str)) {
+            if (should_grp_score_cos(ctx, grp, str)) {
+                grp->score = grp_score(grp, str);
+            }
+        }
+    }
+
+    /* Sort descending */
+    struct heap *heap = heap_init(__score_gt);
+    if (!heap) {
+        perror("heap_init");
+        return NULL;
+    }
+    for (i = 0; i < ctx->n_grps; i++) {
+        struct strgrp_grp *curr = darray_item(ctx->grps, i);
+
+        if (heap_push(heap, curr)) {
+            perror("heap_push");
+            heap_free(heap);
+            return NULL;
+        }
+    }
+
+    return heap;
+}
+
+const struct strgrp_grp *
 strgrp_add(struct strgrp *const ctx, const char *const str,
         void *const data) {
     bool inserted = false;
