@@ -258,22 +258,8 @@ cache(struct strgrp *const ctx, struct strgrp_grp *const grp,
     *(stringmap_enter(ctx->known, str)) = grp;
 }
 
-static struct strgrp_grp *
-grp_for(struct strgrp *const ctx, const char *const str) {
-    // Ensure ctx->pop is always populated. Returning null here indicates a new
-    // group should be created, at which point add_grp() copies ctx->pop into
-    // the new group's struct.
-    strpopcnt(str, ctx->pop);
-    if (!ctx->n_grps) {
-        return NULL;
-    }
-    {
-        struct strgrp_grp **const grp = stringmap_lookup(ctx->known, str);
-        if (grp) {
-            return *grp;
-        }
-    }
-
+static void
+grps_score(struct strgrp *const ctx, const char *const str) {
     int i;
 // Keep ccanlint happy in reduced feature mode
 #if HAVE_OPENMP
@@ -288,6 +274,27 @@ grp_for(struct strgrp *const ctx, const char *const str) {
             }
         }
     }
+}
+
+static struct strgrp_grp *
+grp_for(struct strgrp *const ctx, const char *const str) {
+    int i;
+
+    // Ensure ctx->pop is always populated. Returning null here indicates a new
+    // group should be created, at which point add_grp() copies ctx->pop into
+    // the new group's struct.
+    strpopcnt(str, ctx->pop);
+    if (!ctx->n_grps) {
+        return NULL;
+    }
+    {
+        struct strgrp_grp **const grp = stringmap_lookup(ctx->known, str);
+        if (grp) {
+            return *grp;
+        }
+    }
+
+    grps_score(ctx, str);
 
     struct strgrp_grp *max = NULL;
     for (i = 0; i < ctx->n_grps; i++) {
@@ -331,19 +338,8 @@ strgrp_grp_heap(struct strgrp *const ctx, const char *const str) {
     // group should be created, at which point add_grp() copies ctx->pop into
     // the new group's struct.
     strpopcnt(str, ctx->pop);
-    // Keep ccanlint happy in reduced feature mode
-#if HAVE_OPENMP
-    #pragma omp parallel for schedule(dynamic)
-#endif
-    for (i = 0; i < ctx->n_grps; i++) {
-        struct strgrp_grp *grp = darray_item(ctx->grps, i);
-        grp->score = 0.0;
-        if (should_grp_score_len(ctx, grp, str)) {
-            if (should_grp_score_cos(ctx, grp, str)) {
-                grp->score = grp_score(grp, str);
-            }
-        }
-    }
+
+    grps_score(ctx, str);
 
     /* Sort descending */
     struct heap *heap = heap_init(__score_gt);
