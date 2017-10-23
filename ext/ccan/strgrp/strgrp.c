@@ -37,19 +37,11 @@ typedef darray(struct strgrp_item *) darray_item;
 
 typedef stringmap(struct strgrp_grp *) stringmap_grp;
 
-struct grp_score {
-    struct strgrp_grp *grp;
-    double score;
-};
-
-typedef darray(struct grp_score *) darray_score;
-
 struct strgrp {
     double threshold;
     stringmap_grp known;
     unsigned int n_grps;
     darray_grp grps;
-    struct grp_score *scores;
     int16_t pop[CHAR_N_VALUES];
 };
 
@@ -64,6 +56,7 @@ struct strgrp_grp {
     darray_item items;
     int32_t n_items;
     int16_t pop[CHAR_N_VALUES];
+    double score;
 };
 
 struct strgrp_grp_iter {
@@ -246,16 +239,6 @@ add_grp(struct strgrp *const ctx, const char *const str,
     memcpy(b->pop, ctx->pop, sizeof(ctx->pop));
     darray_push(ctx->grps, b);
     ctx->n_grps++;
-    if (ctx->scores) {
-        if (!tal_resize(&ctx->scores, ctx->n_grps)) {
-            return NULL;
-        }
-    } else {
-        ctx->scores = tal_arr(ctx, struct grp_score, ctx->n_grps);
-        if (!ctx->scores) {
-            return NULL;
-        }
-    }
     return b;
 }
 
@@ -290,6 +273,7 @@ grp_for(struct strgrp *const ctx, const char *const str) {
             return *grp;
         }
     }
+
     int i;
 // Keep ccanlint happy in reduced feature mode
 #if HAVE_OPENMP
@@ -297,21 +281,23 @@ grp_for(struct strgrp *const ctx, const char *const str) {
 #endif
     for (i = 0; i < ctx->n_grps; i++) {
         struct strgrp_grp *grp = darray_item(ctx->grps, i);
-        ctx->scores[i].grp = grp;
-        ctx->scores[i].score = 0;
+        grp->score = 0.0;
         if (should_grp_score_len(ctx, grp, str)) {
             if (should_grp_score_cos(ctx, grp, str)) {
-                ctx->scores[i].score = grp_score(grp, str);
+                grp->score = grp_score(grp, str);
             }
         }
     }
-    struct grp_score *max = NULL;
+
+    struct strgrp_grp *max = NULL;
     for (i = 0; i < ctx->n_grps; i++) {
-        if (!max || ctx->scores[i].score > max->score) {
-            max = &(ctx->scores[i]);
+        struct strgrp_grp *curr = darray_item(ctx->grps, i);
+
+        if (!max || curr->score > max->score) {
+            max = curr;
         }
     }
-    return (max && max->score >= ctx->threshold) ? max->grp : NULL;
+    return (max && max->score >= ctx->threshold) ? max : NULL;
 }
 
 const struct strgrp_grp *
