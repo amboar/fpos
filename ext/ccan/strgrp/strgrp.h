@@ -35,16 +35,16 @@ strgrp_new(double threshold);
  * of the returned pointer resides with the strgrp instance and it becomes
  * invalid if the strgrp instance is freed.
  */
-const struct strgrp_grp *
+struct strgrp_grp *
 strgrp_grp_for(struct strgrp *ctx, const char *str);
 
 /* If a group with a literal string match exist then return it, otherwise NULL */
-const struct strgrp_grp *
+struct strgrp_grp *
 strgrp_grp_exact(struct strgrp *ctx, const char *str);
 
 /* Unconditionally score all groups, and provide a heap using the scores */
-const struct heap *
-strgrp_grp_heap(struct strgrp *ctx, const char *str);
+struct heap *
+strgrp_grps_for(struct strgrp *ctx, const char *str);
 
 /* Implicitly accept()s */
 bool
@@ -65,7 +65,7 @@ strgrp_grp_add(struct strgrp_grp *grp, const char *str, void *data);
  * pointer resides with the strgrp instance and it becomes invalid if the
  * strgrp instance is freed.
  */
-const struct strgrp_grp *
+struct strgrp_grp *
 strgrp_add(struct strgrp *ctx, const char *str, void *data);
 
 /**
@@ -89,7 +89,7 @@ strgrp_iter_new(struct strgrp *ctx);
  * Ownership of the returned pointer resides with the strgrp instance and
  * becomes invalid if the strgrp instance is freed.
  */
-const struct strgrp_grp *
+struct strgrp_grp *
 strgrp_iter_next(struct strgrp_iter *iter);
 
 /**

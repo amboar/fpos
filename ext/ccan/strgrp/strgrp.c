@@ -307,12 +307,12 @@ grp_for(struct strgrp *const ctx, const char *const str) {
     return (max && max->score >= ctx->threshold) ? max : NULL;
 }
 
-const struct strgrp_grp *
+struct strgrp_grp *
 strgrp_grp_for(struct strgrp *const ctx, const char *const str) {
     return grp_for(ctx, str);
 }
 
-const struct strgrp_grp *
+struct strgrp_grp *
 strgrp_grp_exact(struct strgrp *const ctx, const char *const str) {
     struct strgrp_grp **const grp = stringmap_lookup(ctx->known, str);
     if (!grp) {
@@ -329,8 +329,8 @@ static bool __score_gt(const void *a, const void *b) {
     return score_gt(a, b);
 }
 
-const struct heap *
-strgrp_grp_heap(struct strgrp *const ctx, const char *const str) {
+struct heap *
+strgrp_grps_for(struct strgrp *const ctx, const char *const str) {
     int i;
 
     assert(ctx->n_grps);
@@ -360,7 +360,16 @@ strgrp_grp_heap(struct strgrp *const ctx, const char *const str) {
     return heap;
 }
 
-const struct strgrp_grp *
+bool
+strgrp_grp_add(struct strgrp_grp *grp, const char *str, void *data)
+{
+     if (!add_item(grp, str, data))
+         return false;
+
+     return true;
+}
+
+struct strgrp_grp *
 strgrp_add(struct strgrp *const ctx, const char *const str,
         void *const data) {
     bool inserted = false;
@@ -392,7 +401,7 @@ strgrp_iter_new(struct strgrp *const ctx) {
     return iter;
 }
 
-const struct strgrp_grp *
+struct strgrp_grp *
 strgrp_iter_next(struct strgrp_iter *const iter) {
     return (iter->ctx->n_grps == iter->i) ?
         NULL : darray_item(iter->ctx->grps, iter->i++);
