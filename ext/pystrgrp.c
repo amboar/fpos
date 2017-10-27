@@ -84,7 +84,7 @@ static PyTypeObject ItemType = {
 
 typedef struct {
     PyObject_HEAD;
-    const struct strgrp_grp *grp;
+    struct strgrp_grp *grp;
     struct strgrp_grp_iter *iter;
 } GrpObject;
 
@@ -134,9 +134,33 @@ Grp_key(GrpObject *self) {
     return py_key;
 }
 
+static PyObject *
+Grp_add(GrpObject *self, PyObject *args, PyObject *kwds) {
+    char *key;
+    PyObject *data = NULL;
+    static char *kwlist[] = { "key", "data", NULL };
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "sO", kwlist, &key, &data)) {
+        return NULL;
+    }
+
+    if (!data) {
+        return NULL;
+    }
+
+    const bool added = strgrp_grp_add(self->grp, key, data);
+    if (added) {
+        Py_INCREF(data);
+        Py_RETURN_TRUE;
+    }
+
+    Py_RETURN_FALSE;
+}
+
 static PyMethodDef Grp_methods[] = {
     { "key", (PyCFunction)Grp_key, METH_NOARGS,
         "Fetch the description stored in the item" },
+    { "add", (PyCFunction)Grp_add, (METH_VARARGS | METH_KEYWORDS),
+        "Add a string and its associated data to a group" },
     {NULL}
 };
 
@@ -235,7 +259,7 @@ Strgrp_grp_for(StrgrpObject *self, PyObject *args, PyObject *kwds) {
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "s", kwlist, &key)) {
         return NULL;
     }
-    const struct strgrp_grp * grp = strgrp_grp_for(self->grp, key);
+    struct strgrp_grp * grp = strgrp_grp_for(self->grp, key);
     if (!grp) {
         Py_RETURN_NONE;
     }
@@ -259,7 +283,7 @@ Strgrp_add(StrgrpObject *self, PyObject *args, PyObject *kwds) {
         return NULL;
     }
     Py_INCREF(data);
-    const struct strgrp_grp * grp = strgrp_add(self->grp, key, data);
+    struct strgrp_grp * grp = strgrp_add(self->grp, key, data);
     if (!grp) {
         return PyErr_NoMemory();
     }
@@ -300,11 +324,77 @@ Strgrp_iternext(StrgrpObject *self) {
     return (PyObject *)grp;
 }
 
+static PyObject *
+Strgrp_grp_exact(StrgrpObject *self, PyObject *args, PyObject *kwds) {
+    char *key;
+    static char *kwlist[] = { "key", NULL };
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "s", kwlist, &key)) {
+        return NULL;
+    }
+    struct strgrp_grp * grp = strgrp_grp_exact(self->grp, key);
+    if (!grp) {
+        Py_RETURN_NONE;
+    }
+    GrpObject * const grpobj = (GrpObject *)PyType_GenericNew(&GrpType, NULL, NULL);
+    if (!grpobj) {
+        return PyErr_NoMemory();
+    }
+    grpobj->grp = grp;
+    return (PyObject *)grpobj;
+}
+
+static PyObject *
+Strgrp_grps_for(StrgrpObject *self, PyObject *args, PyObject *kwds) {
+    char *key;
+    static char *kwlist[] = { "key", NULL };
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "s", kwlist, &key)) {
+        return NULL;
+    }
+
+    struct heap *heap = strgrp_grps_for(self->grp, key);
+    if (!heap) {
+        Py_RETURN_NONE;
+    }
+
+    PyObject *tupleobj = PyTuple_New(heap->len);
+    if (!tupleobj) {
+        return PyErr_NoMemory();
+    }
+
+    struct strgrp_grp *grp;
+    Py_ssize_t i;
+    for (i = 0; (grp = heap_pop(heap)); i++) {
+        GrpObject *const grpobj = (GrpObject *)PyType_GenericNew(&GrpType, NULL, NULL);
+        if (!grpobj) {
+            goto cleanup;
+        }
+        grpobj->grp = grp;
+        if (PyTuple_SetItem(tupleobj, i, (PyObject *)grpobj)) {
+            Py_XDECREF((PyObject *)grpobj);
+            goto cleanup;
+        };
+    }
+
+    return (PyObject *)tupleobj;
+
+cleanup:
+    while (--i >= 0) {
+        Py_XDECREF((PyObject *)PyTuple_GetItem(tupleobj, i));
+    }
+    Py_XDECREF((PyObject *)tupleobj);
+
+    return NULL;
+}
+
 static PyMethodDef Strgrp_methods[] = {
     { "add", (PyCFunction)Strgrp_add, (METH_VARARGS | METH_KEYWORDS),
         "Cluster a string" },
     { "grp_for", (PyCFunction)Strgrp_grp_for, (METH_VARARGS | METH_KEYWORDS),
         "Find a cluster for a string, if one exists" },
+    { "grp_exact", (PyCFunction)Strgrp_grp_exact,
+        (METH_VARARGS | METH_KEYWORDS), "Find group by exact match" },
+    { "grps_for", (PyCFunction)Strgrp_grps_for, (METH_VARARGS | METH_KEYWORDS),
+        "Provide a tuple of grouops ordered by match score descending" },
     {NULL}
 };
 
