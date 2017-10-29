@@ -22,7 +22,7 @@ from datetime import datetime as dt
 from datetime import timedelta as td
 from itertools import islice, cycle
 import unittest
-from fpos import annotate, combine, core, transform, visualise, window, predict, db, psave
+from fpos import annotate, combine, core, transform, visualise, window, predict, db, psave, ann
 
 money = visualise.money
 
@@ -930,3 +930,70 @@ class PsaveTest(unittest.TestCase):
                 then2 : psave.Balance(then2, 1, 0),
                 then3 : psave.Balance(then3, 1, 0)}
         self.assertEquals(expected, state)
+
+class DescriptionAnnTest(unittest.TestCase):
+    def contain(self, func):
+        test_dir = "/tmp/descriptionann"
+        os.mkdir(test_dir)
+        try:
+            func(self, test_dir)
+        finally:
+            # HACK
+            os.system("rm -rf {}".format(test_dir))
+
+    def test_accept(self):
+        def test(tc, test_dir):
+            da = ann.DescriptionAnn(cache=test_dir)
+            da.accept("f")
+        DescriptionAnnTest.contain(self, test)
+
+    def test_accept_more(self):
+        def test(tc, test_dir):
+            da = ann.DescriptionAnn(cache=test_dir)
+            da.accept("f" * 101)
+        DescriptionAnnTest.contain(self, test)
+
+    def test_reject(self):
+        def test(tc, test_dir):
+            da = ann.DescriptionAnn(cache=test_dir)
+            da.reject("f")
+        DescriptionAnnTest.contain(self, test)
+
+    def test_reject_more(self):
+        def test(tc, test_dir):
+            da = ann.DescriptionAnn(cache=test_dir)
+            da.reject("f" * 101)
+        DescriptionAnnTest.contain(self, test)
+
+    def test_run_accept(self):
+        def test(tc, test_dir):
+            threshold = 0.75
+            da = ann.DescriptionAnn(cache=test_dir)
+            for i in range(0, 100):
+                da.accept("f")
+            v = da.run("f")
+            tc.assertTrue(v >= threshold, msg="{} is not greater-than-or-equal to {}".format(v, threshold))
+        DescriptionAnnTest.contain(self, test)
+
+    def test_run_reject(self):
+        def test(tc, test_dir):
+            threshold = 0.25
+            da = ann.DescriptionAnn(cache=test_dir)
+            for i in range(0, 300):
+                da.reject("f")
+            v = da.run("f")
+            tc.assertTrue(v < threshold, msg="{} is not less than {}".format(v, threshold))
+        DescriptionAnnTest.contain(self, test)
+
+    def test_load(self):
+        def test(tc, test_dir):
+            threshold = 0.75
+            da1 = ann.DescriptionAnn(cache=test_dir)
+            for i in range(0, 100):
+                da1.accept("f")
+            v = da1.run("f")
+            tc.assertTrue(v >= threshold, msg="{} is not greater-than-or-equal to {}".format(v, threshold))
+            da2 = ann.DescriptionAnn.load("f", cache=test_dir)
+            v = da2.run("f")
+            tc.assertTrue(v >= threshold, msg="{} is not greater-than-or-equal to {}".format(v, threshold))
+        DescriptionAnnTest.contain(self, test)
