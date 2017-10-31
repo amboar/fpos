@@ -944,33 +944,35 @@ class DescriptionAnnTest(unittest.TestCase):
     def test_accept(self):
         def test(tc, test_dir):
             da = ann.DescriptionAnn(cache=test_dir)
-            da.accept("f")
+            da.accept("a")
         DescriptionAnnTest.contain(self, test)
 
     def test_accept_more(self):
         def test(tc, test_dir):
             da = ann.DescriptionAnn(cache=test_dir)
-            da.accept("f" * 101)
+            da.accept("a" * 101)
         DescriptionAnnTest.contain(self, test)
+        self.assertTrue(False)
 
     def test_reject(self):
         def test(tc, test_dir):
             da = ann.DescriptionAnn(cache=test_dir)
-            da.reject("f")
+            da.reject("r")
         DescriptionAnnTest.contain(self, test)
 
     def test_reject_more(self):
         def test(tc, test_dir):
             da = ann.DescriptionAnn(cache=test_dir)
-            da.reject("f" * 101)
+            da.reject("r" * 101)
         DescriptionAnnTest.contain(self, test)
+        self.assertTrue(False)
 
     def test_run_accept(self):
         def test(tc, test_dir):
             threshold = 0.75
             da = ann.DescriptionAnn(cache=test_dir)
-            da.accept("f")
-            v = da.run("f")
+            da.accept("a")
+            v = da.run("a")
             tc.assertTrue(v >= threshold, msg="{} is not greater-than-or-equal to {}".format(v, threshold))
         DescriptionAnnTest.contain(self, test)
 
@@ -983,7 +985,35 @@ class DescriptionAnnTest(unittest.TestCase):
             tc.assertTrue(v < threshold, msg="{} is not less than {}".format(v, threshold))
         DescriptionAnnTest.contain(self, test)
 
-    def test_load(self):
+    def test_run_accept_reject(self):
+        def test(tc, test_dir):
+            threshold = 0.75
+            da = ann.DescriptionAnn(cache=test_dir)
+            da.accept("accept")
+            da.reject("reject")
+            da.accept("accept")
+            da.reject("reject")
+            da.accept("accept")
+            da.reject("reject")
+            v = da.run("accept")
+            tc.assertTrue(v >= threshold, msg="{} is not greater-than-or-equal-to {}".format(v, threshold))
+            v = da.run("r")
+            tc.assertTrue(v <= (1 - threshold), msg="{} is not less-than-or-equal-to {}".format(v, (1 - threshold)))
+        DescriptionAnnTest.contain(self, test)
+
+    def test_load_pass(self):
+        def test(tc, test_dir):
+            threshold = 0.75
+            da1 = ann.DescriptionAnn(cache=test_dir)
+            da1.accept("f")
+            v = da1.run("f")
+            tc.assertTrue(v >= threshold, msg="{} is not greater-than-or-equal-to {}".format(v, threshold))
+            da2 = ann.DescriptionAnn.load("f", cache=test_dir)
+            v = da2.run("f")
+            tc.assertTrue(v >= threshold, msg="{} is not greater-than-or-equal-to {}".format(v, threshold))
+        DescriptionAnnTest.contain(self, test)
+
+    def test_load_pass(self):
         def test(tc, test_dir):
             threshold = 0.75
             da1 = ann.DescriptionAnn(cache=test_dir)
