@@ -84,15 +84,15 @@ class DescriptionAnn(object):
 
         self.ann.write(path)
 
-    def accept(self, description):
+    def accept(self, description, iters=300):
         try:
-            return self.ann.train(to_input(description), [1.0], 3)
+            return self.ann.train(to_input(description), [1.0], 3, iters=iters)
         finally:
             self.cache_ann(description)
 
 
-    def reject(self, description):
-        return self.ann.train(to_input(description), [0.0], 3)
+    def reject(self, description, iters=300):
+        return self.ann.train(to_input(description), [0.0], 3, iters=iters)
 
     def run(self, description):
         return self.ann.run(to_input(description))[0]

@@ -969,8 +969,7 @@ class DescriptionAnnTest(unittest.TestCase):
         def test(tc, test_dir):
             threshold = 0.75
             da = ann.DescriptionAnn(cache=test_dir)
-            for i in range(0, 100):
-                da.accept("f")
+            da.accept("f")
             v = da.run("f")
             tc.assertTrue(v >= threshold, msg="{} is not greater-than-or-equal to {}".format(v, threshold))
         DescriptionAnnTest.contain(self, test)
@@ -979,8 +978,7 @@ class DescriptionAnnTest(unittest.TestCase):
         def test(tc, test_dir):
             threshold = 0.25
             da = ann.DescriptionAnn(cache=test_dir)
-            for i in range(0, 300):
-                da.reject("f")
+            da.reject("f")
             v = da.run("f")
             tc.assertTrue(v < threshold, msg="{} is not less than {}".format(v, threshold))
         DescriptionAnnTest.contain(self, test)
@@ -989,8 +987,7 @@ class DescriptionAnnTest(unittest.TestCase):
         def test(tc, test_dir):
             threshold = 0.75
             da1 = ann.DescriptionAnn(cache=test_dir)
-            for i in range(0, 100):
-                da1.accept("f")
+            da1.accept("f")
             v = da1.run("f")
             tc.assertTrue(v >= threshold, msg="{} is not greater-than-or-equal to {}".format(v, threshold))
             da2 = ann.DescriptionAnn.load("f", cache=test_dir)
