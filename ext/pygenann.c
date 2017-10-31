@@ -103,14 +103,18 @@ Genann_run(GenannObject *self, PyObject *args) {
 }
 
 static PyObject *
-Genann_train(GenannObject *self, PyObject *args) {
-    PyObject *outputsobj;
-    PyObject *inputsobj;
+Genann_train(GenannObject *self, PyObject *args, PyObject *kws) {
+    char *keywords[] = { "inputs", "outputs", "rate", "iters", NULL };
+    PyObject *outputsobj = NULL;
+    PyObject *inputsobj = NULL;
     double *outputs;
     double *inputs;
+    int iters = 1;
     double rate;
+    int i;
 
-    if (!PyArg_ParseTuple(args, "OOd", &inputsobj, &outputsobj, &rate))
+    if (!PyArg_ParseTupleAndKeywords(args, kws, "OOd|i", keywords, &inputsobj,
+                &outputsobj, &rate, &iters))
         return NULL;
 
     inputs = unpack_PyList(inputsobj);
@@ -123,7 +127,9 @@ Genann_train(GenannObject *self, PyObject *args) {
         return PyErr_NoMemory();
     }
 
-    genann_train(self->ann, inputs, outputs, rate);
+    for (i = 0; i < iters; i++) {
+        genann_train(self->ann, inputs, outputs, rate);
+    }
 
     free(outputs);
     free(inputs);
@@ -197,7 +203,7 @@ Genann_dealloc(PyObject *obj) {
 static PyMethodDef Genann_methods[] = {
     { "run", (PyCFunction)Genann_run, (METH_VARARGS),
         "Runs the feedforward algorithm to calculate the ANN's output" },
-    { "train", (PyCFunction)Genann_train, (METH_VARARGS),
+    { "train", (PyCFunction)Genann_train, (METH_VARARGS | METH_KEYWORDS),
         "Does a single backprop update" },
     { "read", (PyCFunction)Genann_read, (METH_VARARGS | METH_CLASS),
         "Creates ANN from file saved with write()" },
