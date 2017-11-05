@@ -23,6 +23,7 @@ from pystrgrp import Strgrp
 import math
 from .core import categories
 from .core import money
+from .ann import DescriptionAnn
 
 cmd_description = \
         """Annotates transactions in an IR document with category information.
@@ -40,6 +41,7 @@ TaggedEntry = collections.namedtuple("TaggedEntry", ("entry", "tag"))
 class _Tagger(object):
     def __init__(self, fuzzer=None):
         self._strgrp = Strgrp()
+        self._grpanns = {}
 
     @staticmethod
     def find_category(needle, haystack):
@@ -75,6 +77,10 @@ class _Tagger(object):
         grpbin = self._strgrp.grp_for(description)
         if grpbin is None:
              return None
+        if grpbin not in self._grpanns:
+            self._grpanns[grpbin] = DescriptionAnn.load(description)
+        else:
+            ann = self._grpanns[grpbin]
         return self._tag_for(grpbin)
 
     def categorize(self, entry, confirm=False):
