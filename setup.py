@@ -18,6 +18,7 @@ pystrgrp = Extension('pystrgrp',
     sources = [
         "ext/ccan/block_pool/block_pool.c",
         "ext/ccan/hash/hash.c",
+        "ext/ccan/heap/heap.c",
         "ext/ccan/htable/htable.c",
         "ext/ccan/likely/likely.c",
         "ext/ccan/list/list.c",

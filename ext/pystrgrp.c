@@ -358,7 +358,8 @@ Strgrp_grps_for(StrgrpObject *self, PyObject *args, PyObject *kwds) {
 
     PyObject *tupleobj = PyTuple_New(heap->len);
     if (!tupleobj) {
-        return PyErr_NoMemory();
+        PyErr_NoMemory();
+        goto cleanup_heap;
     }
 
     struct strgrp_grp *grp;
@@ -366,22 +367,27 @@ Strgrp_grps_for(StrgrpObject *self, PyObject *args, PyObject *kwds) {
     for (i = 0; (grp = heap_pop(heap)); i++) {
         GrpObject *const grpobj = (GrpObject *)PyType_GenericNew(&GrpType, NULL, NULL);
         if (!grpobj) {
-            goto cleanup;
+            goto cleanup_tuple;
         }
         grpobj->grp = grp;
         if (PyTuple_SetItem(tupleobj, i, (PyObject *)grpobj)) {
             Py_XDECREF((PyObject *)grpobj);
-            goto cleanup;
+            goto cleanup_tuple;
         };
     }
 
+    heap_free(heap);
+
     return (PyObject *)tupleobj;
 
-cleanup:
+cleanup_tuple:
     while (--i >= 0) {
         Py_XDECREF((PyObject *)PyTuple_GetItem(tupleobj, i));
     }
     Py_XDECREF((PyObject *)tupleobj);
+
+cleanup_heap:
+    heap_free(heap);
 
     return NULL;
 }
