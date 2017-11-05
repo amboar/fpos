@@ -931,15 +931,12 @@ class PsaveTest(unittest.TestCase):
                 then3 : psave.Balance(then3, 1, 0)}
         self.assertEquals(expected, state)
 
+import tempfile
+
 class DescriptionAnnTest(unittest.TestCase):
     def contain(self, func):
-        test_dir = "/tmp/descriptionann"
-        os.mkdir(test_dir)
-        try:
+        with tempfile.TemporaryDirectory() as test_dir:
             func(self, test_dir)
-        finally:
-            # HACK
-            os.system("rm -rf {}".format(test_dir))
 
     def test_accept(self):
         def test(tc, test_dir):
@@ -951,8 +948,8 @@ class DescriptionAnnTest(unittest.TestCase):
         def test(tc, test_dir):
             da = ann.DescriptionAnn(cache=test_dir)
             da.accept("a" * 101)
-        DescriptionAnnTest.contain(self, test)
-        self.assertTrue(False)
+        with self.assertRaises(ValueError):
+            DescriptionAnnTest.contain(self, test)
 
     def test_reject(self):
         def test(tc, test_dir):
@@ -964,8 +961,8 @@ class DescriptionAnnTest(unittest.TestCase):
         def test(tc, test_dir):
             da = ann.DescriptionAnn(cache=test_dir)
             da.reject("r" * 101)
-        DescriptionAnnTest.contain(self, test)
-        self.assertTrue(False)
+        with self.assertRaises(ValueError):
+            DescriptionAnnTest.contain(self, test)
 
     def test_run_accept(self):
         def test(tc, test_dir):
@@ -985,20 +982,40 @@ class DescriptionAnnTest(unittest.TestCase):
             tc.assertTrue(v < threshold, msg="{} is not less than {}".format(v, threshold))
         DescriptionAnnTest.contain(self, test)
 
-    def test_run_accept_reject(self):
+    def test_run_accept_reject_static(self):
+        def test(tc, test_dir):
+            # This seems to be roughly minimal - removing any training results
+            # in a failure.
+            threshold = 0.75
+            da = ann.DescriptionAnn(cache=test_dir)
+            da.accept("TICKETEK PTY LTD WEB      SYDNEY")
+            da.reject("CARRIG CHEMIST            OAKLANDS PARK")
+            da.reject("VISA DEBIT PURCHASE CARD 4007 ANYTIME FITNESS M NOOSAVILLE")
+            da.reject("BP MITCHELL PK5936        MITCHELL PARK")
+            da.accept("TICKETEK PTY LTD WEB      SYDNEY")
+            v = da.run("TICKETEK PTY LTD WEB      SYDNEY")
+            tc.assertTrue(v >= threshold, msg="{} is not greater-than-or-equal-to {}".format(v, threshold))
+            v = da.run("CARRIG CHEMIST            OAKLANDS PARK")
+            tc.assertTrue(v < threshold, msg="{} is not less-than-or-equal-to {}".format(v, threshold))
+        DescriptionAnnTest.contain(self, test)
+
+    def test_run_accept_reject_dynamic(self):
         def test(tc, test_dir):
             threshold = 0.75
             da = ann.DescriptionAnn(cache=test_dir)
-            da.accept("accept")
-            da.reject("reject")
-            da.accept("accept")
-            da.reject("reject")
-            da.accept("accept")
-            da.reject("reject")
-            v = da.run("accept")
+            da.accept("EFTPOS DEBIT EFTPOS 24/08 17:26  FOODLAND IGA THEBAR CASH OUT    $10.00", iters=600)
+            da.reject("CARRIG CHEMIST            OAKLANDS PARK")
+            da.reject("VISA DEBIT PURCHASE CARD 4007 ANYTIME FITNESS M NOOSAVILLE")
+            da.accept("EFTPOS DEBIT EFTPOS 28/08 13:55  FOODLAND IGA THEBAR CASH OUT    $50.00", iters=600)
+            v = da.run("EFTPOS DEBIT EFTPOS 24/08 17:26  FOODLAND IGA THEBAR CASH OUT    $10.00")
             tc.assertTrue(v >= threshold, msg="{} is not greater-than-or-equal-to {}".format(v, threshold))
-            v = da.run("r")
-            tc.assertTrue(v <= (1 - threshold), msg="{} is not less-than-or-equal-to {}".format(v, (1 - threshold)))
+            v = da.run("EFTPOS DEBIT EFTPOS 18/12 13:19  FOODLAND IGA THEBAR CASH OUT    $30.00")
+            tc.assertTrue(v >= threshold, msg="{} is not greater-than-or-equal-to {}".format(v, threshold))
+            v = da.run("CARRIG CHEMIST            OAKLANDS PARK")
+            tc.assertTrue(v < threshold, msg="{} is not less-than {}".format(v, threshold))
+            # Test we learned the pattern
+            v = da.run("BP MITCHELL PK5936        MITCHELL PARK")
+            tc.assertTrue(v < threshold, msg="{} is not less-than {}".format(v, threshold))
         DescriptionAnnTest.contain(self, test)
 
     def test_load_pass(self):

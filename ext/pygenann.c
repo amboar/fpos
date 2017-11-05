@@ -94,6 +94,11 @@ Genann_run(GenannObject *self, PyObject *args) {
     if (!PyArg_ParseTuple(args, "O", &inputsobj))
         return NULL;
 
+    if (PyList_Size(inputsobj) > self->ann->inputs) {
+        PyErr_SetString(PyExc_ValueError, "Input length exceeds NN input size");
+        return NULL;
+    }
+
     inputs = unpack_PyList(inputsobj, self->ann->inputs);
     if (!inputs)
         return PyErr_NoMemory();
@@ -121,6 +126,11 @@ Genann_train(GenannObject *self, PyObject *args, PyObject *kws) {
     if (!PyArg_ParseTupleAndKeywords(args, kws, "OOd|i", keywords, &inputsobj,
                 &outputsobj, &rate, &iters))
         return NULL;
+
+    if (PyList_Size(inputsobj) > self->ann->inputs) {
+        PyErr_SetString(PyExc_ValueError, "Input length exceeds NN input size");
+        return NULL;
+    }
 
     inputs = unpack_PyList(inputsobj, self->ann->inputs);
     if (!inputs)

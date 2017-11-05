@@ -9,7 +9,7 @@ def to_input(string):
 salt = "382a55c995b1e53f3ad0a3ed1c5ae735b9c7adc0".encode("UTF-8")
 
 class DescriptionAnn(object):
-    def __init__(self, cache=None, ann=None, inputs=100, layers=1, hidden=100, outputs=1):
+    def __init__(self, cache=None, ann=None, inputs=100, layers=1, hidden=100, outputs=1, description=None):
         if cache is None:
             cache = DescriptionAnn.get_data_dir()
         self.data_dir = cache
@@ -17,6 +17,12 @@ class DescriptionAnn(object):
         if ann is None:
             ann = pygenann.genann(inputs, layers, hidden, outputs)
         self.ann = ann
+
+        if description is None:
+            self.canonical_path = None
+        else:
+            self.canonical_path = DescriptionAnn.derive_canonical(self.data_dir, description)
+
 
     @staticmethod
     def get_data_dir(head=None, tail=None):
@@ -56,10 +62,8 @@ class DescriptionAnn(object):
         dentries = DescriptionAnn.gen_rel_dentries(did)
         path = os.path.join(cache, *dentries)
         if DescriptionAnn.have_ann(path):
-            print("Loading ANN at {}".format(path))
             ann = pygenann.genann.read(path)
             return DescriptionAnn(cache=cache, ann=ann)
-        print("No ANN found at {}, instantiating new".format(path))
         return DescriptionAnn(cache=cache, inputs=100, layers=1, hidden=100, outputs=1)
 
     @staticmethod
@@ -68,31 +72,47 @@ class DescriptionAnn(object):
             return os.path.readlink(path)
         return path
 
-    def cache_ann(self, description, **kwargs):
+    @staticmethod
+    def derive_canonical(data_dir, description):
+        did = DescriptionAnn.gen_id(description, salt)
+        dentries = DescriptionAnn.gen_rel_dentries(did)
+        path = os.path.join(data_dir, *dentries)
+        DescriptionAnn.ensure_dir(data_dir, dentries)
+        return DescriptionAnn.get_canonical(path)
+
+    def cache(self, description):
         did = DescriptionAnn.gen_id(description, salt)
         dentries = DescriptionAnn.gen_rel_dentries(did)
         path = os.path.join(self.data_dir, *dentries)
         DescriptionAnn.ensure_dir(self.data_dir, dentries)
-        c = DescriptionAnn.get_canonical(path)
+        if self.canonical_path is None:
+            self.canonical_path = DescriptionAnn.get_canonical(path)
 
-        if not os.path.exists(c) or c == path:
+        if (not os.path.exists(self.canonical_path)
+                or self.canonical_path == path):
             self.ann.write(path)
             return
 
         if not os.path.exists(path):
-            os.symlink(c, path)
+            os.symlink(self.canonical_path, path)
 
-        self.ann.write(path)
+        self.ann.write(self.canonical_path)
 
-    def accept(self, description, iters=300):
-        try:
-            return self.ann.train(to_input(description), [1.0], 3, iters=iters)
-        finally:
-            self.cache_ann(description)
+    def write(self):
+        assert(self.canonical_path is not None)
+        self.ann.write(self.canonical_path)
 
+    def accept(self, description, iters=300, write=True):
+        ret = self.ann.train(to_input(description), [1.0], 3, iters=iters)
+        if write:
+            self.cache(description)
+        return ret
 
-    def reject(self, description, iters=300):
-        return self.ann.train(to_input(description), [0.0], 3, iters=iters)
+    def reject(self, description, iters=300, write=False):
+        ret = self.ann.train(to_input(description), [0.0], 3, iters=iters)
+        if write:
+            self.write()
+        return
 
     def run(self, description):
         return self.ann.run(to_input(description))[0]
