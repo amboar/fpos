@@ -73,15 +73,49 @@ class _Tagger(object):
             return None
         return max(self._bin2hist(grpbin).items(), key=lambda x: x[1])[0]
 
+    def _request_match(self, description, needles):
+        # FIXME: Ask the user which group, if any, matches the description
+        pass
+
     def classify(self, description):
-        grpbin = self._strgrp.grp_for(description)
-        if grpbin is None:
-             return None
-        if grpbin not in self._grpanns:
-            self._grpanns[grpbin] = DescriptionAnn.load(description)
-        else:
-            ann = self._grpanns[grpbin]
-        return self._tag_for(grpbin)
+        grpbin = self._strgrp.grp_exact(description)
+        if grpbin is not None:
+            return self._tag_for(grpbin)
+
+        needles = []
+        heap = self._strgrp.grps_for(description)
+        for grpbin in heap:
+            if grpbin.is_acceptible(self._strgrp):
+                if grpbin not in self._grpanns:
+                    self._grpanns[grpbin] = DescriptionAnn.load(grpbin.key())
+                needles.append(grpbin)
+            else:
+                break
+
+        if len(needles) == 0:
+            return None
+
+        # FIXME: 0.5
+        scores = [ self._grpanns[grpbin].run(description) > 0.5 for grpbin in needles ]
+        if sum(scores) == 1:
+            return self._tag_for(needles[scores.index(True)])
+
+        match = self._request_match(description, needles)
+        if match is None:
+            return None
+
+        self._grpanns.accept(description)
+
+        needles.remove(match)
+        for grpbin in needles:
+            self._grpanns.reject(description)
+
+        # FIXME: Maybe iterate the group and accept() on some good descriptions
+        # to keep the training balance? Otherwise reject()s will dominate.
+
+        # FIXME: Also call reject() for some of the remaining chaff values
+
+        return self._tag_for(match)
 
     def categorize(self, entry, confirm=False):
         need = True
