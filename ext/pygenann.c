@@ -31,14 +31,19 @@ Genann_init(GenannObject *self, PyObject *args, PyObject *kwds) {
     return 0;
 }
 
+static inline ssize_t
+max(ssize_t a, ssize_t b) {
+    return a >= b ? a : b;
+}
+
 static double *
-unpack_PyList(PyObject *listobj) {
+unpack_PyList(PyObject *listobj, ssize_t n_elems) {
     double *inputs;
-    long len;
+    ssize_t len;
     int i;
 
     len = PyList_Size(listobj);
-    inputs = malloc(len * sizeof(*inputs));
+    inputs = calloc(max(n_elems, len), sizeof(*inputs));
     if (!inputs) {
         void *ret = PyErr_NoMemory();
         return ret;
@@ -89,7 +94,7 @@ Genann_run(GenannObject *self, PyObject *args) {
     if (!PyArg_ParseTuple(args, "O", &inputsobj))
         return NULL;
 
-    inputs = unpack_PyList(inputsobj);
+    inputs = unpack_PyList(inputsobj, self->ann->inputs);
     if (!inputs)
         return PyErr_NoMemory();
 
@@ -117,11 +122,11 @@ Genann_train(GenannObject *self, PyObject *args, PyObject *kws) {
                 &outputsobj, &rate, &iters))
         return NULL;
 
-    inputs = unpack_PyList(inputsobj);
+    inputs = unpack_PyList(inputsobj, self->ann->inputs);
     if (!inputs)
         return PyErr_NoMemory();
 
-    outputs = unpack_PyList(outputsobj);
+    outputs = unpack_PyList(outputsobj, self->ann->outputs);
     if (!outputs) {
         free(inputs);
         return PyErr_NoMemory();
