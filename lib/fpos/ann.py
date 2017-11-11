@@ -31,7 +31,6 @@ class DescriptionAnn(object):
             self.canonical_path = DescriptionAnn.derive_canonical(self.data_dir, description)
             if ann is None:
                 self.accept(self.description)
-                self.write()
 
     @staticmethod
     def get_data_dir(head=None, tail=None):
@@ -92,27 +91,19 @@ class DescriptionAnn(object):
         return DescriptionAnn.get_canonical(path)
 
     def is_ready(self):
-        print("{}: Ready? {}".format(self.description, repr(self.ready)))
         return self.ready['accept'] and self.ready['reject']
 
     def cache(self, description):
         did = DescriptionAnn.gen_id(description, salt)
         dentries = DescriptionAnn.gen_rel_dentries(did)
         path = os.path.join(self.data_dir, *dentries)
-        print("Canonical description:\t{}".format(self.description))
-        print("Provided description:\t{}".format(description))
-        print("Description Path: {}".format(path))
         DescriptionAnn.ensure_dir(self.data_dir, dentries)
         if self.canonical_path is None:
             self.canonical_path = DescriptionAnn.get_canonical(path)
 
-        print("Canonical path: {}".format(self.canonical_path))
-
-        print("Writing ANN at canonical path")
         self.ann.write(self.canonical_path)
 
         if not (self.canonical_path == path or os.path.exists(path)):
-            print("Linking description path to canonical path");
             os.symlink(self.canonical_path, path)
 
     def write(self):
@@ -123,7 +114,6 @@ class DescriptionAnn(object):
         # FIXME: 0.5
         self.ready['accept'] = (self.ann.run(to_input(description))[0] >= 0.5)
         ret = self.ann.train(to_input(description), [1.0], 3, iters=iters)
-        print("{}: Ready? {}".format(self.description, repr(self.ready)))
         if write and self.is_ready():
             self.cache(description)
         return ret
@@ -132,7 +122,6 @@ class DescriptionAnn(object):
         # FIXME: 0.5
         self.ready['reject'] = (self.ann.run(to_input(description))[0] < 0.5)
         ret = self.ann.train(to_input(description), [0.0], 3, iters=iters)
-        print("{}: Ready? {}".format(self.description, repr(self.ready)))
         if write and self.is_ready():
             self.write()
         return
@@ -167,9 +156,9 @@ class CognitiveStrgrp(object):
                 index = int(result)
                 need = not (0 <= index <= nota)
                 if need:
-                    print("Invalid value: {}".format(index))
+                    print("\nInvalid value: {}".format(index))
             except ValueError:
-                print("Not a number: '{}'".format(result))
+                print("\nNot a number: '{}'".format(result))
                 need = True
 
         if index == nota:
@@ -189,6 +178,7 @@ class CognitiveStrgrp(object):
 
     def train(self, description, needle, needles, hay):
         # Black magic follows: Hacky attempt at training NNs.
+        print("Learning from feedback...")
         for straw in hay:
             if needle.ready['reject']:
                 break
@@ -207,12 +197,12 @@ class CognitiveStrgrp(object):
                     ann.reject(description)
                     # Also train on the initial description
                     ann.accept(ann.description)
+        print()
 
     def find_group(self, description):
         # Check for an exact match, don't need fuzzy behaviour if we have one
         grpbin = self._strgrp.grp_exact(description)
         if grpbin is not None:
-            print("Got exact match for '{}'".format(description))
             return grpbin
 
         # Use a binary output NN trained for each group to determine
@@ -223,7 +213,6 @@ class CognitiveStrgrp(object):
         # These are the candidates groups for the current description.
         needles, hay = self._split_heap(self._strgrp.grps_for(description))
         if len(needles) == 0:
-            print("Found no needles for '{}' in the haystack!".format(description))
             return None
 
         # Score the description using each group's NN, to see if we find a
@@ -231,7 +220,12 @@ class CognitiveStrgrp(object):
         # the correct group
         anns = [ self._grpanns[grpbin] for grpbin in needles ]
         scores = [ ann.run(description) for ann in anns ]
-        print("Found needles: {}".format(', '.join(x.key() for x in needles)))
+        curr_ann = DescriptionAnn.load(description)
+        if curr_ann.is_ready() && curr_ann.run(description) > max(max(scores), 0.5):
+            # We can't have seen it if it's strictly greater, therefore it's a
+            # new group
+            return None
+
         # FIXME: 0.5
         passes = [ x >= 0.5 for x in scores ]
         ready = [ ann.is_ready() for ann in anns ]
@@ -241,10 +235,7 @@ class CognitiveStrgrp(object):
             if n_passes == 1 or (l_passes > 1 and n_passes == l_passes):
                 i = passes.index(True)
                 self.train(description, anns[i], anns, [grp.key() for grp in hay])
-                print("Found one needle '{}' for '{}' in the haystack".format(needles[i].key(), description))
                 return needles[i]
-        else:
-            print("All ready? {}. Passing? {}".format(all(ready), sum(passes)))
 
         # Otherwise get user input
         match = self._request_match(description, needles)
