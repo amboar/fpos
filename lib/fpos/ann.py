@@ -201,7 +201,7 @@ class CognitiveStrgrp(object):
             if ann != needle:
                 # For the unlucky needles, use the description for negative
                 # training
-                while not ann.is_ready():
+                while not ann.ready['reject']:
                     ann.reject(description)
                     # Also train on the initial description
                     ann.accept(ann.description)
