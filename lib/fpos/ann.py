@@ -37,7 +37,9 @@ class DescriptionAnn(object):
             head = str(xdg.BaseDirectory.save_data_path("fpos"))
         if tail is None:
             tail = ("ann", "descriptions")
-        return os.path.join(head, *tail)
+        path = os.path.join(head, *tail)
+        os.makedirs(path, exist_ok=True)
+        return path
 
     @staticmethod
     def gen_id(description, salt):
