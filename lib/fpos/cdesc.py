@@ -52,61 +52,11 @@ def print_tokens(group):
             tokencount[t] += 1
     print(tokencount)
 
-def retain_common_intra_tokens(group):
-    count = {}
-    for e in group:
-        local = set()
-        for t in sanitise(e[0]).split():
-            if t not in count:
-                count[t] = 0
-            if t not in local:
-                count[t] += 1
-                local.add(t)
-    n_common = max(count.values())
-    keep = { k for k, v in count.items() if v == n_common }
-    common_group = []
-    for e in group:
-        kept = []
-        for t in sanitise(e[0]).split():
-            if t in keep:
-                kept.append(t)
-        kept_str = " ".join(kept) if len(kept) > 1 else group[0][0]
-        common_group.append([ kept_str, e[1] ])
-    return common_group
-
-def retain_unique_inter_tokens(groups):
-    rev_descs = sorted(groups, key=lambda x: x[0][::-1])
-    prev = None
-    for g in rev_descs:
-        if None is prev:
-            prev = g[0]
-        else:
-            if g[0].endswith(prev):
-                g[0] = prev
-            else:
-                prev = g[0]
-    return rev_descs
-
 def cdesc(reader):
     grouper = CognitiveStrgrp()
     for r in reader:
         grouper.add(" ".join(sanitise(r[2]).split()).upper(), r)
-    groups = [ [ [x.key(), x.value()] for x in g ] for g in grouper ]
-    intra_common = []
-    for g in groups:
-        intra_common.append(retain_common_intra_tokens(g))
-    grouper2 = CognitiveStrgrp()
-    for g in intra_common:
-        for m in g:
-            grouper2.add(m[0].upper(), m[1])
-    groups2 = [ [ g.key(), [ x.value() for x in g ] ] for g in grouper2 ]
-    inter_unique = retain_unique_inter_tokens(groups2)
-    grouper3 = CognitiveStrgrp()
-    for g in inter_unique:
-        for m in g[1]:
-            grouper3.add(g[0].upper(), m)
-    groups3 = [ [ g.key(), [ x.value() for x in g ] ] for g in grouper3 ]
-    return [ x[1] for x in groups3 ]
+    return [ [ x.value() for x in g ] for g in grouper ]
 
 def main(args=None):
     if args is None:
