@@ -237,20 +237,22 @@ class CognitiveStrgrp(object):
 
         # Otherwise get user input
         match = self._request_match(description, needles)
+        print("Learning from feedback...")
 
         # None means no group was matched an a new one should be created
-        if match is None:
-            return None
+        try:
+            if match is None:
+                return None
 
-        # Otherwise, if the user confirmed membership of the description to a
-        # candidate group, if the NN correctly predicted the membership then
-        # mark it as ready to use
-        i = needles.index(match)
-        print("Learning from feedback...")
-        self.train(description, anns[i], anns, [grp.key() for grp in hay])
-        print()
+            # Otherwise, if the user confirmed membership of the description to a
+            # candidate group, if the NN correctly predicted the membership then
+            # mark it as ready to use
+            i = needles.index(match)
+            self.train(description, anns[i], anns, [grp.key() for grp in hay])
 
-        return match
+            return match
+        finally:
+            print()
 
     def insert(self, description, data, group):
         if group is None:
