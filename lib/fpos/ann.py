@@ -233,11 +233,14 @@ class CognitiveStrgrp(object):
         # FIXME: 0.5
         passes = [ x >= 0.5 for x in scores ]
         ready = [ ann.is_ready() for ann in anns ]
-        if all(ready) and sum(passes) == 1:
-            i = passes.index(True)
-            self.train(description, anns[i], anns, [grp.key() for grp in hay])
-            print("Found one needle '{}' for '{}' in the haystack".format(needles[i].key(), description))
-            return needles[i]
+        if all(ready):
+            l_passes = len(passes)
+            n_passes = sum(passes)
+            if n_passes == 1 or (l_passes > 1 and n_passes == l_passes):
+                i = passes.index(True)
+                self.train(description, anns[i], anns, [grp.key() for grp in hay])
+                print("Found one needle '{}' for '{}' in the haystack".format(needles[i].key(), description))
+                return needles[i]
         else:
             print("All ready? {}. Passing? {}".format(all(ready), sum(passes)))
 
