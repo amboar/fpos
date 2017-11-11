@@ -16,7 +16,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import pystrgrp
+from .ann import CognitiveStrgrp
 import csv
 import argparse
 
@@ -88,20 +88,20 @@ def retain_unique_inter_tokens(groups):
     return rev_descs
 
 def cdesc(reader):
-    grouper = pystrgrp.Strgrp()
+    grouper = CognitiveStrgrp()
     for r in reader:
         grouper.add(" ".join(sanitise(r[2]).split()).upper(), r)
     groups = [ [ [x.key(), x.value()] for x in g ] for g in grouper ]
     intra_common = []
     for g in groups:
         intra_common.append(retain_common_intra_tokens(g))
-    grouper2 = pystrgrp.Strgrp()
+    grouper2 = CognitiveStrgrp()
     for g in intra_common:
         for m in g:
             grouper2.add(m[0].upper(), m[1])
     groups2 = [ [ g.key(), [ x.value() for x in g ] ] for g in grouper2 ]
     inter_unique = retain_unique_inter_tokens(groups2)
-    grouper3 = pystrgrp.Strgrp()
+    grouper3 = CognitiveStrgrp()
     for g in inter_unique:
         for m in g[1]:
             grouper3.add(g[0].upper(), m)

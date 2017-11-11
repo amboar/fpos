@@ -4,7 +4,7 @@ PIP:=pip3
 NOSETESTS_NAMES:=nosetests-3.5 nosetests-3.4 nosetests-3.3 nosetests3 nosetests
 NOSETESTS:=$(firstword $(foreach exec,$(NOSETESTS_NAMES),$(shell which $(exec) 2> /dev/null)))
 VIRTUALENV:=virtualenv
-VE_NAME:=ve
+VE_NAME:=.venv
 
 build build_py build_ext build_clib build_scripts install_lib install_headers install_scripts install_data sdist register bdist bdist_dumb bdist_wininst: configure
 	$(PYTHON) setup.py $@ $(SETUP_FLAGS)
