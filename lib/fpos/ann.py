@@ -266,4 +266,4 @@ class CognitiveStrgrp(object):
             group.add(description, data)
 
     def add(self, description, data):
-        self.add(description, data, self.find_group(description))
+        self.insert(description, data, self.find_group(description))
