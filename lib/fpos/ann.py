@@ -178,7 +178,6 @@ class CognitiveStrgrp(object):
 
     def train(self, description, needle, needles, hay):
         # Black magic follows: Hacky attempt at training NNs.
-        print("Learning from feedback...")
         for straw in hay:
             if needle.ready['reject']:
                 break
@@ -197,7 +196,6 @@ class CognitiveStrgrp(object):
                     ann.reject(description)
                     # Also train on the initial description
                     ann.accept(ann.description)
-        print()
 
     def find_group(self, description):
         # Check for an exact match, don't need fuzzy behaviour if we have one
@@ -248,7 +246,9 @@ class CognitiveStrgrp(object):
         # candidate group, if the NN correctly predicted the membership then
         # mark it as ready to use
         i = needles.index(match)
+        print("Learning from feedback...")
         self.train(description, anns[i], anns, [grp.key() for grp in hay])
+        print()
 
         return match
 
