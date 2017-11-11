@@ -193,7 +193,7 @@ class CognitiveStrgrp(object):
             if ann is not needle:
                 # For the unlucky needles, use the description for negative
                 # training
-                while not ann.is_ready():
+                while not ann.ready['reject']:
                     ann.reject(description)
                     # Also train on the initial description
                     ann.accept(ann.description)
@@ -231,12 +231,13 @@ class CognitiveStrgrp(object):
         if all(ready):
             l_passes = len(passes)
             n_passes = sum(passes)
-            if n_passes == 0:
-                return None
             if n_passes == 1 or (l_passes > 1 and n_passes == l_passes):
                 i = passes.index(True)
                 self.train(description, anns[i], anns, [grp.key() for grp in hay])
                 return needles[i]
+        if all(ann.ready['reject'] for ann in anns):
+            if n_passes == 0:
+                return None
 
         # Otherwise get user input
         match = self._request_match(description, needles)
@@ -246,6 +247,9 @@ class CognitiveStrgrp(object):
         try:
             if match is None:
                 self.train(description, None, anns, [grp.key() for grp in hay])
+                for ann in anns:
+                    # FIXME: Violates assumption in __init__ that ready['accept'] is True
+                    ann.write()
                 return None
 
             # Otherwise, if the user confirmed membership of the description to a
