@@ -332,21 +332,26 @@ static bool __score_gt(const void *a, const void *b) {
 struct heap *
 strgrp_grps_for(struct strgrp *const ctx, const char *const str) {
     int i;
+    struct heap *heap;
 
-    assert(ctx->n_grps);
     // Ensure ctx->pop is always populated. Returning null here indicates a new
     // group should be created, at which point add_grp() copies ctx->pop into
     // the new group's struct.
     strpopcnt(str, ctx->pop);
 
-    grps_score(ctx, str);
-
     /* Sort descending */
-    struct heap *heap = heap_init(__score_gt);
+    heap = heap_init(__score_gt);
     if (!heap) {
         perror("heap_init");
         return NULL;
     }
+
+    if (!ctx->n_grps) {
+        return heap;
+    }
+
+    grps_score(ctx, str);
+
     for (i = 0; i < ctx->n_grps; i++) {
         struct strgrp_grp *curr = darray_item(ctx->grps, i);
 
