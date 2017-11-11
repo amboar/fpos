@@ -230,6 +230,8 @@ class CognitiveStrgrp(object):
         if all(ready):
             l_passes = len(passes)
             n_passes = sum(passes)
+            if n_passes == 0:
+                return None
             if n_passes == 1 or (l_passes > 1 and n_passes == l_passes):
                 i = passes.index(True)
                 self.train(description, anns[i], anns, [grp.key() for grp in hay])
