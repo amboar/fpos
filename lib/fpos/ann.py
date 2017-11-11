@@ -119,8 +119,8 @@ class DescriptionAnn(object):
 
     def accept(self, description, iters=300, write=True):
         # FIXME: 0.5
-        ret = self.ann.train(to_input(description), [1.0], 3, iters=iters)
         self.ready['accept'] = (self.ann.run(to_input(description))[0] >= 0.5)
+        ret = self.ann.train(to_input(description), [1.0], 3, iters=iters)
         print("{}: Ready? {}".format(self.description, repr(self.ready)))
         if write and self.is_ready():
             self.cache(description)
@@ -128,8 +128,8 @@ class DescriptionAnn(object):
 
     def reject(self, description, iters=300, write=True):
         # FIXME: 0.5
-        ret = self.ann.train(to_input(description), [0.0], 3, iters=iters)
         self.ready['reject'] = (self.ann.run(to_input(description))[0] < 0.5)
+        ret = self.ann.train(to_input(description), [0.0], 3, iters=iters)
         print("{}: Ready? {}".format(self.description, repr(self.ready)))
         if write and self.is_ready():
             self.write()
@@ -231,7 +231,7 @@ class CognitiveStrgrp(object):
         scores = [ ann.run(description) for ann in anns ]
         print("Found needles: {}".format(', '.join(x.key() for x in needles)))
         # FIXME: 0.5
-        passes = [ x > 0.5 for x in scores ]
+        passes = [ x >= 0.5 for x in scores ]
         ready = [ ann.is_ready() for ann in anns ]
         if all(ready) and sum(passes) == 1:
             i = passes.index(True)
