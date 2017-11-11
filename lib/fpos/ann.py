@@ -221,7 +221,7 @@ class CognitiveStrgrp(object):
         anns = [ self._grpanns[grpbin] for grpbin in needles ]
         scores = [ ann.run(description) for ann in anns ]
         curr_ann = DescriptionAnn.load(description)
-        if curr_ann.is_ready() && curr_ann.run(description) > max(max(scores), 0.5):
+        if curr_ann.is_ready() and curr_ann.run(description) > max(max(scores), 0.5):
             # We can't have seen it if it's strictly greater, therefore it's a
             # new group
             return None
