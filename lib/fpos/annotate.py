@@ -140,7 +140,7 @@ def annotate(src, confirm=False):
             try:
                 category = t.resolve_category(row[3])
                 group = t.find_group(entry.description)
-                t.add(entry, category, group)
+                t.insert(entry, category, group)
             except ValueError:
                 # Category isn't known, output remains empty to
                 # trigger user input
@@ -150,7 +150,7 @@ def annotate(src, confirm=False):
             group = t.find_group(entry.description)
             category = t.categorize(entry, group, confirm)
             assert None is not category
-            t.add(entry, category, group)
+            t.insert(entry, category, group)
             print()
         output = []
         output.extend(entry)
