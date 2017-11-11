@@ -178,21 +178,22 @@ class CognitiveStrgrp(object):
 
     def train(self, description, needle, needles, hay):
         # Black magic follows: Hacky attempt at training NNs.
-        for straw in hay:
-            if needle.ready['reject']:
-                break
-            needle.reject(straw)
-            needle.accept(description)
+        if needle:
+            for straw in hay:
+                if needle.ready['reject']:
+                    break
+                needle.reject(straw)
+                needle.accept(description)
 
-        while not needle.ready['accept']:
-            needle.accept(description)
-            needle.accept(needle.description)
+            while not needle.ready['accept']:
+                needle.accept(description)
+                needle.accept(needle.description)
 
         for ann in needles:
             if ann is not needle:
                 # For the unlucky needles, use the description for negative
                 # training
-                while not ann.ready['reject']:
+                while not ann.is_ready():
                     ann.reject(description)
                     # Also train on the initial description
                     ann.accept(ann.description)
@@ -244,6 +245,7 @@ class CognitiveStrgrp(object):
         # None means no group was matched an a new one should be created
         try:
             if match is None:
+                self.train(description, None, anns, [grp.key() for grp in hay])
                 return None
 
             # Otherwise, if the user confirmed membership of the description to a
