@@ -78,7 +78,7 @@ class DescriptionAnn(object):
     @staticmethod
     def get_canonical(path):
         if os.path.islink(path):
-            return os.path.readlink(path)
+            return os.readlink(path)
         return path
 
     @staticmethod
