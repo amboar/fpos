@@ -122,7 +122,7 @@ class DescriptionAnn(object):
         ret = self.ann.train(to_input(description), [1.0], 3, iters=iters)
         self.ready['accept'] = (self.ann.run(to_input(description))[0] >= 0.5)
         print("{}: Ready? {}".format(self.description, repr(self.ready)))
-        if write and self.ready['accept']:
+        if write and self.is_ready():
             self.cache(description)
         return ret
 
@@ -131,7 +131,7 @@ class DescriptionAnn(object):
         ret = self.ann.train(to_input(description), [0.0], 3, iters=iters)
         self.ready['reject'] = (self.ann.run(to_input(description))[0] < 0.5)
         print("{}: Ready? {}".format(self.description, repr(self.ready)))
-        if write and self.ready['reject']:
+        if write and self.is_ready():
             self.write()
         return
 
