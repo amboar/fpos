@@ -18,18 +18,20 @@ class DescriptionAnn(object):
 
         if ann is None:
             self.ready = { 'accept' : False, 'reject' : False }
-            ann = pygenann.genann(inputs, layers, hidden, outputs)
+            self.ann = pygenann.genann(inputs, layers, hidden, outputs)
         else:
             # Assume this for the moment
             self.ready = { 'accept' : True, 'reject' : True }
-        self.ann = ann
+            self.ann = ann
 
         self.description = description
         if description is None:
             self.canonical_path = None
         else:
             self.canonical_path = DescriptionAnn.derive_canonical(self.data_dir, description)
-            self.accept(self.description)
+            if ann is None:
+                self.accept(self.description)
+                self.write()
 
     @staticmethod
     def get_data_dir(head=None, tail=None):
@@ -261,7 +263,8 @@ class CognitiveStrgrp(object):
 
     def insert(self, description, data, group):
         if group is None:
-            self._strgrp.grp_new(description, data)
+            grpbin = self._strgrp.grp_new(description, data)
+            self._grpanns[grpbin] = DescriptionAnn.load(grpbin.key())
         else:
             group.add(description, data)
 
