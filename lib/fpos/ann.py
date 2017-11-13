@@ -193,10 +193,11 @@ class CognitiveStrgrp(object):
             if ann is not needle:
                 # For the unlucky needles, use the description for negative
                 # training
+                ann.reject(description)
                 while not ann.ready['reject']:
-                    ann.reject(description)
                     # Also train on the initial description
                     ann.accept(ann.description)
+                    ann.reject(description)
 
     def find_group(self, description):
         # Check for an exact match, don't need fuzzy behaviour if we have one
@@ -238,6 +239,15 @@ class CognitiveStrgrp(object):
         if all(ann.ready['reject'] for ann in anns):
             if n_passes == 0:
                 return None
+            if n_passes == 1:
+                i = passes.index(True)
+                if anns[i].is_ready():
+                    self.train(description, anns[i], anns, [grp.key() for grp in hay])
+                    return needles[i]
+
+        print("scores: {}".format(scores))
+        print("passes: {}".format(passes))
+        print("ready: {}".format(ready))
 
         # Otherwise get user input
         match = self._request_match(description, needles)
