@@ -3,6 +3,7 @@ import os
 import pygenann
 import xdg
 from pystrgrp import Strgrp
+import itertools
 
 def to_input(string):
     return [float(ord(x)) for x in string]
@@ -176,28 +177,38 @@ class CognitiveStrgrp(object):
                 break
         return heap[:i], heap[i:]
 
-    def train(self, description, needle, needles, hay):
+    def train(self, description, picked, candidates, hay):
         # Black magic follows: Hacky attempt at training NNs.
-        if needle:
-            for straw in hay:
-                if needle.ready['reject']:
+        if pick:
+            ann = self._grpanns[pick]
+            rpick = list(pick)
+            rpick.append(description)
+            rpick.reverse()
+            for (needle, straw) in zip(itertools.cycle(rpick), hay):
+                if ann.is_ready()
                     break
-                needle.reject(straw)
-                needle.accept(description)
+                ann.reject(straw)
+                ann.accept(needle)
 
-            while not needle.ready['accept']:
-                needle.accept(description)
-                needle.accept(needle.description)
-
-        for ann in needles:
-            if ann is not needle:
-                # For the unlucky needles, use the description for negative
-                # training
-                ann.reject(description)
-                while not ann.ready['reject']:
-                    # Also train on the initial description
-                    ann.accept(ann.description)
-                    ann.reject(description)
+        for grp in candidates:
+            ann = self._grpanns[grp]
+            rgrp = list(grp)
+            if grp is pick:
+                rgrp.append(description)
+            rgrp.reverse()
+            grpless = [ x.key() for x in candidates if x is not grp ]
+            if grp is not pick:
+                grpless.append(description)
+            grpless.reverse()
+            seq = itertools.cycle(zip(itertools.cycle(rgrp), grpless))
+            pred = lambda: not ann.is_ready()
+            # For the unlucky needles, use the description for negative
+            # training
+            ann.reject(description)
+            for (needle, straw) in itertools.takewhile(pred, seq):
+                # Also train on the initial description
+                ann.accept(needle)
+                ann.reject(straw)
 
     def find_group(self, description):
         # Check for an exact match, don't need fuzzy behaviour if we have one
@@ -229,12 +240,13 @@ class CognitiveStrgrp(object):
         # FIXME: 0.5
         passes = [ x >= 0.5 for x in scores ]
         ready = [ ann.is_ready() for ann in anns ]
+        hay_keys = [ grp.key() for grp in hay ]
         if all(ready):
             l_passes = len(passes)
             n_passes = sum(passes)
             if n_passes == 1 or (l_passes > 1 and n_passes == l_passes):
                 i = passes.index(True)
-                self.train(description, anns[i], anns, [grp.key() for grp in hay])
+                self.train(description, needles[i], needles, hay_keys)
                 return needles[i]
         if all(ann.ready['reject'] for ann in anns):
             if n_passes == 0:
@@ -242,7 +254,7 @@ class CognitiveStrgrp(object):
             if n_passes == 1:
                 i = passes.index(True)
                 if anns[i].is_ready():
-                    self.train(description, anns[i], anns, [grp.key() for grp in hay])
+                    self.train(description, needles[i], needles, hay_keys)
                     return needles[i]
 
         print("scores: {}".format(scores))
@@ -256,7 +268,7 @@ class CognitiveStrgrp(object):
         # None means no group was matched an a new one should be created
         try:
             if match is None:
-                self.train(description, None, anns, [grp.key() for grp in hay])
+                self.train(description, None, anns, hay_keys)
                 for ann in anns:
                     # FIXME: Violates assumption in __init__ that ready['accept'] is True
                     ann.write()
