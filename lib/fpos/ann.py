@@ -4,14 +4,93 @@ import pygenann
 import xdg
 from pystrgrp import Strgrp
 import itertools
+from random import shuffle
+import sys
 
 def to_input(string):
     return [float(ord(x)) for x in string]
 
 salt = "382a55c995b1e53f3ad0a3ed1c5ae735b9c7adc0".encode("UTF-8")
 
+class PolarisationDetector(object):
+    """ Undocumented state machine!"""
+
+    def __init__(self, limit=5):
+        self.S0, self.S1, self.S2, self.S3, self.S4, self.S5, self.S6, self.S7 = list(range(0, 7))
+        self.s = self.S0
+        self.polarised = { FlipFlop.S6, FlipFlop.S7 }
+        self.count = 0
+        self.limit = limit
+
+    def enter(self, state):
+        if state in self.polarised:
+            self.count += 1
+
+        self.s = state
+
+    def accept(val):
+        if self.s == self.S0:
+            if val:
+                self.enter(self.S1)
+        elif self.s == self.S1:
+            if not val:
+                self.enter(self.S4)
+        elif self.s == self.S2:
+            if val:
+                self.enter(self.S3)
+        elif self.s == self.S3:
+            if not val:
+                self.enter(self.S2)
+        elif self.s == self.S4:
+            if val:
+                self.enter(self.S1)
+        elif self.s == self.S5:
+            if val:
+                self.s == self.S7
+        elif self.s == self.S6:
+            if val:
+                self.enter(self.S3)
+        else:
+            assert self.s == self.S7
+            if not val:
+                self.enter(self.S0)
+
+    def reject(val):
+        if self.s == self.S0:
+            if val:
+                self.enter(self.S2)
+        elif self.s == self.S1:
+            if val:
+                self.enter(self.S3)
+        elif self.s == self.S2:
+            if not val:
+                self.enter(self.S5)
+        elif self.s == self.S3:
+            if not val:
+                self.enter(self.S1)
+        elif self.s == self.S4:
+            if val:
+                self.enter(self.S6)
+        elif self.s == self.S5:
+            if val:
+                self.enter(self.S2)
+        elif self.s == self.S6:
+            if not val:
+                self.enter(self.S0)
+        else:
+            assert self.s == self.S7
+            if val:
+                self.enter(self.S3)
+
+        def is_polarised(self):
+            r = (self.s in self.polarised and
+                    ((self.count % self.limit) == 0))
+            print("Polarised? {}".format(r))
+            return r
+
 class DescriptionAnn(object):
-    def __init__(self, cache=None, ann=None, inputs=100, layers=1, hidden=100, outputs=1, description=None):
+    def __init__(self, cache=None, ann=None, inputs=100, layers=2, hidden=100, outputs=1, description=None):
+        self.pd = PolarisationDetector()
 
         if cache is None:
             cache = DescriptionAnn.get_data_dir()
@@ -75,7 +154,7 @@ class DescriptionAnn(object):
         if DescriptionAnn.have_ann(path):
             ann = pygenann.genann.read(path)
             return DescriptionAnn(cache=cache, ann=ann, description=description)
-        return DescriptionAnn(cache=cache, inputs=100, layers=1, hidden=100, outputs=1, description=description)
+        return DescriptionAnn(cache=cache, inputs=100, layers=2, hidden=100, outputs=1, description=description)
 
     @staticmethod
     def get_canonical(path):
@@ -93,6 +172,9 @@ class DescriptionAnn(object):
 
     def is_ready(self):
         return self.ready['accept'] and self.ready['reject']
+
+    def is_polarised(self):
+        return self.pd.is_polarised() 
 
     def cache(self, description):
         did = DescriptionAnn.gen_id(description, salt)
@@ -113,28 +195,59 @@ class DescriptionAnn(object):
 
     def accept(self, description, iters=300, write=True):
         # FIXME: 0.5
-        self.ready['accept'] = (self.ann.run(to_input(description))[0] >= 0.5)
-        ret = self.ann.train(to_input(description), [1.0], 3, iters=iters)
+        accepted = self.ann.run(to_input(description))[0] >= 0.5
+        self.pd.accept(accepted)
+        self.ready['accept'] = accept
+        self.ann.train(to_input(description), [1.0], 3, iters=iters)
         if write and self.is_ready():
             self.cache(description)
-        return ret
+        return self.ready['accept']
 
     def reject(self, description, iters=300, write=True):
         # FIXME: 0.5
-        self.ready['reject'] = (self.ann.run(to_input(description))[0] < 0.5)
+        rejected = self.ann.run(to_input(description))[0] < 0.5
+        self.pd.reject(rejected)
+        self.ready['reject'] = rejected
         ret = self.ann.train(to_input(description), [0.0], 3, iters=iters)
         if write and self.is_ready():
             self.write()
-        return
+        return self.ready['reject']
 
     def run(self, description):
         return self.ann.run(to_input(description))[0]
+
+class StatusLine(object):
+    def __init__(self):
+        self._line = []
+
+    def write(self, line, terminate=False):
+        sys.stdout.write("\r{}".format(' ' * len(self._line)))
+        sys.stdout.write("\r{}".format(line))
+        if terminate:
+            self.terminate()
+        else:
+            self._line = line
+        sys.stdout.flush()
+
+    def terminate(self):
+        if len(self._line) > 0:
+            sys.stdout.write("\n")
+        self._line = []
+
+    def ellipsis(self, string, limit, ellipsis="..."):
+        lstr = len(string)
+        if lstr <= limit:
+            return string
+
+        split = (limit - len(ellipsis)) // 2
+        return string[:split] + ellipsis + string[-split:]
 
 class CognitiveStrgrp(object):
     """ LOL """
     def __init__(self):
         self._strgrp = Strgrp()
         self._grpanns = {}
+        self._status = StatusLine()
 
     def __iter__(self):
         return iter(self._strgrp)
@@ -171,50 +284,98 @@ class CognitiveStrgrp(object):
         i = None
         for i, grpbin in enumerate(heap):
             if grpbin.is_acceptible(self._strgrp):
-                if grpbin not in self._grpanns:
-                    self._grpanns[grpbin] = DescriptionAnn.load(grpbin.key())
+                if grpbin.key() not in self._grpanns:
+                    self._grpanns[grpbin.key()] = DescriptionAnn.load(grpbin.key())
             else:
                 break
         return heap[:i], heap[i:]
 
-    def train(self, description, picked, candidates, hay):
-        # Black magic follows: Hacky attempt at training NNs.
-        if pick:
-            ann = self._grpanns[pick]
-            rpick = list(pick)
-            rpick.append(description)
-            rpick.reverse()
-            for (needle, straw) in zip(itertools.cycle(rpick), hay):
-                if ann.is_ready()
+    def _train_positive(self, description, pick, candidates, hay):
+        ann = self._grpanns[pick.key()]
+
+        accept = list(item.key() for item in pick)
+        shuffle(accept)
+        accept.insert(0, description)
+
+        i = 0
+        while not (ann.accept(description) and ann.is_ready()):
+            for (needle, straw) in zip(itertools.cycle(accept), hay):
+                score = ann.run(description)
+                line = "Positive training: ({}, {}, {})".format(i, ann.ready, score)
+                self._status.write(line)
+
+                if ann.is_ready():
                     break
+
                 ann.reject(straw)
                 ann.accept(needle)
+                i += 1
 
-        for grp in candidates:
-            ann = self._grpanns[grp]
-            rgrp = list(grp)
-            if grp is pick:
-                rgrp.append(description)
-            rgrp.reverse()
-            grpless = [ x.key() for x in candidates if x is not grp ]
-            if grp is not pick:
-                grpless.append(description)
-            grpless.reverse()
-            seq = itertools.cycle(zip(itertools.cycle(rgrp), grpless))
-            pred = lambda: not ann.is_ready()
-            # For the unlucky needles, use the description for negative
-            # training
-            ann.reject(description)
+                if self.ann.is_polarised():
+                    break;
+
+            if self.ann.is_polarised():
+                break;
+
+            score = ann.run(description)
+            line = "Positive training: ({}, {}, {})".format(i, ann.ready, score)
+            self._status.write(line, terminate=True)
+
+    def _train_negative(self, description, pick, candidates, hay):
+        ann = self._grpanns[grp.key()]
+        accept = list(item.key() for item in grp)
+        shuffle(accept)
+        print("accept: {}".format(accept))
+
+        reject = [ x.key() for x in candidates if x is not grp ]
+        reject.extend(hay[:max(7, len(reject))])
+        shuffle(reject)
+        reject.insert(0, description)
+        print("reject: {}".format(reject))
+
+        seq = itertools.cycle(zip(itertools.cycle(accept), reject))
+        pred = lambda x: not ann.is_ready()
+        i = 0
+        while not (ann.reject(description) and ann.is_ready()):
             for (needle, straw) in itertools.takewhile(pred, seq):
+                score = ann.run(description)
+                line = "Negative training: ({}, {}, {})".format(i, ann.ready, score)
+                self._status.write(line)
                 # Also train on the initial description
                 ann.accept(needle)
                 ann.reject(straw)
+                i += 1
+
+                if self.ann.is_polarised():
+                    break;
+
+            if self.ann.is_polarised():
+                break;
+
+            score = ann.run(description)
+            line = "Negative training: ({}, {}, {})".format(i, ann.ready, score)
+            self._status.write(line, terminate=True)
+
+    def train(self, description, pick, candidates, hay):
+        shuffle(hay)
+        # Black magic follows: Hacky attempt at training NNs.
+        if pick:
+            self._train_positive(description, pick, candidates, hay)
+
+        for grp in candidates:
+            if grp is pick:
+                continue
+
+            self._train_negative(description, pick, candidates, hay)
 
     def find_group(self, description):
         # Check for an exact match, don't need fuzzy behaviour if we have one
         grpbin = self._strgrp.grp_exact(description)
         if grpbin is not None:
+            assert grpbin.key() in self._grpanns
             return grpbin
+
+        # Check for an existing mapping
 
         # Use a binary output NN trained for each group to determine
         # membership. Leverage the groups generated with strgrp as training
@@ -223,28 +384,30 @@ class CognitiveStrgrp(object):
         # needles is the set of groups breaking the strgrp fuzz threshold.
         # These are the candidates groups for the current description.
         needles, hay = self._split_heap(self._strgrp.grps_for(description))
-        if len(needles) == 0:
+        l_needles = len(needles)
+        if l_needles == 0:
+            self._grpanns[description] = DescriptionAnn.load(description);
             return None
 
         # Score the description using each group's NN, to see if we find a
         # single candidate among the needles. If we do then we assume this is
         # the correct group
-        anns = [ self._grpanns[grpbin] for grpbin in needles ]
+        anns = [ self._grpanns[grpbin.key()] for grpbin in needles ]
         scores = [ ann.run(description) for ann in anns ]
         curr_ann = DescriptionAnn.load(description)
         if curr_ann.is_ready() and curr_ann.run(description) > max(max(scores), 0.5):
             # We can't have seen it if it's strictly greater, therefore it's a
             # new group
+            self._grpanns[description] = curr_ann
             return None
 
         # FIXME: 0.5
         passes = [ x >= 0.5 for x in scores ]
+        n_passes = sum(passes)
         ready = [ ann.is_ready() for ann in anns ]
         hay_keys = [ grp.key() for grp in hay ]
         if all(ready):
-            l_passes = len(passes)
-            n_passes = sum(passes)
-            if n_passes == 1 or (l_passes > 1 and n_passes == l_passes):
+            if n_passes == 1 or (l_needles > 1 and n_passes == l_needles):
                 i = passes.index(True)
                 self.train(description, needles[i], needles, hay_keys)
                 return needles[i]
@@ -263,12 +426,11 @@ class CognitiveStrgrp(object):
 
         # Otherwise get user input
         match = self._request_match(description, needles)
-        print("Learning from feedback...")
 
         # None means no group was matched an a new one should be created
         try:
             if match is None:
-                self.train(description, None, anns, hay_keys)
+                self.train(description, None, needles, hay_keys)
                 for ann in anns:
                     # FIXME: Violates assumption in __init__ that ready['accept'] is True
                     ann.write()
@@ -277,8 +439,7 @@ class CognitiveStrgrp(object):
             # Otherwise, if the user confirmed membership of the description to a
             # candidate group, if the NN correctly predicted the membership then
             # mark it as ready to use
-            i = needles.index(match)
-            self.train(description, anns[i], anns, [grp.key() for grp in hay])
+            self.train(description, match, needles, [grp.key() for grp in hay])
 
             return match
         finally:
@@ -287,7 +448,7 @@ class CognitiveStrgrp(object):
     def insert(self, description, data, group):
         if group is None:
             grpbin = self._strgrp.grp_new(description, data)
-            self._grpanns[grpbin] = DescriptionAnn.load(grpbin.key())
+            self._grpanns[grpbin.key()] = DescriptionAnn.load(grpbin.key())
         else:
             group.add(self._strgrp, description, data)
 
