@@ -95,7 +95,18 @@ Genann_run(GenannObject *self, PyObject *args) {
         return NULL;
 
     if (PyList_Size(inputsobj) > self->ann->inputs) {
-        PyErr_SetString(PyExc_ValueError, "Input length exceeds NN input size");
+    	char *buf;
+	int rv;
+
+    	rv = asprintf(&buf,  "Input length exceeds NN input size: %ld / %d",
+	              PyList_Size(inputsobj), self->ann->inputs);
+        if (rv >= 0) {
+		/* Leaky McLeakface */
+		PyErr_SetString(PyExc_ValueError, buf);
+	} else {
+		perror("asprintf");
+		PyErr_SetString(PyExc_ValueError, "Input length exceeds NN input");
+	}
         return NULL;
     }
 
@@ -128,7 +139,18 @@ Genann_train(GenannObject *self, PyObject *args, PyObject *kws) {
         return NULL;
 
     if (PyList_Size(inputsobj) > self->ann->inputs) {
-        PyErr_SetString(PyExc_ValueError, "Input length exceeds NN input size");
+    	char *buf;
+	int rv;
+
+    	rv = asprintf(&buf,  "Input length exceeds NN input size: %ld / %d",
+	              PyList_Size(inputsobj), self->ann->inputs);
+        if (rv >= 0) {
+		/* Leaky McLeakface */
+		PyErr_SetString(PyExc_ValueError, buf);
+	} else {
+		perror("asprintf");
+		PyErr_SetString(PyExc_ValueError, "Input length exceeds NN input");
+	}
         return NULL;
     }
 

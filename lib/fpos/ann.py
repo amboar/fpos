@@ -6,6 +6,7 @@ from pystrgrp import Strgrp
 import itertools
 from random import shuffle
 import sys
+import traceback
 
 def to_input(string):
     return [float(ord(x)) for x in string]
@@ -16,9 +17,9 @@ class PolarisationDetector(object):
     """ Undocumented state machine!"""
 
     def __init__(self, limit=5):
-        self.S0, self.S1, self.S2, self.S3, self.S4, self.S5, self.S6, self.S7 = list(range(0, 7))
+        self.S0, self.S1, self.S2, self.S3, self.S4, self.S5, self.S6, self.S7 = list(range(0, 8))
         self.s = self.S0
-        self.polarised = { FlipFlop.S6, FlipFlop.S7 }
+        self.polarised = { self.S6, self.S7 }
         self.count = 0
         self.limit = limit
 
@@ -26,9 +27,10 @@ class PolarisationDetector(object):
         if state in self.polarised:
             self.count += 1
 
+        print("\nEntering {}".format(state))
         self.s = state
 
-    def accept(val):
+    def accept(self, val):
         if self.s == self.S0:
             if val:
                 self.enter(self.S1)
@@ -55,7 +57,7 @@ class PolarisationDetector(object):
             if not val:
                 self.enter(self.S0)
 
-    def reject(val):
+    def reject(self, val):
         if self.s == self.S0:
             if val:
                 self.enter(self.S2)
@@ -82,14 +84,12 @@ class PolarisationDetector(object):
             if val:
                 self.enter(self.S3)
 
-        def is_polarised(self):
-            r = (self.s in self.polarised and
-                    ((self.count % self.limit) == 0))
-            print("Polarised? {}".format(r))
-            return r
+    def is_polarised(self):
+        r = (self.s in self.polarised and ((self.count % self.limit) == 0))
+        return r
 
 class DescriptionAnn(object):
-    def __init__(self, cache=None, ann=None, inputs=100, layers=2, hidden=100, outputs=1, description=None):
+    def __init__(self, cache=None, ann=None, inputs=120, layers=2, hidden=120, outputs=1, description=None):
         self.pd = PolarisationDetector()
 
         if cache is None:
@@ -103,6 +103,9 @@ class DescriptionAnn(object):
             # Assume this for the moment
             self.ready = { 'accept' : True, 'reject' : True }
             self.ann = ann
+
+        self.pd.accept(self.ready['accept'])
+        self.pd.reject(self.ready['reject'])
 
         self.description = description
         if description is None:
@@ -197,7 +200,7 @@ class DescriptionAnn(object):
         # FIXME: 0.5
         accepted = self.ann.run(to_input(description))[0] >= 0.5
         self.pd.accept(accepted)
-        self.ready['accept'] = accept
+        self.ready['accept'] = accepted
         self.ann.train(to_input(description), [1.0], 3, iters=iters)
         if write and self.is_ready():
             self.cache(description)
@@ -218,21 +221,15 @@ class DescriptionAnn(object):
 
 class StatusLine(object):
     def __init__(self):
-        self._line = []
+        pass
 
     def write(self, line, terminate=False):
-        sys.stdout.write("\r{}".format(' ' * len(self._line)))
-        sys.stdout.write("\r{}".format(line))
+        print("\r{}".format(line), end='', flush=True)
         if terminate:
             self.terminate()
-        else:
-            self._line = line
-        sys.stdout.flush()
 
     def terminate(self):
-        if len(self._line) > 0:
-            sys.stdout.write("\n")
-        self._line = []
+        print("", flush=True)
 
     def ellipsis(self, string, limit, ellipsis="..."):
         lstr = len(string)
@@ -246,7 +243,7 @@ class CognitiveStrgrp(object):
     """ LOL """
     def __init__(self):
         self._strgrp = Strgrp()
-        self._grpanns = {}
+        self._grpanns = dict()
         self._status = StatusLine()
 
     def __iter__(self):
@@ -296,10 +293,16 @@ class CognitiveStrgrp(object):
         accept = list(item.key() for item in pick)
         shuffle(accept)
         accept.insert(0, description)
+        print("accept: {}".format(accept))
+
+        reject = [ x.key() for x in candidates if x is not pick ]
+        reject.extend(hay[:max(7, len(reject))])
+        shuffle(reject)
+        print("reject: {}".format(reject))
 
         i = 0
         while not (ann.accept(description) and ann.is_ready()):
-            for (needle, straw) in zip(itertools.cycle(accept), hay):
+            for (needle, straw) in zip(itertools.cycle(accept), reject):
                 score = ann.run(description)
                 line = "Positive training: ({}, {}, {})".format(i, ann.ready, score)
                 self._status.write(line)
@@ -311,17 +314,20 @@ class CognitiveStrgrp(object):
                 ann.accept(needle)
                 i += 1
 
-                if self.ann.is_polarised():
+                if ann.is_polarised():
                     break;
 
-            if self.ann.is_polarised():
+            if ann.is_polarised():
                 break;
 
-            score = ann.run(description)
-            line = "Positive training: ({}, {}, {})".format(i, ann.ready, score)
-            self._status.write(line, terminate=True)
+        score = ann.run(description)
+        line = "Positive training: ({}, {}, {})".format(i, ann.ready, score)
+        self._status.write(line, terminate=True)
 
-    def _train_negative(self, description, pick, candidates, hay):
+        if ann.is_polarised():
+            print("Observed {} polarisation events, not enough training material".format(ann.pd.limit))
+
+    def _train_negative(self, description, grp, candidates, hay):
         ann = self._grpanns[grp.key()]
         accept = list(item.key() for item in grp)
         shuffle(accept)
@@ -334,7 +340,7 @@ class CognitiveStrgrp(object):
         print("reject: {}".format(reject))
 
         seq = itertools.cycle(zip(itertools.cycle(accept), reject))
-        pred = lambda x: not ann.is_ready()
+        pred = lambda x: not (ann.is_ready() or ann.is_polarised())
         i = 0
         while not (ann.reject(description) and ann.is_ready()):
             for (needle, straw) in itertools.takewhile(pred, seq):
@@ -346,15 +352,15 @@ class CognitiveStrgrp(object):
                 ann.reject(straw)
                 i += 1
 
-                if self.ann.is_polarised():
-                    break;
-
-            if self.ann.is_polarised():
+            if ann.is_polarised():
                 break;
 
-            score = ann.run(description)
-            line = "Negative training: ({}, {}, {})".format(i, ann.ready, score)
-            self._status.write(line, terminate=True)
+        score = ann.run(description)
+        line = "Negative training: ({}, {}, {})".format(i, ann.ready, score)
+        self._status.write(line, terminate=True)
+
+        if ann.is_polarised():
+            print("Observed {} polarisation events, not enough training material".format(ann.pd.limit))
 
     def train(self, description, pick, candidates, hay):
         shuffle(hay)
@@ -365,8 +371,7 @@ class CognitiveStrgrp(object):
         for grp in candidates:
             if grp is pick:
                 continue
-
-            self._train_negative(description, pick, candidates, hay)
+            self._train_negative(description, grp, candidates, hay)
 
     def find_group(self, description):
         # Check for an exact match, don't need fuzzy behaviour if we have one
@@ -386,7 +391,6 @@ class CognitiveStrgrp(object):
         needles, hay = self._split_heap(self._strgrp.grps_for(description))
         l_needles = len(needles)
         if l_needles == 0:
-            self._grpanns[description] = DescriptionAnn.load(description);
             return None
 
         # Score the description using each group's NN, to see if we find a
@@ -398,7 +402,6 @@ class CognitiveStrgrp(object):
         if curr_ann.is_ready() and curr_ann.run(description) > max(max(scores), 0.5):
             # We can't have seen it if it's strictly greater, therefore it's a
             # new group
-            self._grpanns[description] = curr_ann
             return None
 
         # FIXME: 0.5
@@ -445,12 +448,17 @@ class CognitiveStrgrp(object):
         finally:
             print()
 
-    def insert(self, description, data, group):
-        if group is None:
+    def insert(self, description, data, grpbin):
+        if grpbin is None:
             grpbin = self._strgrp.grp_new(description, data)
+            assert grpbin.key() == description
+            assert description not in self._grpanns
             self._grpanns[grpbin.key()] = DescriptionAnn.load(grpbin.key())
+            assert description in self._grpanns
+            assert grpbin.key() in self._grpanns
         else:
-            group.add(self._strgrp, description, data)
+            assert grpbin.key() in self._grpanns
+            grpbin.add(self._strgrp, description, data)
 
     def add(self, description, data):
         self.insert(description, data, self.find_group(description))
