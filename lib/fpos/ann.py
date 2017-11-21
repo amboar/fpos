@@ -296,7 +296,7 @@ class CognitiveStrgrp(object):
         print("accept: {}".format(accept))
 
         reject = [ x.key() for x in candidates if x is not pick ]
-        reject.extend(hay[:max(7, len(reject))])
+        reject.extend(hay[:max(7, len(accept) - len(reject))])
         shuffle(reject)
         print("reject: {}".format(reject))
 
@@ -333,9 +333,10 @@ class CognitiveStrgrp(object):
         shuffle(accept)
         print("accept: {}".format(accept))
 
-        reject = [ x.key() for x in candidates if x is not grp ]
+        reject = [ i.key() for x in candidates if x is not grp for i in grp ]
         reject.extend(hay[:max(7, len(reject))])
         shuffle(reject)
+        reject = reject[:max(7, len(accept))]
         reject.insert(0, description)
         print("reject: {}".format(reject))
 
@@ -380,7 +381,7 @@ class CognitiveStrgrp(object):
             assert grpbin.key() in self._grpanns
             return grpbin
 
-        # Check for an existing mapping
+        # FIXME: Check for an existing mapping on disk
 
         # Use a binary output NN trained for each group to determine
         # membership. Leverage the groups generated with strgrp as training
@@ -414,7 +415,7 @@ class CognitiveStrgrp(object):
                 i = passes.index(True)
                 self.train(description, needles[i], needles, hay_keys)
                 return needles[i]
-        if all(ann.ready['reject'] for ann in anns):
+        elif all(ann.ready['reject'] for ann in anns):
             if n_passes == 0:
                 return None
             if n_passes == 1:
