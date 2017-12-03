@@ -91,6 +91,8 @@ class PolarisationDetector(object):
 class DescriptionAnn(object):
     def __init__(self, cache=None, ann=None, inputs=120, layers=2, hidden=120, outputs=1, description=None):
         self.pd = PolarisationDetector()
+        self.accepted = set()
+        self.threshold = 3
 
         if cache is None:
             cache = DescriptionAnn.get_data_dir()
@@ -173,11 +175,14 @@ class DescriptionAnn(object):
         DescriptionAnn.ensure_dir(data_dir, dentries)
         return DescriptionAnn.get_canonical(path)
 
-    def is_ready(self):
+    def is_trained(self):
         return self.ready['accept'] and self.ready['reject']
 
     def is_polarised(self):
         return self.pd.is_polarised() 
+
+    def is_ready(self):
+        return self.is_trained() and len(self.accepted) > self.threshold
 
     def cache(self, description):
         did = DescriptionAnn.gen_id(description, salt)
@@ -201,6 +206,7 @@ class DescriptionAnn(object):
         accepted = self.ann.run(to_input(description))[0] >= 0.5
         self.pd.accept(accepted)
         self.ready['accept'] = accepted
+        self.accepted.add(description)
         self.ann.train(to_input(description), [1.0], 3, iters=iters)
         if write and self.is_ready():
             self.cache(description)
@@ -230,14 +236,6 @@ class StatusLine(object):
 
     def terminate(self):
         print("", flush=True)
-
-    def ellipsis(self, string, limit, ellipsis="..."):
-        lstr = len(string)
-        if lstr <= limit:
-            return string
-
-        split = (limit - len(ellipsis)) // 2
-        return string[:split] + ellipsis + string[-split:]
 
 class CognitiveStrgrp(object):
     """ LOL """
@@ -301,13 +299,13 @@ class CognitiveStrgrp(object):
         print("reject: {}".format(reject))
 
         i = 0
-        while not (ann.accept(description) and ann.is_ready()):
+        while not (ann.accept(description) and ann.is_trained()):
             for (needle, straw) in zip(itertools.cycle(accept), reject):
                 score = ann.run(description)
                 line = "Positive training: ({}, {}, {})".format(i, ann.ready, score)
                 self._status.write(line)
 
-                if ann.is_ready():
+                if ann.is_trained():
                     break
 
                 ann.reject(straw)
@@ -341,9 +339,9 @@ class CognitiveStrgrp(object):
         print("reject: {}".format(reject))
 
         seq = itertools.cycle(zip(itertools.cycle(accept), reject))
-        pred = lambda x: not (ann.is_ready() or ann.is_polarised())
+        pred = lambda x: not (ann.is_trained() or ann.is_polarised())
         i = 0
-        while not (ann.reject(description) and ann.is_ready()):
+        while not (ann.reject(description) and ann.is_trained()):
             for (needle, straw) in itertools.takewhile(pred, seq):
                 score = ann.run(description)
                 line = "Negative training: ({}, {}, {})".format(i, ann.ready, score)
@@ -416,8 +414,6 @@ class CognitiveStrgrp(object):
                 self.train(description, needles[i], needles, hay_keys)
                 return needles[i]
         elif all(ann.ready['reject'] for ann in anns):
-            if n_passes == 0:
-                return None
             if n_passes == 1:
                 i = passes.index(True)
                 if anns[i].is_ready():
