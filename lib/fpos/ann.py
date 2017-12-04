@@ -186,6 +186,7 @@ class DescriptionAnn(object):
         self.read_metadata(self.canonical_path)
         self.pd.accept(self.ready['accept'])
         self.pd.reject(self.ready['reject'])
+        self.accept(description)
 
     def read_metadata(self, path):
         prop_path = path + ".properties"
@@ -285,16 +286,19 @@ class CognitiveStrgrp(object):
         index = None
         need = True
 
+        # None Of The Above
         nota = len(haystack)
         print("Which description best matches '{}'?".format(description))
         print()
         for i, needle in enumerate(haystack):
-            print("({})\t{}".format(i, needle.key()))
-        print("({})\tNone of the above".format(nota))
+            print("[{}]\t{}".format(i, needle.key()))
+        print("[{}]\tNone of the above".format(nota))
         print()
 
         while need:
-            result = input("Select: ")
+            result = input("Select [0]: ")
+            if len(result) == 0:
+                result = 0
             try:
                 index = int(result)
                 need = not (0 <= index <= nota)
@@ -410,27 +414,26 @@ class CognitiveStrgrp(object):
             self._train_negative(description, grp, candidates, hay)
 
     def find_group(self, description):
+        print("\nFinding group for '{}'".format(description))
         # Check for an exact match, don't need fuzzy behaviour if we have one
         grpbin = self._strgrp.grp_exact(description)
         if grpbin is not None:
             assert DescriptionAnn.gen_id(grpbin.key(), salt) in self._grpanns
+            print("Existing group: Exact match")
             return grpbin
 
-        # FIXME: Check for an existing mapping on disk
-
+        # Check for an existing mapping on disk
         path = DescriptionAnn.get_path(description)
         if DescriptionAnn.have_ann(path):
-            print("Already have NN for '{}': {}".format(description, DescriptionAnn.gen_id(description, salt)))
             # Add description to a group that has an on-disk mapping:
             with open(DescriptionAnn.get_canonical(path) + ".properties", "r") as f:
                 cid = f.readline().strip()
-                print("Found canonical ID: {}".format(cid))
                 if cid in self._grpanns:
-                    print("Already have NN loaded, returning it")
                     # Group is already loaded
+                    print("Existing group: From on-disk NN mapping")
                     return self._strgrp.grp_exact(self._grpanns[cid].description)
-                print("No NN loaded for ID {}, signalling new group".format(cid))
                 # Likely the result of a time-bounded window on the database
+                print("New group: Found on-disk NN mapping")
                 return None
 
         # Use a binary output NN trained for each group to determine
@@ -442,6 +445,7 @@ class CognitiveStrgrp(object):
         needles, hay = self._split_heap(self._strgrp.grps_for(description))
         l_needles = len(needles)
         if l_needles == 0:
+            print("New group: No needles in the haystack")
             return None
 
         # Score the description using each group's NN, to see if we find a
@@ -450,27 +454,25 @@ class CognitiveStrgrp(object):
         anns = [ self._grpanns[DescriptionAnn.gen_id(grpbin.key(), salt)]
                     for grpbin in needles ]
         scores = [ ann.run(description) for ann in anns ]
-        curr_ann = DescriptionAnn.load(description)
-        if curr_ann.is_ready() and curr_ann.run(description) > max(max(scores), 0.5):
-            # We can't have seen it if it's strictly greater, therefore it's a
-            # new group
-            return None
-
         # FIXME: 0.5
         passes = [ x >= 0.5 for x in scores ]
         n_passes = sum(passes)
         ready = [ ann.is_ready() for ann in anns ]
         hay_keys = [ grp.key() for grp in hay ]
         if all(ready):
-            if n_passes == 1 or (l_needles > 1 and n_passes == l_needles):
+            # if n_passes == 1 or (l_needles > 1 and n_passes == l_needles):
+            if n_passes == 1:
                 i = passes.index(True)
                 self.train(description, needles[i], needles, hay_keys)
+                print("Existing group: All NNs ready, one matched")
                 return needles[i]
         elif all(ann.ready['reject'] for ann in anns):
             if n_passes == 1:
+                print("One passing while all reject")
                 i = passes.index(True)
                 if anns[i].is_ready():
                     self.train(description, needles[i], needles, hay_keys)
+                    print("Existing group: passing group is ready, under all-reject")
                     return needles[i]
 
         print("scores: {}".format(scores))
@@ -485,26 +487,27 @@ class CognitiveStrgrp(object):
             if match is None:
                 self.train(description, None, needles, hay_keys)
                 for ann in anns:
-                    # FIXME: Violates assumption in __init__ that ready['accept'] is True
                     ann.write()
+                print("New group: User provided answer")
                 return None
 
             # Otherwise, if the user confirmed membership of the description to a
             # candidate group, if the NN correctly predicted the membership then
             # mark it as ready to use
             self.train(description, match, needles, [grp.key() for grp in hay])
-
+            print("Existing group: User provided answer")
             return match
         finally:
             print()
 
     def insert(self, description, data, grpbin):
         if grpbin is None:
+            print("New group for description '{}'".format(description))
             key = DescriptionAnn.gen_id(description, salt)
-            print("Adding new bin for {} with key {}".format(description, key))
             grpbin = self._strgrp.grp_new(description, data)
             self._grpanns[key] = DescriptionAnn.load(grpbin.key())
         else:
+            print("Adding to group of '{}'".format(grpbin.key()))
             assert DescriptionAnn.gen_id(grpbin.key(), salt) in self._grpanns
             grpbin.add(self._strgrp, description, data)
 
