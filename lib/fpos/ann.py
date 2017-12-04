@@ -7,6 +7,7 @@ import itertools
 from random import shuffle
 import sys
 import traceback
+from collections import namedtuple
 
 def to_input(string):
     return [float(ord(x)) for x in string]
@@ -88,35 +89,9 @@ class PolarisationDetector(object):
         r = (self.s in self.polarised and ((self.count % self.limit) == 0))
         return r
 
+AnnMetadata = namedtuple("AnnMetadata", [ "id", "accept", "reject", "nr_accepted" ])
+
 class DescriptionAnn(object):
-    def __init__(self, cache=None, ann=None, inputs=120, layers=2, hidden=120, outputs=1, description=None):
-        self.pd = PolarisationDetector()
-        self.accepted = set()
-        self.threshold = 3
-
-        if cache is None:
-            cache = DescriptionAnn.get_data_dir()
-        self.data_dir = cache
-
-        if ann is None:
-            self.ready = { 'accept' : False, 'reject' : False }
-            self.ann = pygenann.genann(inputs, layers, hidden, outputs)
-        else:
-            # Assume this for the moment
-            self.ready = { 'accept' : True, 'reject' : True }
-            self.ann = ann
-
-        self.pd.accept(self.ready['accept'])
-        self.pd.reject(self.ready['reject'])
-
-        self.description = description
-        if description is None:
-            self.canonical_path = None
-        else:
-            self.canonical_path = DescriptionAnn.derive_canonical(self.data_dir, description)
-            if ann is None:
-                self.accept(self.description)
-
     @staticmethod
     def get_data_dir(head=None, tail=None):
         if head is None:
@@ -175,14 +150,66 @@ class DescriptionAnn(object):
         DescriptionAnn.ensure_dir(data_dir, dentries)
         return DescriptionAnn.get_canonical(path)
 
+    def __init__(self, cache=None, ann=None, inputs=120, layers=2, hidden=120, outputs=1, description=None):
+        self.pd = PolarisationDetector()
+        self.accepted = set()
+        self.threshold = 3
+        self.ready = { 'accept' : False, 'reject' : False }
+
+        if cache is None:
+            cache = DescriptionAnn.get_data_dir()
+        self.data_dir = cache
+
+        if ann is None:
+            self.ann = pygenann.genann(inputs, layers, hidden, outputs)
+        else:
+            self.ann = ann
+
+        assert description is not None
+        self.description = description
+        self.canonical_path = DescriptionAnn.derive_canonical(self.data_dir, description)
+        if ann is None:
+            self.pd.accept(self.ready['accept'])
+            self.pd.reject(self.ready['reject'])
+            self.accept(self.description)
+        else:
+            self.read_metadata(self.canonical_path)
+            self.pd.accept(self.ready['accept'])
+            self.pd.reject(self.ready['reject'])
+
+    def read_metadata(self, path):
+        try:
+            with open(path + ".properties", "r", encoding="utf-8") as f:
+                self.ready['accept'] = f.readline().strip() == "True"
+                self.ready['reject'] = f.readline().strip() == "True"
+                for line in f:
+                    self.accepted.add(line.strip())
+        except Exception as e:
+            print(e)
+            self.ready = { 'accept' : False, 'reject' : False }
+            self.accepted = set()
+
+    def write_metadata(self, path):
+        try:
+            with open(path + ".properties", "w", encoding="utf-8") as f:
+                f.write("{}\n".format(repr(self.ready['accept'])))
+                f.write("{}\n".format(repr(self.ready['reject'])))
+                for description in self.accepted:
+                    f.write("{}\n".format(description))
+        except Exception as e:
+            print(e)
+
     def is_trained(self):
         return self.ready['accept'] and self.ready['reject']
 
     def is_polarised(self):
         return self.pd.is_polarised() 
 
+    def meets_threshold(self):
+        return len(self.accepted) > self.threshold
+
     def is_ready(self):
-        return self.is_trained() and len(self.accepted) > self.threshold
+        return self.is_trained() and self.meets_threshold()
 
     def cache(self, description):
         did = DescriptionAnn.gen_id(description, salt)
@@ -193,6 +220,7 @@ class DescriptionAnn(object):
             self.canonical_path = DescriptionAnn.get_canonical(path)
 
         self.ann.write(self.canonical_path)
+        self.write_metadata(self.canonical_path)
 
         if not (self.canonical_path == path or os.path.exists(path)):
             os.symlink(self.canonical_path, path)
@@ -206,7 +234,7 @@ class DescriptionAnn(object):
         accepted = self.ann.run(to_input(description))[0] >= 0.5
         self.pd.accept(accepted)
         self.ready['accept'] = accepted
-        self.accepted.add(description)
+        self.accepted.add(DescriptionAnn.gen_id(description, salt))
         self.ann.train(to_input(description), [1.0], 3, iters=iters)
         if write and self.is_ready():
             self.cache(description)
