@@ -89,8 +89,6 @@ class PolarisationDetector(object):
         r = (self.s in self.polarised and ((self.count % self.limit) == 0))
         return r
 
-AnnMetadata = namedtuple("AnnMetadata", [ "id", "accept", "reject", "nr_accepted" ])
-
 class DescriptionAnn(object):
     @staticmethod
     def get_data_dir(head=None, tail=None):
@@ -128,13 +126,17 @@ class DescriptionAnn(object):
     def load(description, cache=None):
         if cache is None:
             cache = DescriptionAnn.get_data_dir()
+
         did = DescriptionAnn.gen_id(description, salt)
         dentries = DescriptionAnn.gen_rel_dentries(did)
         path = os.path.join(cache, *dentries)
+
         if DescriptionAnn.have_ann(path):
             ann = pygenann.genann.read(path)
-            return DescriptionAnn(cache=cache, ann=ann, description=description)
-        return DescriptionAnn(cache=cache, inputs=100, layers=2, hidden=100, outputs=1, description=description)
+        else:
+            ann = pygenann.genann(100, 2, 100, 1)
+
+        return DescriptionAnn(cache, ann, description)
 
     @staticmethod
     def get_canonical(path):
@@ -150,54 +152,36 @@ class DescriptionAnn(object):
         DescriptionAnn.ensure_dir(data_dir, dentries)
         return DescriptionAnn.get_canonical(path)
 
-    def __init__(self, cache=None, ann=None, inputs=120, layers=2, hidden=120, outputs=1, description=None):
+    def __init__(self, cache, ann, description):
         self.pd = PolarisationDetector()
         self.accepted = set()
         self.threshold = 3
         self.ready = { 'accept' : False, 'reject' : False }
-
-        if cache is None:
-            cache = DescriptionAnn.get_data_dir()
         self.data_dir = cache
-
-        if ann is None:
-            self.ann = pygenann.genann(inputs, layers, hidden, outputs)
-        else:
-            self.ann = ann
-
-        assert description is not None
+        self.ann = ann
         self.description = description
         self.canonical_path = DescriptionAnn.derive_canonical(self.data_dir, description)
-        if ann is None:
-            self.pd.accept(self.ready['accept'])
-            self.pd.reject(self.ready['reject'])
-            self.accept(self.description)
-        else:
-            self.read_metadata(self.canonical_path)
-            self.pd.accept(self.ready['accept'])
-            self.pd.reject(self.ready['reject'])
+        self.read_metadata(self.canonical_path)
+        self.pd.accept(self.ready['accept'])
+        self.pd.reject(self.ready['reject'])
 
     def read_metadata(self, path):
-        try:
-            with open(path + ".properties", "r", encoding="utf-8") as f:
-                self.ready['accept'] = f.readline().strip() == "True"
-                self.ready['reject'] = f.readline().strip() == "True"
-                for line in f:
-                    self.accepted.add(line.strip())
-        except Exception as e:
-            print(e)
-            self.ready = { 'accept' : False, 'reject' : False }
-            self.accepted = set()
+        prop_path = path + ".properties"
+        if not os.path.exists(prop_path):
+            return
+
+        with open(prop_path, "r", encoding="utf-8") as f:
+            self.ready['accept'] = f.readline().strip() == "True"
+            self.ready['reject'] = f.readline().strip() == "True"
+            for line in f:
+                self.accepted.add(line.strip())
 
     def write_metadata(self, path):
-        try:
-            with open(path + ".properties", "w", encoding="utf-8") as f:
-                f.write("{}\n".format(repr(self.ready['accept'])))
-                f.write("{}\n".format(repr(self.ready['reject'])))
-                for description in self.accepted:
-                    f.write("{}\n".format(description))
-        except Exception as e:
-            print(e)
+        with open(path + ".properties", "w", encoding="utf-8") as f:
+            f.write("{}\n".format(repr(self.ready['accept'])))
+            f.write("{}\n".format(repr(self.ready['reject'])))
+            for description in self.accepted:
+                f.write("{}\n".format(description))
 
     def is_trained(self):
         return self.ready['accept'] and self.ready['reject']
@@ -216,28 +200,26 @@ class DescriptionAnn(object):
         dentries = DescriptionAnn.gen_rel_dentries(did)
         path = os.path.join(self.data_dir, *dentries)
         DescriptionAnn.ensure_dir(self.data_dir, dentries)
-        if self.canonical_path is None:
-            self.canonical_path = DescriptionAnn.get_canonical(path)
 
-        self.ann.write(self.canonical_path)
-        self.write_metadata(self.canonical_path)
+        if not self.have_ann(self.canonical_path) or self.is_ready():
+            self.ann.write(self.canonical_path)
+            self.write_metadata(self.canonical_path)
 
-        if not (self.canonical_path == path or os.path.exists(path)):
+        if self.canonical_path != path and not os.path.exists(path):
             os.symlink(self.canonical_path, path)
 
     def write(self):
         assert(self.canonical_path is not None)
         self.ann.write(self.canonical_path)
 
-    def accept(self, description, iters=300, write=True):
+    def accept(self, description, iters=300):
         # FIXME: 0.5
         accepted = self.ann.run(to_input(description))[0] >= 0.5
         self.pd.accept(accepted)
         self.ready['accept'] = accepted
         self.accepted.add(DescriptionAnn.gen_id(description, salt))
         self.ann.train(to_input(description), [1.0], 3, iters=iters)
-        if write and self.is_ready():
-            self.cache(description)
+        self.cache(description)
         return self.ready['accept']
 
     def reject(self, description, iters=300, write=True):
