@@ -28,7 +28,6 @@ class PolarisationDetector(object):
         if state in self.polarised:
             self.count += 1
 
-        print("\nEntering {}".format(state))
         self.s = state
 
     def accept(self, val):
@@ -139,13 +138,35 @@ class DescriptionAnn(object):
         return DescriptionAnn(cache, ann, description)
 
     @staticmethod
+    def get_path(description, data_dir=None):
+        if data_dir is None:
+            data_dir = DescriptionAnn.get_data_dir()
+
+        did = DescriptionAnn.gen_id(description, salt)
+        dentries = DescriptionAnn.gen_rel_dentries(did)
+        return os.path.join(data_dir, *dentries)
+
+    @staticmethod
     def get_canonical(path):
         if os.path.islink(path):
             return os.readlink(path)
         return path
 
     @staticmethod
-    def derive_canonical(data_dir, description):
+    def is_canonical(description, data_dir=None):
+        if data_dir is None:
+            data_dir = DescriptionAnn.get_data_dir()
+
+        did = DescriptionAnn.gen_id(description, salt)
+        dentries = DescriptionAnn.gen_rel_dentries(did)
+        path = os.path.join(data_dir, *dentries)
+        return os.path.exists(path) and path == DescriptionAnn.get_canonical(path)
+
+    @staticmethod
+    def derive_canonical(description, data_dir=None):
+        if data_dir is None:
+            data_dir = DescriptionAnn.get_data_dir()
+
         did = DescriptionAnn.gen_id(description, salt)
         dentries = DescriptionAnn.gen_rel_dentries(did)
         path = os.path.join(data_dir, *dentries)
@@ -153,6 +174,7 @@ class DescriptionAnn(object):
         return DescriptionAnn.get_canonical(path)
 
     def __init__(self, cache, ann, description):
+        self.id = self.gen_id(description, salt)
         self.pd = PolarisationDetector()
         self.accepted = set()
         self.threshold = 3
@@ -160,7 +182,7 @@ class DescriptionAnn(object):
         self.data_dir = cache
         self.ann = ann
         self.description = description
-        self.canonical_path = DescriptionAnn.derive_canonical(self.data_dir, description)
+        self.canonical_path = DescriptionAnn.derive_canonical(description, self.data_dir)
         self.read_metadata(self.canonical_path)
         self.pd.accept(self.ready['accept'])
         self.pd.reject(self.ready['reject'])
@@ -171,6 +193,7 @@ class DescriptionAnn(object):
             return
 
         with open(prop_path, "r", encoding="utf-8") as f:
+            self.id = f.readline().strip()
             self.ready['accept'] = f.readline().strip() == "True"
             self.ready['reject'] = f.readline().strip() == "True"
             for line in f:
@@ -178,6 +201,7 @@ class DescriptionAnn(object):
 
     def write_metadata(self, path):
         with open(path + ".properties", "w", encoding="utf-8") as f:
+            f.write("{}\n".format(self.id))
             f.write("{}\n".format(repr(self.ready['accept'])))
             f.write("{}\n".format(repr(self.ready['reject'])))
             for description in self.accepted:
@@ -289,30 +313,30 @@ class CognitiveStrgrp(object):
         i = None
         for i, grpbin in enumerate(heap):
             if grpbin.is_acceptible(self._strgrp):
-                if grpbin.key() not in self._grpanns:
-                    self._grpanns[grpbin.key()] = DescriptionAnn.load(grpbin.key())
+                key = DescriptionAnn.gen_id(grpbin.key(), salt)
+                if key not in self._grpanns:
+                    self._grpanns[key] = DescriptionAnn.load(grpbin.key())
             else:
                 break
         return heap[:i], heap[i:]
 
     def _train_positive(self, description, pick, candidates, hay):
-        ann = self._grpanns[pick.key()]
+        ann = self._grpanns[DescriptionAnn.gen_id(pick.key(), salt)]
 
         accept = list(item.key() for item in pick)
         shuffle(accept)
         accept.insert(0, description)
-        print("accept: {}".format(accept))
 
         reject = [ x.key() for x in candidates if x is not pick ]
         reject.extend(hay[:max(7, len(accept) - len(reject))])
         shuffle(reject)
-        print("reject: {}".format(reject))
 
         i = 0
         while not (ann.accept(description) and ann.is_trained()):
             for (needle, straw) in zip(itertools.cycle(accept), reject):
                 score = ann.run(description)
-                line = "Positive training: ({}, {}, {})".format(i, ann.ready, score)
+                line = "Positive training: ({}, {}, {}, {})".format(i, ann.ready,
+                            ann.pd.count, score)
                 self._status.write(line)
 
                 if ann.is_trained():
@@ -329,24 +353,24 @@ class CognitiveStrgrp(object):
                 break;
 
         score = ann.run(description)
-        line = "Positive training: ({}, {}, {})".format(i, ann.ready, score)
-        self._status.write(line, terminate=True)
+        if i > 0:
+            line = "Positive training: ({}, {}, {}, {})".format(i, ann.ready,
+                        ann.pd.count, score)
+            self._status.write(line, terminate=True)
 
         if ann.is_polarised():
             print("Observed {} polarisation events, not enough training material".format(ann.pd.limit))
 
     def _train_negative(self, description, grp, candidates, hay):
-        ann = self._grpanns[grp.key()]
+        ann = self._grpanns[DescriptionAnn.gen_id(grp.key(), salt)]
         accept = list(item.key() for item in grp)
         shuffle(accept)
-        print("accept: {}".format(accept))
 
         reject = [ i.key() for x in candidates if x is not grp for i in grp ]
         reject.extend(hay[:max(7, len(reject))])
         shuffle(reject)
         reject = reject[:max(7, len(accept))]
         reject.insert(0, description)
-        print("reject: {}".format(reject))
 
         seq = itertools.cycle(zip(itertools.cycle(accept), reject))
         pred = lambda x: not (ann.is_trained() or ann.is_polarised())
@@ -354,7 +378,8 @@ class CognitiveStrgrp(object):
         while not (ann.reject(description) and ann.is_trained()):
             for (needle, straw) in itertools.takewhile(pred, seq):
                 score = ann.run(description)
-                line = "Negative training: ({}, {}, {})".format(i, ann.ready, score)
+                line = "Negative training: ({}, {}, {}, {})".format(i, ann.ready,
+                            ann.pd.count, score)
                 self._status.write(line)
                 # Also train on the initial description
                 ann.accept(needle)
@@ -365,8 +390,10 @@ class CognitiveStrgrp(object):
                 break;
 
         score = ann.run(description)
-        line = "Negative training: ({}, {}, {})".format(i, ann.ready, score)
-        self._status.write(line, terminate=True)
+        if i > 0:
+            line = "Negative training: ({}, {}, {}, {})".format(i, ann.ready,
+                        ann.pd.count, score)
+            self._status.write(line, terminate=True)
 
         if ann.is_polarised():
             print("Observed {} polarisation events, not enough training material".format(ann.pd.limit))
@@ -386,10 +413,25 @@ class CognitiveStrgrp(object):
         # Check for an exact match, don't need fuzzy behaviour if we have one
         grpbin = self._strgrp.grp_exact(description)
         if grpbin is not None:
-            assert grpbin.key() in self._grpanns
+            assert DescriptionAnn.gen_id(grpbin.key(), salt) in self._grpanns
             return grpbin
 
         # FIXME: Check for an existing mapping on disk
+
+        path = DescriptionAnn.get_path(description)
+        if DescriptionAnn.have_ann(path):
+            print("Already have NN for '{}': {}".format(description, DescriptionAnn.gen_id(description, salt)))
+            # Add description to a group that has an on-disk mapping:
+            with open(DescriptionAnn.get_canonical(path) + ".properties", "r") as f:
+                cid = f.readline().strip()
+                print("Found canonical ID: {}".format(cid))
+                if cid in self._grpanns:
+                    print("Already have NN loaded, returning it")
+                    # Group is already loaded
+                    return self._strgrp.grp_exact(self._grpanns[cid].description)
+                print("No NN loaded for ID {}, signalling new group".format(cid))
+                # Likely the result of a time-bounded window on the database
+                return None
 
         # Use a binary output NN trained for each group to determine
         # membership. Leverage the groups generated with strgrp as training
@@ -405,7 +447,8 @@ class CognitiveStrgrp(object):
         # Score the description using each group's NN, to see if we find a
         # single candidate among the needles. If we do then we assume this is
         # the correct group
-        anns = [ self._grpanns[grpbin.key()] for grpbin in needles ]
+        anns = [ self._grpanns[DescriptionAnn.gen_id(grpbin.key(), salt)]
+                    for grpbin in needles ]
         scores = [ ann.run(description) for ann in anns ]
         curr_ann = DescriptionAnn.load(description)
         if curr_ann.is_ready() and curr_ann.run(description) > max(max(scores), 0.5):
@@ -457,14 +500,12 @@ class CognitiveStrgrp(object):
 
     def insert(self, description, data, grpbin):
         if grpbin is None:
+            key = DescriptionAnn.gen_id(description, salt)
+            print("Adding new bin for {} with key {}".format(description, key))
             grpbin = self._strgrp.grp_new(description, data)
-            assert grpbin.key() == description
-            assert description not in self._grpanns
-            self._grpanns[grpbin.key()] = DescriptionAnn.load(grpbin.key())
-            assert description in self._grpanns
-            assert grpbin.key() in self._grpanns
+            self._grpanns[key] = DescriptionAnn.load(grpbin.key())
         else:
-            assert grpbin.key() in self._grpanns
+            assert DescriptionAnn.gen_id(grpbin.key(), salt) in self._grpanns
             grpbin.add(self._strgrp, description, data)
 
     def add(self, description, data):
