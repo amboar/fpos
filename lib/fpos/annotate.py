@@ -129,33 +129,36 @@ def parse_args(subparser=None):
 def annotate(src, confirm=False):
     annotated = []
     t = _Tagger()
-    for row in src:
-        if 0 == len(row):
-            # Skip empty lines
-            continue
-        entry = Entry(*row[:3])
-        category = None
-        if 4 == len(row):
-            # Fourth column is category, check that it's known
-            try:
-                category = t.resolve_category(row[3])
+    try:
+        for row in src:
+            if 0 == len(row):
+                # Skip empty lines
+                continue
+            entry = Entry(*row[:3])
+            category = None
+            if 4 == len(row):
+                # Fourth column is category, check that it's known
+                try:
+                    category = t.resolve_category(row[3])
+                    group = t.find_group(entry.description)
+                    t.insert(entry, category, group)
+                except ValueError:
+                    # Category isn't known, output remains empty to
+                    # trigger user input
+                    pass
+            if category is None:
+                # Haven't yet determined the category, require user input
                 group = t.find_group(entry.description)
+                category = t.categorize(entry, group, confirm)
+                assert None is not category
                 t.insert(entry, category, group)
-            except ValueError:
-                # Category isn't known, output remains empty to
-                # trigger user input
-                pass
-        if category is None:
-            # Haven't yet determined the category, require user input
-            group = t.find_group(entry.description)
-            category = t.categorize(entry, group, confirm)
-            assert None is not category
-            t.insert(entry, category, group)
-            print()
-        output = []
-        output.extend(entry)
-        output.append(category)
-        annotated.append(output)
+                print()
+            output = []
+            output.extend(entry)
+            output.append(category)
+            annotated.append(output)
+    except EOFError:
+        pass
     return annotated
 
 def main(args=None):
