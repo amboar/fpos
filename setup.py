@@ -39,7 +39,7 @@ pystrgrp = Extension('pystrgrp',
 
 pygenann = Extension('pygenann',
     include_dirs = ['ext'],
-    extra_compile_args = [ '-O2', '-fwrapv', '-Wall', '-Wstrict-prototypes', ],
+    extra_compile_args = [ '-O3', '-fwrapv', '-Wall', '-Wstrict-prototypes', '-march=native', '-Dgenann_act=genann_act_sigmoid_cached' ],
     sources = [
         "ext/genann/genann.c",
         "ext/pygenann.c"
