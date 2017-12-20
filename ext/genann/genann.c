@@ -395,4 +395,44 @@ void genann_write(genann const *ann, FILE *out) {
     }
 }
 
+/* "-2147483647" */
+#define GENANN_INT_CHARS        11
 
+/* "-2.2250738585072020E−308" */
+#define GENANN_DBL_CHARS        24
+
+ssize_t genann_dumps(genann const *ann, char **buf) {
+    char *base, *cur;
+    ssize_t ret;
+    int i;
+
+    base = malloc(4 * GENANN_INT_CHARS + 3 + ann->total_weights * (GENANN_DBL_CHARS + 1) + 1);
+    if (!buf)
+        return -1;
+
+    cur = base;
+    ret = sprintf(cur, "%d %d %d %d", ann->inputs, ann->hidden_layers, ann->hidden, ann->outputs);
+    if (ret < 0)
+        return ret;
+
+    cur += ret;
+
+    for (i = 0; i < ann->total_weights; ++i) {
+        ret = sprintf(cur, " %.20e", ann->weight[i]);
+        if (ret < 0)
+            return ret;
+
+        cur += ret;
+    }
+
+    ret = cur - base;
+    cur = realloc(base, ret);
+    if (!cur) {
+        free(buf);
+        return -1;
+    }
+
+    *buf = cur;
+
+    return ret;
+}

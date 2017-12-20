@@ -93,6 +93,7 @@ void genann_train(genann const *ann, double const *inputs, double const *desired
 
 /* Saves the ann. */
 void genann_write(genann const *ann, FILE *out);
+ssize_t genann_dumps(genann const *ann, char **buf);
 
 void genann_init_sigmoid_lookup(const genann *ann);
 double genann_act_sigmoid(const genann *ann, double a);
