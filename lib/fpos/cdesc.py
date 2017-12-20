@@ -35,27 +35,10 @@ def parse_args(subparser=None):
             help="The IR document containing un-categorised transactions")
     return [ parser ] if subparser else parser.parse_args()
 
-def sanitise(value, strip=None):
-    if strip is None:
-        strip = [ "VISA DEBIT PURCHASE CARD", "EFTPOS", "\\" ]
-    for phrase in strip:
-        value = value.replace(phrase, " ")
-    return value
-
-
-def print_tokens(group):
-    tokencount = {}
-    for e in group:
-        for t in e[0].split():
-            if t not in tokencount:
-                tokencount[t] = 0 
-            tokencount[t] += 1
-    print(tokencount)
-
 def cdesc(reader):
     grouper = CognitiveStrgrp()
     for r in reader:
-        grouper.add(" ".join(sanitise(r[2]).split()).upper(), r)
+        grouper.add(r[2], r)
     return [ [ x.value() for x in g ] for g in grouper ]
 
 def main(args=None):
