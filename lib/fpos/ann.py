@@ -14,6 +14,22 @@ def to_input(string):
 
 salt = "382a55c995b1e53f3ad0a3ed1c5ae735b9c7adc0".encode("UTF-8")
 
+class StatusLine(object):
+    def __init__(self):
+        self.line = ""
+        pass
+
+    def write(self, line, terminate=False):
+        erase = [ '\b' ] * max(0, len(line) - len(self.line))
+        print("{}\r{}".format(erase, line), end='', flush=True)
+        self.line = line;
+        if terminate:
+            self.terminate()
+
+    def terminate(self):
+        print("", flush=True)
+        self.line = ""
+
 class PolarisationDetector(object):
     """ Undocumented state machine!"""
 
@@ -88,125 +104,146 @@ class PolarisationDetector(object):
         r = (self.s in self.polarised and ((self.count % self.limit) == 0))
         return r
 
-class DescriptionAnn(object):
-    @staticmethod
-    def get_data_dir(head=None, tail=None):
-        if head is None:
-            head = str(xdg.BaseDirectory.save_data_path("fpos"))
-        if tail is None:
-            tail = ("ann", "descriptions")
-        path = os.path.join(head, *tail)
+def gen_id(description, salt):
+    s = hashlib.sha1()
+    s.update(str(description).encode("UTF-8"))
+    s.update(salt)
+    return s.hexdigest()
+
+class AnnCollection(object):
+    def __init__(self, ann_id, data_dir=None):
+        if data_dir is None:
+            data_dir = self.get_data_dir()
+        self.data_dir = data_dir
+        self.ann_id = ann_id
+
+    def get_data_dir(self, path=None):
+        if path is None:
+            path = str(xdg.BaseDirectory.save_data_path("fpos"))
         os.makedirs(path, exist_ok=True)
         return path
 
-    @staticmethod
-    def gen_id(description, salt):
-        s = hashlib.sha1()
-        s.update(str(description).encode("UTF-8"))
-        s.update(salt)
-        return s.hexdigest()
+    def have_ann(self, did):
+        raise NotImplementedError
 
+    def is_canonical(self, did):
+        raise NotImplementedError
+
+    def get_canonical(self, did):
+        raise NotImplementedError
+
+    def load(self, did):
+        raise NotImplementedError
+
+    def load_metadata(self, did):
+        raise NotImplementedError
+
+    def store(self, did, ann):
+        raise NotImplementedError
+
+    def store_metadata(self, did, accept, reject, accepted):
+        raise NotImplementedError
+
+    def associate(self, cdid, adid):
+        raise NotImplementedError
+
+class FsAnnCollection(AnnCollection):
     @staticmethod
     def gen_rel_dentries(did):
         return did[:2], did[2:]
 
-    @staticmethod
-    def ensure_dir(data_dir, dentries):
-        assert os.path.exists(data_dir), "Expected present: {}".format(data_dir)
-        abspath = os.path.join(data_dir, dentries[0])
-        if not os.path.exists(abspath):
-            os.mkdir(abspath)
+    def __init__(self, data_dir=None):
+        super.__init__(data_dir)
+        pass
 
-    @staticmethod
-    def have_ann(path):
-        return os.path.exists(path)
+    def _get_path(self, did):
+        dentries = FsAnnCollection.gen_rel_dentries(did)
+        return os.path.join(self.data_dir, *dentries)
 
-    @staticmethod
-    def load(description, cache=None):
-        if cache is None:
-            cache = DescriptionAnn.get_data_dir()
+    def get_data_dir(self, path=None):
+        base = super.get_data_dir(path)
+        path = os.path.join(base, "ann", "descriptions")
+        os.makedirs(path, exist_ok=True)
+        return path
 
-        did = DescriptionAnn.gen_id(description, salt)
-        dentries = DescriptionAnn.gen_rel_dentries(did)
-        path = os.path.join(cache, *dentries)
+    def have_ann(self, did):
+        return os.path.exists(self._get_path(did))
 
-        if DescriptionAnn.have_ann(path):
-            ann = pygenann.genann.read(path)
-        else:
-            ann = pygenann.genann(100, 2, 100, 1)
-
-        return DescriptionAnn(cache, ann, description)
-
-    @staticmethod
-    def get_path(description, data_dir=None):
-        if data_dir is None:
-            data_dir = DescriptionAnn.get_data_dir()
-
-        did = DescriptionAnn.gen_id(description, salt)
-        dentries = DescriptionAnn.gen_rel_dentries(did)
-        return os.path.join(data_dir, *dentries)
-
-    @staticmethod
-    def get_canonical(path):
+    def _get_canonical(self, path):
         if os.path.islink(path):
             return os.readlink(path)
         return path
 
-    @staticmethod
-    def is_canonical(description, data_dir=None):
-        if data_dir is None:
-            data_dir = DescriptionAnn.get_data_dir()
+    def get_canonical(self, did):
+        path = self._get_canonical(self._get_path(did))
+        if os.path.exists(path + ".properties"):
+            with open(path + ".properties", "r") as f:
+                return f.readline().strip() # First line is the NN ID
+        return did
 
-        did = DescriptionAnn.gen_id(description, salt)
-        dentries = DescriptionAnn.gen_rel_dentries(did)
-        path = os.path.join(data_dir, *dentries)
-        return os.path.exists(path) and path == DescriptionAnn.get_canonical(path)
+    def is_canonical(self, did):
+        cdid = self.get_canonical(description)
+        return did == cdid
 
-    @staticmethod
-    def derive_canonical(description, data_dir=None):
-        if data_dir is None:
-            data_dir = DescriptionAnn.get_data_dir()
+    def load(self, description):
+        if self.have_ann(description):
+            ann = pygenann.genann.read(self._get_path(self.gen_id(description)))
+        else:
+            ann = pygenann.genann(100, 2, 100, 1)
 
-        did = DescriptionAnn.gen_id(description, salt)
-        dentries = DescriptionAnn.gen_rel_dentries(did)
-        path = os.path.join(data_dir, *dentries)
-        DescriptionAnn.ensure_dir(data_dir, dentries)
-        return DescriptionAnn.get_canonical(path)
+        return DescriptionAnn(ann, description, backend=self)
 
-    def __init__(self, cache, ann, description):
-        self.id = self.gen_id(description, salt)
-        self.pd = PolarisationDetector()
-        self.accepted = set()
-        self.threshold = 3
-        self.ready = { 'accept' : False, 'reject' : False }
-        self.data_dir = cache
+    def load_metadata(self, did):
+        prop_path = self._get_path(self.get_canonical(did)) + ".properties"
+        if not os.path.exists(prop_path):
+            return did, False, False, set()
+
+        with open(prop_path, "r", encoding="utf-8") as f:
+            did = f.readline().strip()
+            accept = f.readline().strip() == "True"
+            reject = f.readline().strip() == "True"
+            accepted = set()
+            for line in f:
+                accepted.add(line.strip())
+            return (did, accept, reject, accepted)
+
+    def store(self, did, ann):
+        dentries = FsAnnCollection.gen_rel_dentries(did)
+        path = os.path.join(self.data_dir, *dentries)
+        self.ann.write(self.canonical_path)
+
+    def store_metadata(self, did, accept, reject, accepted):
+        dentries = FsAnnCollection.gen_rel_dentries(did)
+        path = os.path.join(self.data_dir, *dentries)
+        with open(path + ".properties", "w", encoding="utf-8") as f:
+            f.write("{}\n".format(did))
+            f.write("{}\n".format(repr(accept)))
+            f.write("{}\n".format(repr(reject)))
+            for did in accepted:
+                f.write("{}\n".format(did))
+
+    def associate(self, cdid, adid):
+        os.symlink(self._get_path(cdid), self._get_path(adid))
+
+class DescriptionAnn(object):
+    def __init__(self, ann, description, backend, polarised=None):
+        self.id = gen_id(description, salt)
         self.ann = ann
-        self.description = description
-        self.canonical_path = DescriptionAnn.derive_canonical(description, self.data_dir)
-        self.read_metadata(self.canonical_path)
+
+        vals = backend.load_metadata(self.id)
+        self.ready['accept'] = vals[1]
+        self.ready['reject'] = vals[2]
+        self.accepted = vals[3]
+        self.threshold = 3
+        self.backend = backend
+
+        if None is polarised:
+            polarised = PolarisationDetector()
+        self.pd = polarised
+
         self.pd.accept(self.ready['accept'])
         self.pd.reject(self.ready['reject'])
         self.accept(description)
-
-    def read_metadata(self, path):
-        prop_path = path + ".properties"
-        if not os.path.exists(prop_path):
-            return
-
-        with open(prop_path, "r", encoding="utf-8") as f:
-            self.id = f.readline().strip()
-            self.ready['accept'] = f.readline().strip() == "True"
-            self.ready['reject'] = f.readline().strip() == "True"
-            for line in f:
-                self.accepted.add(line.strip())
-
-    def write_metadata(self, path):
-        with open(path + ".properties", "w", encoding="utf-8") as f:
-            f.write("{}\n".format(self.id))
-            f.write("{}\n".format(repr(self.ready['accept'])))
-            f.write("{}\n".format(repr(self.ready['reject'])))
-            for description in self.accepted:
-                f.write("{}\n".format(description))
 
     def is_trained(self):
         return self.ready['accept'] and self.ready['reject']
@@ -220,31 +257,32 @@ class DescriptionAnn(object):
     def is_ready(self):
         return self.is_trained() and self.meets_threshold()
 
-    def cache(self, description):
-        did = DescriptionAnn.gen_id(description, salt)
-        dentries = DescriptionAnn.gen_rel_dentries(did)
-        path = os.path.join(self.data_dir, *dentries)
-        DescriptionAnn.ensure_dir(self.data_dir, dentries)
-
-        if not self.have_ann(self.canonical_path) or self.is_ready():
-            self.ann.write(self.canonical_path)
-            self.write_metadata(self.canonical_path)
-
-        if self.canonical_path != path and not os.path.exists(path):
-            os.symlink(self.canonical_path, path)
+    def read_metadata(self):
+        vals = self.backend.read_metadata(self.id)
 
     def write(self):
-        assert(self.canonical_path is not None)
-        self.ann.write(self.canonical_path)
+        self.backend.store(self.id, self.ann)
+
+    def write_metadata(self):
+        self.backend.store_metadata(self.id, self.ready['accept'], self.ready['reject'], self.accepted)
+
+    def cache(self, description):
+        if not self.backend.have_ann(self.id) or self.is_ready():
+            self.write()
+            self.write_metadata()
+
+        did = gen_id(description, salt)
+        if self.id != did:
+            self.backend.associate(self.id, did)
 
     def accept(self, description, iters=300):
         # FIXME: 0.5
         accepted = self.ann.run(to_input(description))[0] >= 0.5
         self.pd.accept(accepted)
         self.ready['accept'] = accepted
-        self.accepted.add(DescriptionAnn.gen_id(description, salt))
+        self.accepted.add(gen_id(description, salt))
         self.ann.train(to_input(description), [1.0], 3, iters=iters)
-        self.cache(description)
+        self.cache()
         return self.ready['accept']
 
     def reject(self, description, iters=300, write=True):
@@ -260,25 +298,10 @@ class DescriptionAnn(object):
     def run(self, description):
         return self.ann.run(to_input(description))[0]
 
-class StatusLine(object):
-    def __init__(self):
-        self.line = ""
-        pass
-
-    def write(self, line, terminate=False):
-        erase = [ '\b' ] * max(0, len(line) - len(self.line))
-        print("{}\r{}".format(erase, line), end='', flush=True)
-        self.line = line;
-        if terminate:
-            self.terminate()
-
-    def terminate(self):
-        print("", flush=True)
-        self.line = ""
-
 class CognitiveStrgrp(object):
     """ LOL """
     def __init__(self):
+        self._collection = FsAnnCollection()
         self._strgrp = Strgrp()
         self._grpanns = dict()
         self._status = StatusLine()
@@ -321,15 +344,15 @@ class CognitiveStrgrp(object):
         i = None
         for i, grpbin in enumerate(heap):
             if grpbin.is_acceptible(self._strgrp):
-                key = DescriptionAnn.gen_id(grpbin.key(), salt)
+                key = gen_id(grpbin.key(), salt)
                 if key not in self._grpanns:
-                    self._grpanns[key] = DescriptionAnn.load(grpbin.key())
+                    self._grpanns[key] = self._collection.load(grpbin.key())
             else:
                 break
         return heap[:i], heap[i:]
 
     def _train_positive(self, description, pick, candidates, hay):
-        ann = self._grpanns[DescriptionAnn.gen_id(pick.key(), salt)]
+        ann = self._grpanns[gen_id(pick.key(), salt)]
 
         accept = list(item.key() for item in pick)
         shuffle(accept)
@@ -370,7 +393,7 @@ class CognitiveStrgrp(object):
             print("Observed {} polarisation events, not enough training material".format(ann.pd.limit))
 
     def _train_negative(self, description, grp, candidates, hay):
-        ann = self._grpanns[DescriptionAnn.gen_id(grp.key(), salt)]
+        ann = self._grpanns[gen_id(grp.key(), salt)]
         accept = list(item.key() for item in grp)
         shuffle(accept)
 
@@ -422,23 +445,21 @@ class CognitiveStrgrp(object):
         # Check for an exact match, don't need fuzzy behaviour if we have one
         grpbin = self._strgrp.grp_exact(description)
         if grpbin is not None:
-            assert DescriptionAnn.gen_id(grpbin.key(), salt) in self._grpanns
+            assert gen_id(grpbin.key(), salt) in self._grpanns
             print("Existing group: Exact match")
             return grpbin
 
         # Check for an existing mapping on disk
-        path = DescriptionAnn.get_path(description)
-        if DescriptionAnn.have_ann(path):
+        if self._collection.have_ann(description):
             # Add description to a group that has an on-disk mapping:
-            with open(DescriptionAnn.get_canonical(path) + ".properties", "r") as f:
-                cid = f.readline().strip()
-                if cid in self._grpanns:
-                    # Group is already loaded
-                    print("Existing group: From on-disk NN mapping")
-                    return self._strgrp.grp_exact(self._grpanns[cid].description)
-                # Likely the result of a time-bounded window on the database
-                print("New group: Found on-disk NN mapping")
-                return None
+            cid = self._collection.get_canonical(gen_id(description, salt))
+            if cid in self._grpanns:
+                # Group is already loaded
+                print("Existing group: From on-disk NN mapping")
+                return self._strgrp.grp_exact(self._grpanns[cid].description)
+            # Likely the result of a time-bounded window on the database
+            print("New group: Found on-disk NN mapping")
+            return None
 
         # Use a binary output NN trained for each group to determine
         # membership. Leverage the groups generated with strgrp as training
@@ -455,7 +476,7 @@ class CognitiveStrgrp(object):
         # Score the description using each group's NN, to see if we find a
         # single candidate among the needles. If we do then we assume this is
         # the correct group
-        anns = [ self._grpanns[DescriptionAnn.gen_id(grpbin.key(), salt)]
+        anns = [ self._grpanns[gen_id(grpbin.key(), salt)]
                     for grpbin in needles ]
         scores = [ ann.run(description) for ann in anns ]
         # FIXME: 0.5
@@ -507,12 +528,12 @@ class CognitiveStrgrp(object):
     def insert(self, description, data, grpbin):
         if grpbin is None:
             print("New group for description '{}'".format(description))
-            key = DescriptionAnn.gen_id(description, salt)
+            key = gen_id(description, salt)
             grpbin = self._strgrp.grp_new(description, data)
-            self._grpanns[key] = DescriptionAnn.load(grpbin.key())
+            self._grpanns[key] = self._collection.load(grpbin.key())
         else:
             print("Adding to group of '{}'".format(grpbin.key()))
-            assert DescriptionAnn.gen_id(grpbin.key(), salt) in self._grpanns
+            assert gen_id(grpbin.key(), salt) in self._grpanns
             grpbin.add(self._strgrp, description, data)
 
     def add(self, description, data):
