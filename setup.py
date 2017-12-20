@@ -13,7 +13,7 @@ if v < (3,):
 
 pystrgrp = Extension('pystrgrp',
     include_dirs = ['ext'],
-    extra_compile_args = [ '-O2', '-fwrapv', '-Wall', '-Wstrict-prototypes', '-fopenmp' ],
+    extra_compile_args = [ '-O2', '-fwrapv', '-Wall', '-Wstrict-prototypes', '-fopenmp', '-march=native' ],
     extra_link_args = [ '-fopenmp' ],
     sources = [
         "ext/ccan/block_pool/block_pool.c",
