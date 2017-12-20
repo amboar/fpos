@@ -262,15 +262,19 @@ class DescriptionAnn(object):
 
 class StatusLine(object):
     def __init__(self):
+        self.line = ""
         pass
 
     def write(self, line, terminate=False):
-        print("\r{}".format(line), end='', flush=True)
+        erase = [ '\b' ] * max(0, len(line) - len(self.line))
+        print("{}\r{}".format(erase, line), end='', flush=True)
+        self.line = line;
         if terminate:
             self.terminate()
 
     def terminate(self):
         print("", flush=True)
+        self.line = ""
 
 class CognitiveStrgrp(object):
     """ LOL """
