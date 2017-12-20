@@ -230,6 +230,21 @@ Genann_write(GenannObject *self, PyObject *args) {
     Py_RETURN_NONE;
 }
 
+static PyObject*
+Genann_dumps(GenannObject *self) {
+    PyObject *str;
+    ssize_t ret;
+    char *buf;
+
+    ret = genann_dumps(self->ann, &buf);
+    if (ret < 0)
+        return PyErr_SetFromErrno(PyExc_OSError);
+
+    str = PyBytes_FromString(buf);
+    free(buf);
+    return str;
+}
+
 static void
 Genann_dealloc(PyObject *obj) {
     GenannObject *self = (GenannObject *)obj;
@@ -245,6 +260,7 @@ static PyMethodDef Genann_methods[] = {
     { "read", (PyCFunction)Genann_read, (METH_VARARGS | METH_CLASS),
         "Creates ANN from file saved with write()" },
     { "write", (PyCFunction)Genann_write, (METH_VARARGS), "Saves the ANN" },
+    { "dumps", (PyCFunction)Genann_dumps, (METH_NOARGS), "Serialise the ANN" },
     {NULL}
 };
 
