@@ -153,15 +153,14 @@ class FsAnnCollection(AnnCollection):
         return did[:2], did[2:]
 
     def __init__(self, data_dir=None):
-        super.__init__(data_dir)
-        pass
+        super().__init__(self, data_dir)
 
     def _get_path(self, did):
         dentries = FsAnnCollection.gen_rel_dentries(did)
         return os.path.join(self.data_dir, *dentries)
 
     def get_data_dir(self, path=None):
-        base = super.get_data_dir(path)
+        base = super().get_data_dir(path)
         path = os.path.join(base, "ann", "descriptions")
         os.makedirs(path, exist_ok=True)
         return path
@@ -185,13 +184,14 @@ class FsAnnCollection(AnnCollection):
         cdid = self.get_canonical(description)
         return did == cdid
 
-    def load(self, description):
-        if self.have_ann(description):
-            ann = pygenann.genann.read(self._get_path(self.gen_id(description)))
+    def load(self, did, description):
+        if self.have_ann(did):
+            ann = pygenann.genann.read(self._get_path(did))
         else:
             ann = pygenann.genann(100, 2, 100, 1)
+            ann.accept(description)
 
-        return DescriptionAnn(ann, description, backend=self)
+        return DescriptionAnn(did, ann, self)
 
     def load_metadata(self, did):
         prop_path = self._get_path(self.get_canonical(did)) + ".properties"
@@ -210,11 +210,13 @@ class FsAnnCollection(AnnCollection):
     def store(self, did, ann):
         dentries = FsAnnCollection.gen_rel_dentries(did)
         path = os.path.join(self.data_dir, *dentries)
-        self.ann.write(self.canonical_path)
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        ann.write(path)
 
     def store_metadata(self, did, accept, reject, accepted):
         dentries = FsAnnCollection.gen_rel_dentries(did)
         path = os.path.join(self.data_dir, *dentries)
+        os.makedirs(os.path.dirname(path), exist_ok=True)
         with open(path + ".properties", "w", encoding="utf-8") as f:
             f.write("{}\n".format(did))
             f.write("{}\n".format(repr(accept)))
@@ -223,13 +225,20 @@ class FsAnnCollection(AnnCollection):
                 f.write("{}\n".format(did))
 
     def associate(self, cdid, adid):
-        os.symlink(self._get_path(cdid), self._get_path(adid))
+        src = self._get_path(cdid)
+        dst = self._get_path(adid)
+        if os.path.exists(dst):
+            assert os.readlink(dst) == src
+        else:
+            os.makedirs(os.path.dirname(dst), exist_ok=True)
+            os.symlink(src, dst)
 
 class DescriptionAnn(object):
-    def __init__(self, ann, description, backend, polarised=None):
-        self.id = gen_id(description, salt)
+    def __init__(self, did, ann, backend, polarised=None):
+        self.id = did
         self.ann = ann
 
+        self.ready = dict()
         vals = backend.load_metadata(self.id)
         self.ready['accept'] = vals[1]
         self.ready['reject'] = vals[2]
@@ -243,7 +252,6 @@ class DescriptionAnn(object):
 
         self.pd.accept(self.ready['accept'])
         self.pd.reject(self.ready['reject'])
-        self.accept(description)
 
     def is_trained(self):
         return self.ready['accept'] and self.ready['reject']
@@ -282,7 +290,7 @@ class DescriptionAnn(object):
         self.ready['accept'] = accepted
         self.accepted.add(gen_id(description, salt))
         self.ann.train(to_input(description), [1.0], 3, iters=iters)
-        self.cache()
+        self.cache(description)
         return self.ready['accept']
 
     def reject(self, description, iters=300, write=True):
@@ -346,7 +354,7 @@ class CognitiveStrgrp(object):
             if grpbin.is_acceptible(self._strgrp):
                 key = gen_id(grpbin.key(), salt)
                 if key not in self._grpanns:
-                    self._grpanns[key] = self._collection.load(grpbin.key())
+                    self._grpanns[key] = self._collection.load(key, grpbin.key())
             else:
                 break
         return heap[:i], heap[i:]
@@ -530,7 +538,7 @@ class CognitiveStrgrp(object):
             print("New group for description '{}'".format(description))
             key = gen_id(description, salt)
             grpbin = self._strgrp.grp_new(description, data)
-            self._grpanns[key] = self._collection.load(grpbin.key())
+            self._grpanns[key] = self._collection.load(key, grpbin.key())
         else:
             print("Adding to group of '{}'".format(grpbin.key()))
             assert gen_id(grpbin.key(), salt) in self._grpanns

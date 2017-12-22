@@ -395,18 +395,17 @@ void genann_write(genann const *ann, FILE *out) {
     }
 }
 
-/* "-2147483647" */
 #define GENANN_INT_CHARS        11
 
-/* "-2.2250738585072020E−308" */
-#define GENANN_DBL_CHARS        24
+#define GENANN_DBL_CHARS        27
 
 ssize_t genann_dumps(genann const *ann, char **buf) {
     char *base, *cur;
     ssize_t ret;
     int i;
 
-    base = malloc(4 * GENANN_INT_CHARS + 3 + ann->total_weights * (GENANN_DBL_CHARS + 1) + 1);
+#define BUF_LEN (4 * GENANN_INT_CHARS + 4 + ann->total_weights * (GENANN_DBL_CHARS + 1) + 1)
+    base = malloc(BUF_LEN);
     if (!buf)
         return -1;
 

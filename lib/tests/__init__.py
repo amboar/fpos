@@ -932,6 +932,77 @@ class PsaveTest(unittest.TestCase):
         self.assertEquals(expected, state)
 
 import tempfile
+import pygenann
+
+class FsAnnCollectionTest(unittest.TestCase):
+    def contain(self, func):
+        with tempfile.TemporaryDirectory() as test_dir:
+            func(self, test_dir)
+
+    def test_store(self):
+        def test(tc, test_dir):
+            nn = pygenann.genann(1,1,1,1)
+            ac = ann.FsAnnCollection(test_dir)
+            ac.store(ann.gen_id("foo", ann.salt), nn)
+        self.contain(test)
+
+    def test_store_metadata(self):
+        def test(tc, test_dir):
+            ac = ann.FsAnnCollection(test_dir)
+            did = ann.gen_id("foo", ann.salt)
+            ac.store_metadata(did, False, False, set(did))
+        self.contain(test)
+
+    def test_load(self):
+        def test(tc, test_dir):
+            snn = pygenann.genann(1,1,1,1)
+            sdump = snn.dumps()
+            ac = ann.FsAnnCollection(test_dir)
+            did = ann.gen_id("foo", ann.salt)
+            ac.store(did, snn)
+            lnn = ac.load(did, "foo")
+            tc.assertIsNotNone(lnn)
+            ldump = lnn.ann.dumps()
+            tc.assertEquals(sdump, ldump)
+        self.contain(test)
+
+    def test_load_metadata(self):
+        def test(tc, test_dir):
+            ac = ann.FsAnnCollection(test_dir)
+            sdid = ann.gen_id("foo", ann.salt)
+            saccept = True
+            sreject = False
+            saccepted = set(sdid)
+            ac.store_metadata(sdid, saccept, sreject, saccepted)
+            ldid, laccept, lreject, laccepted = ac.load_metadata(sdid)
+            tc.assertEquals(sdid, ldid)
+            tc.assertEquals(saccept, laccept)
+            tc.assertEquals(sreject, lreject)
+            tc.assertEquals(saccepted, laccepted)
+        self.contain(test)
+
+    def test_associate(self):
+        def test(tc, test_dir):
+            snn = pygenann.genann(1,1,1,1)
+            sdump = snn.dumps()
+            ac = ann.FsAnnCollection(test_dir)
+            sdid = ann.gen_id("foo", ann.salt)
+            ac.store(sdid, snn)
+            saccept = True
+            sreject = False
+            saccepted = set(sdid)
+            ac.store_metadata(sdid, saccept, sreject, saccepted)
+            adid = ann.gen_id("bar", ann.salt)
+            ac.associate(sdid, adid)
+            lnn = ac.load(adid, "bar")
+            ldump = lnn.ann.dumps()
+            self.assertEquals(sdump, ldump)
+            ldid, laccept, lreject, laccepted = ac.load_metadata(sdid)
+            tc.assertEquals(sdid, ldid)
+            tc.assertEquals(saccept, laccept)
+            tc.assertEquals(sreject, lreject)
+            tc.assertEquals(saccepted, laccepted)
+        self.contain(test)
 
 class DescriptionAnnTest(unittest.TestCase):
     def contain(self, func):
@@ -940,73 +1011,103 @@ class DescriptionAnnTest(unittest.TestCase):
 
     def test_accept(self):
         def test(tc, test_dir):
-            da = ann.DescriptionAnn(cache=test_dir)
+            be = ann.FsAnnCollection(test_dir)
+            nn = pygenann.genann(100, 2, 100, 1)
+            did = ann.gen_id("a", ann.salt)
+            da = ann.DescriptionAnn(did, nn, be)
             da.accept("a")
-        DescriptionAnnTest.contain(self, test)
+        self.contain(test)
 
     def test_accept_more(self):
         def test(tc, test_dir):
-            da = ann.DescriptionAnn(cache=test_dir)
+            be = ann.FsAnnCollection(test_dir)
+            nn = pygenann.genann(100, 2, 100, 1)
+            did = ann.gen_id("a", ann.salt)
+            da = ann.DescriptionAnn(did, nn, be)
             da.accept("a" * 101)
         with self.assertRaises(ValueError):
-            DescriptionAnnTest.contain(self, test)
+            self.contain(test)
 
     def test_reject(self):
         def test(tc, test_dir):
-            da = ann.DescriptionAnn(cache=test_dir)
+            be = ann.FsAnnCollection(test_dir)
+            nn = pygenann.genann(100, 2, 100, 1)
+            did = ann.gen_id("a", ann.salt)
+            da = ann.DescriptionAnn(did, nn, be)
             da.reject("r")
-        DescriptionAnnTest.contain(self, test)
+        self.contain(test)
 
     def test_reject_more(self):
         def test(tc, test_dir):
-            da = ann.DescriptionAnn(cache=test_dir)
+            be = ann.FsAnnCollection(test_dir)
+            nn = pygenann.genann(100, 2, 100, 1)
+            did = ann.gen_id("r", ann.salt)
+            da = ann.DescriptionAnn(did, nn, be)
             da.reject("r" * 101)
         with self.assertRaises(ValueError):
-            DescriptionAnnTest.contain(self, test)
+            self.contain(test)
 
     def test_run_accept(self):
         def test(tc, test_dir):
             threshold = 0.75
-            da = ann.DescriptionAnn(cache=test_dir)
+            be = ann.FsAnnCollection(test_dir)
+            nn = pygenann.genann(100, 2, 100, 1)
+            did = ann.gen_id("a", ann.salt)
+            da = ann.DescriptionAnn(did, nn, be)
             da.accept("a")
             v = da.run("a")
             tc.assertTrue(v >= threshold, msg="{} is not greater-than-or-equal to {}".format(v, threshold))
-        DescriptionAnnTest.contain(self, test)
+        self.contain(test)
 
     def test_run_reject(self):
         def test(tc, test_dir):
             threshold = 0.25
-            da = ann.DescriptionAnn(cache=test_dir)
+            be = ann.FsAnnCollection(test_dir)
+            nn = pygenann.genann(100, 2, 100, 1)
+            did = ann.gen_id("a", ann.salt)
+            da = ann.DescriptionAnn(did, nn, be)
             da.reject("f")
             v = da.run("f")
             tc.assertTrue(v < threshold, msg="{} is not less than {}".format(v, threshold))
-        DescriptionAnnTest.contain(self, test)
+        self.contain(test)
 
     def test_run_accept_reject_static(self):
         def test(tc, test_dir):
             # This seems to be roughly minimal - removing any training results
             # in a failure.
             threshold = 0.75
-            da = ann.DescriptionAnn(cache=test_dir)
+            be = ann.FsAnnCollection(test_dir)
+            nn = pygenann.genann(100, 2, 100, 1)
+            did = ann.gen_id("a", ann.salt)
+            da = ann.DescriptionAnn(did, nn, be)
             da.accept("TICKETEK PTY LTD WEB      SYDNEY")
             da.reject("CARRIG CHEMIST            OAKLANDS PARK")
+            da.accept("TICKETEK PTY LTD WEB      SYDNEY")
             da.reject("VISA DEBIT PURCHASE CARD 4007 ANYTIME FITNESS M NOOSAVILLE")
+            da.accept("TICKETEK PTY LTD WEB      SYDNEY")
             da.reject("BP MITCHELL PK5936        MITCHELL PARK")
             da.accept("TICKETEK PTY LTD WEB      SYDNEY")
             v = da.run("TICKETEK PTY LTD WEB      SYDNEY")
             tc.assertTrue(v >= threshold, msg="{} is not greater-than-or-equal-to {}".format(v, threshold))
             v = da.run("CARRIG CHEMIST            OAKLANDS PARK")
-            tc.assertTrue(v < threshold, msg="{} is not less-than-or-equal-to {}".format(v, threshold))
-        DescriptionAnnTest.contain(self, test)
+            tc.assertTrue(v < threshold, msg="{} is not less-than {}".format(v, threshold))
+        self.contain(test)
 
     def test_run_accept_reject_dynamic(self):
         def test(tc, test_dir):
             threshold = 0.75
-            da = ann.DescriptionAnn(cache=test_dir)
-            da.accept("EFTPOS DEBIT EFTPOS 24/08 17:26  FOODLAND IGA THEBAR CASH OUT    $10.00", iters=600)
-            da.reject("CARRIG CHEMIST            OAKLANDS PARK")
-            da.reject("VISA DEBIT PURCHASE CARD 4007 ANYTIME FITNESS M NOOSAVILLE")
-            da.accept("EFTPOS DEBIT EFTPOS 28/08 13:55  FOODLAND IGA THEBAR CASH OUT    $50.00", iters=600)
+            be = ann.FsAnnCollection(test_dir)
+            nn = pygenann.genann(100, 2, 100, 1)
+            did = ann.gen_id("a", ann.salt)
+            da = ann.DescriptionAnn(did, nn, be)
+            for x in range(0, 2):
+                da.accept("EFTPOS DEBIT EFTPOS 24/08 17:26  FOODLAND IGA THEBAR CASH OUT    $10.00")
+                da.reject("CARRIG CHEMIST            OAKLANDS PARK", iters=600)
+                da.accept("EFTPOS DEBIT EFTPOS 28/08 13:55  FOODLAND IGA THEBAR CASH OUT    $50.00")
+                da.reject("VISA DEBIT PURCHASE CARD 4007 ANYTIME FITNESS M NOOSAVILLE", iters=600)
+                da.accept("EFTPOS DEBIT EFTPOS 24/08 17:26  FOODLAND IGA THEBAR CASH OUT    $60.00")
+                da.reject("TICKETEK PTY LTD WEB      SYDNEY", iters=600)
+                da.accept("EFTPOS DEBIT EFTPOS 24/08 17:26  FOODLAND IGA THEBAR CASH OUT    $10.00")
             v = da.run("EFTPOS DEBIT EFTPOS 24/08 17:26  FOODLAND IGA THEBAR CASH OUT    $10.00")
             tc.assertTrue(v >= threshold, msg="{} is not greater-than-or-equal-to {}".format(v, threshold))
             v = da.run("EFTPOS DEBIT EFTPOS 18/12 13:19  FOODLAND IGA THEBAR CASH OUT    $30.00")
@@ -1016,28 +1117,22 @@ class DescriptionAnnTest(unittest.TestCase):
             # Test we learned the pattern
             v = da.run("BP MITCHELL PK5936        MITCHELL PARK")
             tc.assertTrue(v < threshold, msg="{} is not less-than {}".format(v, threshold))
-        DescriptionAnnTest.contain(self, test)
+        self.contain(test)
 
     def test_load_pass(self):
         def test(tc, test_dir):
             threshold = 0.75
-            da1 = ann.DescriptionAnn(cache=test_dir)
+            be = ann.FsAnnCollection(test_dir)
+            nn = pygenann.genann(100, 2, 100, 1)
+            did = ann.gen_id("f", ann.salt)
+            da1 = ann.DescriptionAnn(did, nn, be)
             da1.accept("f")
             v = da1.run("f")
             tc.assertTrue(v >= threshold, msg="{} is not greater-than-or-equal-to {}".format(v, threshold))
-            da2 = ann.DescriptionAnn.load("f", cache=test_dir)
+            dump1 = da1.ann.dumps()
+            da2 = be.load(did, "f")
+            dump2 = da2.ann.dumps()
+            self.assertEquals(dump1, dump2)
             v = da2.run("f")
             tc.assertTrue(v >= threshold, msg="{} is not greater-than-or-equal-to {}".format(v, threshold))
-        DescriptionAnnTest.contain(self, test)
-
-    def test_load_pass(self):
-        def test(tc, test_dir):
-            threshold = 0.75
-            da1 = ann.DescriptionAnn(cache=test_dir)
-            da1.accept("f")
-            v = da1.run("f")
-            tc.assertTrue(v >= threshold, msg="{} is not greater-than-or-equal to {}".format(v, threshold))
-            da2 = ann.DescriptionAnn.load("f", cache=test_dir)
-            v = da2.run("f")
-            tc.assertTrue(v >= threshold, msg="{} is not greater-than-or-equal to {}".format(v, threshold))
-        DescriptionAnnTest.contain(self, test)
+        self.contain(test)
