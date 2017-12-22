@@ -21,7 +21,7 @@ class StatusLine(object):
         pass
 
     def write(self, line, terminate=False):
-        erase = [ '\b' ] * max(0, len(line) - len(self.line))
+        erase = '\b' * max(0, len(line) - len(self.line))
         print("{}\r{}".format(erase, line), end='', flush=True)
         self.line = line;
         if terminate:
