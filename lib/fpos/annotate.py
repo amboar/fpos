@@ -41,7 +41,8 @@ class _Tagger(object):
         self.grouper = CognitiveStrgrp()
 
     def __enter__(self):
-        return self.grouper.__enter__()
+        self.grouper.__enter__()
+        return self
 
     def __exit__(self, exc_type, exc_value, traceback):
         return self.grouper.__exit__(exc_type, exc_value, traceback)

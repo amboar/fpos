@@ -212,11 +212,12 @@ class SqlAnnCollection(AnnCollection):
             c.execute('SELECT ann FROM nn, assoc WHERE assoc.ddid = ? and nn.did = assoc.sdid ', (did, ))
             nn = c.fetchone()[0]
             ann = pygenann.genann.loads(nn)
-        else:
-            ann = pygenann.genann(100, 2, 100, 1)
-            ann.accept(description)
+            return DescriptionAnn(did, ann, self)
 
-        return DescriptionAnn(did, ann, self)
+        ann = pygenann.genann(100, 2, 100, 1)
+        da = DescriptionAnn(did, ann, self)
+        da.accept(description)
+        return da
 
     def load_metadata(self, did):
         c = self.db.cursor()
@@ -250,7 +251,10 @@ class SqlAnnCollection(AnnCollection):
 
     def associate(self, cdid, adid):
         c = self.db.cursor()
-        if not self.have_ann(adid):
+        if self.have_ann(adid):
+            q = 'select sdid from assoc where ddid = ?'
+            assert c.execute(q, (adid, )).fetchone()[0] == cdid
+        else:
             c.execute('INSERT INTO assoc (ddid, sdid) VALUES (?, ?)', (adid, cdid))
 
 class FsAnnCollection(AnnCollection):
@@ -260,6 +264,8 @@ class FsAnnCollection(AnnCollection):
 
     def __init__(self, data_dir=None):
         super().__init__(self, data_dir)
+        print("FsAnnCollection")
+        raise ValueError
 
     def __enter__(self):
         return self
@@ -299,11 +305,12 @@ class FsAnnCollection(AnnCollection):
     def load(self, did, description):
         if self.have_ann(did):
             ann = pygenann.genann.read(self._get_path(did))
-        else:
-            ann = pygenann.genann(100, 2, 100, 1)
-            ann.accept(description)
+            return DescriptionAnn(did, ann, self)
 
-        return DescriptionAnn(did, ann, self)
+        ann = pygenann.genann(100, 2, 100, 1)
+        da = DescriptionAnn(did, ann, self)
+        da.accept(description)
+        return da
 
     def load_metadata(self, did):
         prop_path = self._get_path(self.get_canonical(did)) + ".properties"
@@ -430,7 +437,8 @@ class CognitiveStrgrp(object):
         return iter(self._strgrp)
 
     def __enter__(self):
-        return self._collection.__enter__()
+        self._collection.__enter__()
+        return self
 
     def __exit__(self, exc_type, exc_value, traceback):
         return self._collection.__exit__(exc_type, exc_value, traceback)
@@ -576,9 +584,10 @@ class CognitiveStrgrp(object):
             return grpbin
 
         # Check for an existing mapping on disk
-        if self._collection.have_ann(description):
+        did = gen_id(description, salt)
+        if self._collection.have_ann(did):
             # Add description to a group that has an on-disk mapping:
-            cid = self._collection.get_canonical(gen_id(description, salt))
+            cid = self._collection.get_canonical(did)
             if cid in self._grpanns:
                 # Group is already loaded
                 print("Existing group: From on-disk NN mapping")
