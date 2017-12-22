@@ -245,6 +245,44 @@ Genann_dumps(GenannObject *self) {
     return str;
 }
 
+static PyObject*
+Genann_loads(PyTypeObject *class, PyObject *args) {
+    GenannObject *self;
+    PyObject *ret;
+    genann *ann;
+    int size;
+    char *buf;
+    FILE *f;
+
+    if (!PyArg_ParseTuple(args, "s#", &buf, &size))
+        return NULL;
+
+    f = fmemopen(buf, size, "r");
+    if (!f)
+        return PyErr_SetFromErrno(PyExc_OSError);
+
+    ann = genann_read(f);
+    if (!ann) {
+        ret = PyErr_NoMemory();
+        goto cleanup_f;
+    }
+
+    self = (GenannObject *)class->tp_new(class, NULL, NULL);
+    if (!self) {
+        ret = PyErr_NoMemory();
+        genann_free(ann);
+        goto cleanup_f;
+    }
+
+    self->ann = ann;
+    ret = (PyObject *)self;
+
+cleanup_f:
+    fclose(f);
+
+    return ret;
+}
+
 static void
 Genann_dealloc(PyObject *obj) {
     GenannObject *self = (GenannObject *)obj;
@@ -261,6 +299,8 @@ static PyMethodDef Genann_methods[] = {
         "Creates ANN from file saved with write()" },
     { "write", (PyCFunction)Genann_write, (METH_VARARGS), "Saves the ANN" },
     { "dumps", (PyCFunction)Genann_dumps, (METH_NOARGS), "Serialise the ANN" },
+    { "loads", (PyCFunction)Genann_loads, (METH_VARARGS | METH_CLASS),
+        "Deserialise the ANN" },
     {NULL}
 };
 

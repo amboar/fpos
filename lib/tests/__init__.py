@@ -937,27 +937,27 @@ import pygenann
 class FsAnnCollectionTest(unittest.TestCase):
     def contain(self, func):
         with tempfile.TemporaryDirectory() as test_dir:
-            func(self, test_dir)
+            with ann.SqlAnnCollection(test_dir) as ac:
+                func(self, ac)
 
     def test_store(self):
-        def test(tc, test_dir):
+        def test(tc, ac):
             nn = pygenann.genann(1,1,1,1)
-            ac = ann.FsAnnCollection(test_dir)
             ac.store(ann.gen_id("foo", ann.salt), nn)
         self.contain(test)
 
     def test_store_metadata(self):
-        def test(tc, test_dir):
-            ac = ann.FsAnnCollection(test_dir)
+        def test(tc, ac):
             did = ann.gen_id("foo", ann.salt)
-            ac.store_metadata(did, False, False, set(did))
+            nn = pygenann.genann(1,1,1,1)
+            ac.store(ann.gen_id("foo", ann.salt), nn)
+            ac.store_metadata(did, False, False, { did })
         self.contain(test)
 
     def test_load(self):
-        def test(tc, test_dir):
+        def test(tc, ac):
             snn = pygenann.genann(1,1,1,1)
             sdump = snn.dumps()
-            ac = ann.FsAnnCollection(test_dir)
             did = ann.gen_id("foo", ann.salt)
             ac.store(did, snn)
             lnn = ac.load(did, "foo")
@@ -967,33 +967,34 @@ class FsAnnCollectionTest(unittest.TestCase):
         self.contain(test)
 
     def test_load_metadata(self):
-        def test(tc, test_dir):
-            ac = ann.FsAnnCollection(test_dir)
+        def test(tc, ac):
             sdid = ann.gen_id("foo", ann.salt)
             saccept = True
             sreject = False
-            saccepted = set(sdid)
+            saccepted = { sdid }
+            nn = pygenann.genann(1,1,1,1)
+            ac.store(ann.gen_id("foo", ann.salt), nn)
             ac.store_metadata(sdid, saccept, sreject, saccepted)
             ldid, laccept, lreject, laccepted = ac.load_metadata(sdid)
             tc.assertEquals(sdid, ldid)
             tc.assertEquals(saccept, laccept)
             tc.assertEquals(sreject, lreject)
-            tc.assertEquals(saccepted, laccepted)
+            tc.assertTrue(saccepted == laccepted)
         self.contain(test)
 
     def test_associate(self):
-        def test(tc, test_dir):
+        def test(tc, ac):
             snn = pygenann.genann(1,1,1,1)
             sdump = snn.dumps()
-            ac = ann.FsAnnCollection(test_dir)
             sdid = ann.gen_id("foo", ann.salt)
             ac.store(sdid, snn)
             saccept = True
             sreject = False
-            saccepted = set(sdid)
+            saccepted = { sdid }
             ac.store_metadata(sdid, saccept, sreject, saccepted)
             adid = ann.gen_id("bar", ann.salt)
             ac.associate(sdid, adid)
+            saccepted.add(adid)
             lnn = ac.load(adid, "bar")
             ldump = lnn.ann.dumps()
             self.assertEquals(sdump, ldump)
@@ -1007,11 +1008,11 @@ class FsAnnCollectionTest(unittest.TestCase):
 class DescriptionAnnTest(unittest.TestCase):
     def contain(self, func):
         with tempfile.TemporaryDirectory() as test_dir:
-            func(self, test_dir)
+            with ann.SqlAnnCollection(test_dir) as be:
+                func(self, be)
 
     def test_accept(self):
-        def test(tc, test_dir):
-            be = ann.FsAnnCollection(test_dir)
+        def test(tc, be):
             nn = pygenann.genann(100, 2, 100, 1)
             did = ann.gen_id("a", ann.salt)
             da = ann.DescriptionAnn(did, nn, be)
@@ -1019,8 +1020,7 @@ class DescriptionAnnTest(unittest.TestCase):
         self.contain(test)
 
     def test_accept_more(self):
-        def test(tc, test_dir):
-            be = ann.FsAnnCollection(test_dir)
+        def test(tc, be):
             nn = pygenann.genann(100, 2, 100, 1)
             did = ann.gen_id("a", ann.salt)
             da = ann.DescriptionAnn(did, nn, be)
@@ -1029,8 +1029,7 @@ class DescriptionAnnTest(unittest.TestCase):
             self.contain(test)
 
     def test_reject(self):
-        def test(tc, test_dir):
-            be = ann.FsAnnCollection(test_dir)
+        def test(tc, be):
             nn = pygenann.genann(100, 2, 100, 1)
             did = ann.gen_id("a", ann.salt)
             da = ann.DescriptionAnn(did, nn, be)
@@ -1038,8 +1037,7 @@ class DescriptionAnnTest(unittest.TestCase):
         self.contain(test)
 
     def test_reject_more(self):
-        def test(tc, test_dir):
-            be = ann.FsAnnCollection(test_dir)
+        def test(tc, be):
             nn = pygenann.genann(100, 2, 100, 1)
             did = ann.gen_id("r", ann.salt)
             da = ann.DescriptionAnn(did, nn, be)
@@ -1048,9 +1046,8 @@ class DescriptionAnnTest(unittest.TestCase):
             self.contain(test)
 
     def test_run_accept(self):
-        def test(tc, test_dir):
+        def test(tc, be):
             threshold = 0.75
-            be = ann.FsAnnCollection(test_dir)
             nn = pygenann.genann(100, 2, 100, 1)
             did = ann.gen_id("a", ann.salt)
             da = ann.DescriptionAnn(did, nn, be)
@@ -1060,9 +1057,8 @@ class DescriptionAnnTest(unittest.TestCase):
         self.contain(test)
 
     def test_run_reject(self):
-        def test(tc, test_dir):
+        def test(tc, be):
             threshold = 0.25
-            be = ann.FsAnnCollection(test_dir)
             nn = pygenann.genann(100, 2, 100, 1)
             did = ann.gen_id("a", ann.salt)
             da = ann.DescriptionAnn(did, nn, be)
@@ -1072,11 +1068,10 @@ class DescriptionAnnTest(unittest.TestCase):
         self.contain(test)
 
     def test_run_accept_reject_static(self):
-        def test(tc, test_dir):
+        def test(tc, be):
             # This seems to be roughly minimal - removing any training results
             # in a failure.
             threshold = 0.75
-            be = ann.FsAnnCollection(test_dir)
             nn = pygenann.genann(100, 2, 100, 1)
             did = ann.gen_id("a", ann.salt)
             da = ann.DescriptionAnn(did, nn, be)
@@ -1094,9 +1089,8 @@ class DescriptionAnnTest(unittest.TestCase):
         self.contain(test)
 
     def test_run_accept_reject_dynamic(self):
-        def test(tc, test_dir):
+        def test(tc, be):
             threshold = 0.75
-            be = ann.FsAnnCollection(test_dir)
             nn = pygenann.genann(100, 2, 100, 1)
             did = ann.gen_id("a", ann.salt)
             da = ann.DescriptionAnn(did, nn, be)
@@ -1120,9 +1114,8 @@ class DescriptionAnnTest(unittest.TestCase):
         self.contain(test)
 
     def test_load_pass(self):
-        def test(tc, test_dir):
+        def test(tc, be):
             threshold = 0.75
-            be = ann.FsAnnCollection(test_dir)
             nn = pygenann.genann(100, 2, 100, 1)
             did = ann.gen_id("f", ann.salt)
             da1 = ann.DescriptionAnn(did, nn, be)

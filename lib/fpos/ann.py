@@ -8,6 +8,7 @@ from random import shuffle
 import sys
 import traceback
 from collections import namedtuple
+import sqlite3
 
 def to_input(string):
     return [float(ord(x)) for x in string]
@@ -112,14 +113,14 @@ def gen_id(description, salt):
 
 class AnnCollection(object):
     def __init__(self, ann_id, data_dir=None):
-        if data_dir is None:
-            data_dir = self.get_data_dir()
-        self.data_dir = data_dir
+        self.data_dir = self.get_data_dir(data_dir)
         self.ann_id = ann_id
 
-    def get_data_dir(self, path=None):
-        if path is None:
+    def get_data_dir(self, data_dir=None):
+        if data_dir is None:
             path = str(xdg.BaseDirectory.save_data_path("fpos"))
+        else:
+            path = data_dir
         os.makedirs(path, exist_ok=True)
         return path
 
@@ -147,6 +148,111 @@ class AnnCollection(object):
     def associate(self, cdid, adid):
         raise NotImplementedError
 
+class SqlAnnCollection(AnnCollection):
+    def __init__(self, data_dir=None):
+        super().__init__(self, data_dir)
+        self.db = None
+        path = self.get_db_path()
+        if not os.path.exists(path):
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            db = sqlite3.connect(path)
+            self.init_db(db)
+            db.commit()
+            db.close()
+
+    def get_db_path(self):
+        return os.path.join(self.data_dir, "descriptions.db")
+
+    def __enter__(self):
+        self.db = sqlite3.connect(self.get_db_path())
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.db.commit()
+        self.db.close()
+
+    def init_db(self, db):
+        c = db.cursor()
+        c.execute('''
+        CREATE TABLE nn (
+            did         TEXT PRIMARY KEY,
+            accept      INTEGER NOT NULL,
+            reject      INTEGER NOT NULL,
+            ann         BLOB NOT NULL
+        )''')
+        c.execute('''
+        CREATE TABLE assoc (
+            ddid        TEXT PRIMARY KEY,
+            sdid        TEXT NOT NULL
+        )''')
+        c.execute('''
+        CREATE INDEX idx_assoc_sdid on assoc (sdid)
+        ''')
+
+    def have_ann(self, did):
+        c = self.db.cursor()
+        c.execute('SELECT COUNT(*) FROM assoc WHERE ddid=?', (did, ))
+        res = c.fetchone()
+        val = int(res[0])
+        return val > 0
+
+    def get_canonical(self, did):
+        c = self.db.cursor()
+        c.execute('SELECT sdid FROM assoc WHERE ddid=?', (did, ))
+        return c.fetchone()[0]
+
+    def is_canonical(self, did):
+        c = self.db.cursor()
+        c.execute('SELECT COUNT(*) FROM nn WHERE did=?', (did, ))
+        return bool(c.fetchone())
+
+    def load(self, did, description):
+        if self.have_ann(did):
+            c = self.db.cursor()
+            c.execute('SELECT ann FROM nn, assoc WHERE assoc.ddid = ? and nn.did = assoc.sdid ', (did, ))
+            nn = c.fetchone()[0]
+            ann = pygenann.genann.loads(nn)
+        else:
+            ann = pygenann.genann(100, 2, 100, 1)
+            ann.accept(description)
+
+        return DescriptionAnn(did, ann, self)
+
+    def load_metadata(self, did):
+        c = self.db.cursor()
+        c.execute('SELECT accept, reject FROM nn, assoc WHERE assoc.ddid = ? and nn.did = assoc.sdid', (did, ))
+        res = c.fetchone()
+        if res is None:
+            return did, False, False, set()
+        else:
+            accept, reject = res
+        cdid = self.get_canonical(did)
+        c.execute('SELECT ddid FROM assoc WHERE sdid = ?', (cdid, ))
+        accepted = set(x[0] for x in c.fetchall())
+        return did, accept, reject, accepted
+
+    def store(self, did, ann):
+        c = self.db.cursor()
+        if self.have_ann(did):
+            c.execute('UPDATE nn SET ann = ? WHERE did = ?', (ann.dumps(), did))
+        else:
+            c.execute('INSERT INTO nn (did, accept, reject, ann) VALUES (?, 0, 0, ?)',
+                    (did, ann.dumps()))
+            self.associate(did, did)
+
+    def store_metadata(self, did, accept, reject, accepted):
+        if not self.have_ann(did):
+            raise ValueError("No such ID: {}".format(did))
+
+        c = self.db.cursor()
+        c.execute('UPDATE nn SET accept = ?, reject = ? WHERE did = ?',
+                (accept, reject, self.get_canonical(did)))
+
+    def associate(self, cdid, adid):
+        c = self.db.cursor()
+        if not self.have_ann(adid):
+            c.execute('INSERT INTO assoc (ddid, sdid) VALUES (?, ?)', (adid, cdid))
+
 class FsAnnCollection(AnnCollection):
     @staticmethod
     def gen_rel_dentries(did):
@@ -154,6 +260,12 @@ class FsAnnCollection(AnnCollection):
 
     def __init__(self, data_dir=None):
         super().__init__(self, data_dir)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        pass
 
     def _get_path(self, did):
         dentries = FsAnnCollection.gen_rel_dentries(did)
@@ -309,13 +421,19 @@ class DescriptionAnn(object):
 class CognitiveStrgrp(object):
     """ LOL """
     def __init__(self):
-        self._collection = FsAnnCollection()
+        self._collection = SqlAnnCollection()
         self._strgrp = Strgrp()
         self._grpanns = dict()
         self._status = StatusLine()
 
     def __iter__(self):
         return iter(self._strgrp)
+
+    def __enter__(self):
+        return self._collection.__enter__()
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        return self._collection.__exit__(exc_type, exc_value, traceback)
 
     def _request_match(self, description, haystack):
         index = None
