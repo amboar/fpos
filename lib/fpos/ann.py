@@ -215,7 +215,8 @@ class SqlAnnCollection(AnnCollection):
             ann = pygenann.genann.loads(nn)
             return DescriptionAnn(description, did, ann, self)
 
-        ann = pygenann.genann(100, 2, 100, 1)
+        # See: https://stats.stackexchange.com/questions/181/how-to-choose-the-number-of-hidden-layers-and-nodes-in-a-feedforward-neural-netw
+        ann = pygenann.genann(100, 1, 50, 1)
         da = DescriptionAnn(description, did, ann, self)
         da.accept(description)
         return da
@@ -308,7 +309,8 @@ class FsAnnCollection(AnnCollection):
             ann = pygenann.genann.read(self._get_path(did))
             return DescriptionAnn(description, did, ann, self)
 
-        ann = pygenann.genann(100, 2, 100, 1)
+        # See: https://stats.stackexchange.com/questions/181/how-to-choose-the-number-of-hidden-layers-and-nodes-in-a-feedforward-neural-netw
+        ann = pygenann.genann(100, 1, 50, 1)
         da = DescriptionAnn(description, did, ann, self)
         da.accept(description)
         return da
