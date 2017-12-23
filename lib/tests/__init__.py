@@ -1015,7 +1015,7 @@ class DescriptionAnnTest(unittest.TestCase):
         def test(tc, be):
             nn = pygenann.genann(100, 2, 100, 1)
             did = ann.gen_id("a", ann.salt)
-            da = ann.DescriptionAnn(did, nn, be)
+            da = ann.DescriptionAnn("a", did, nn, be)
             da.accept("a")
         self.contain(test)
 
@@ -1023,7 +1023,7 @@ class DescriptionAnnTest(unittest.TestCase):
         def test(tc, be):
             nn = pygenann.genann(100, 2, 100, 1)
             did = ann.gen_id("a", ann.salt)
-            da = ann.DescriptionAnn(did, nn, be)
+            da = ann.DescriptionAnn("a", did, nn, be)
             da.accept("a" * 101)
         with self.assertRaises(ValueError):
             self.contain(test)
@@ -1032,7 +1032,7 @@ class DescriptionAnnTest(unittest.TestCase):
         def test(tc, be):
             nn = pygenann.genann(100, 2, 100, 1)
             did = ann.gen_id("a", ann.salt)
-            da = ann.DescriptionAnn(did, nn, be)
+            da = ann.DescriptionAnn("a", did, nn, be)
             da.reject("r")
         self.contain(test)
 
@@ -1040,7 +1040,7 @@ class DescriptionAnnTest(unittest.TestCase):
         def test(tc, be):
             nn = pygenann.genann(100, 2, 100, 1)
             did = ann.gen_id("r", ann.salt)
-            da = ann.DescriptionAnn(did, nn, be)
+            da = ann.DescriptionAnn("r", did, nn, be)
             da.reject("r" * 101)
         with self.assertRaises(ValueError):
             self.contain(test)
@@ -1050,7 +1050,7 @@ class DescriptionAnnTest(unittest.TestCase):
             threshold = 0.75
             nn = pygenann.genann(100, 2, 100, 1)
             did = ann.gen_id("a", ann.salt)
-            da = ann.DescriptionAnn(did, nn, be)
+            da = ann.DescriptionAnn("a", did, nn, be)
             da.accept("a")
             v = da.run("a")
             tc.assertTrue(v >= threshold, msg="{} is not greater-than-or-equal to {}".format(v, threshold))
@@ -1061,7 +1061,7 @@ class DescriptionAnnTest(unittest.TestCase):
             threshold = 0.25
             nn = pygenann.genann(100, 2, 100, 1)
             did = ann.gen_id("a", ann.salt)
-            da = ann.DescriptionAnn(did, nn, be)
+            da = ann.DescriptionAnn("a", did, nn, be)
             da.reject("f")
             v = da.run("f")
             tc.assertTrue(v < threshold, msg="{} is not less than {}".format(v, threshold))
@@ -1073,8 +1073,9 @@ class DescriptionAnnTest(unittest.TestCase):
             # in a failure.
             threshold = 0.75
             nn = pygenann.genann(100, 2, 100, 1)
-            did = ann.gen_id("a", ann.salt)
-            da = ann.DescriptionAnn(did, nn, be)
+            d = "TICKETEK PTY LTD WEB      SYDNEY"
+            did = ann.gen_id(d, ann.salt)
+            da = ann.DescriptionAnn(d, did, nn, be)
             da.accept("TICKETEK PTY LTD WEB      SYDNEY")
             da.reject("CARRIG CHEMIST            OAKLANDS PARK")
             da.accept("TICKETEK PTY LTD WEB      SYDNEY")
@@ -1092,8 +1093,9 @@ class DescriptionAnnTest(unittest.TestCase):
         def test(tc, be):
             threshold = 0.75
             nn = pygenann.genann(100, 2, 100, 1)
-            did = ann.gen_id("a", ann.salt)
-            da = ann.DescriptionAnn(did, nn, be)
+            d = "EFTPOS DEBIT EFTPOS 24/08 17:26  FOODLAND IGA THEBAR CASH OUT    $10.00"
+            did = ann.gen_id(d, ann.salt)
+            da = ann.DescriptionAnn(d, did, nn, be)
             for x in range(0, 2):
                 da.accept("EFTPOS DEBIT EFTPOS 24/08 17:26  FOODLAND IGA THEBAR CASH OUT    $10.00")
                 da.reject("CARRIG CHEMIST            OAKLANDS PARK", iters=600)
@@ -1118,7 +1120,7 @@ class DescriptionAnnTest(unittest.TestCase):
             threshold = 0.75
             nn = pygenann.genann(100, 2, 100, 1)
             did = ann.gen_id("f", ann.salt)
-            da1 = ann.DescriptionAnn(did, nn, be)
+            da1 = ann.DescriptionAnn("f", did, nn, be)
             da1.accept("f")
             v = da1.run("f")
             tc.assertTrue(v >= threshold, msg="{} is not greater-than-or-equal-to {}".format(v, threshold))

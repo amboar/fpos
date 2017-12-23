@@ -183,7 +183,8 @@ class SqlAnnCollection(AnnCollection):
         c.execute('''
         CREATE TABLE assoc (
             ddid        TEXT PRIMARY KEY,
-            sdid        TEXT NOT NULL
+            sdid        TEXT NOT NULL,
+            FOREIGN KEY (sdid) REFERENCES nn(did)
         )''')
         c.execute('''
         CREATE INDEX idx_assoc_sdid on assoc (sdid)
@@ -212,10 +213,10 @@ class SqlAnnCollection(AnnCollection):
             c.execute('SELECT ann FROM nn, assoc WHERE assoc.ddid = ? and nn.did = assoc.sdid ', (did, ))
             nn = c.fetchone()[0]
             ann = pygenann.genann.loads(nn)
-            return DescriptionAnn(did, ann, self)
+            return DescriptionAnn(description, did, ann, self)
 
         ann = pygenann.genann(100, 2, 100, 1)
-        da = DescriptionAnn(did, ann, self)
+        da = DescriptionAnn(description, did, ann, self)
         da.accept(description)
         return da
 
@@ -305,10 +306,10 @@ class FsAnnCollection(AnnCollection):
     def load(self, did, description):
         if self.have_ann(did):
             ann = pygenann.genann.read(self._get_path(did))
-            return DescriptionAnn(did, ann, self)
+            return DescriptionAnn(description, did, ann, self)
 
         ann = pygenann.genann(100, 2, 100, 1)
-        da = DescriptionAnn(did, ann, self)
+        da = DescriptionAnn(description, did, ann, self)
         da.accept(description)
         return da
 
@@ -353,7 +354,8 @@ class FsAnnCollection(AnnCollection):
             os.symlink(src, dst)
 
 class DescriptionAnn(object):
-    def __init__(self, did, ann, backend, polarised=None):
+    def __init__(self, description, did, ann, backend, polarised=None):
+        self.description = description
         self.id = did
         self.ann = ann
 
@@ -588,9 +590,9 @@ class CognitiveStrgrp(object):
         if self._collection.have_ann(did):
             # Add description to a group that has an on-disk mapping:
             cid = self._collection.get_canonical(did)
-            if cid in self._grpanns:
+            if did in self._grpanns or cid in self._grpanns:
                 # Group is already loaded
-                print("Existing group: From on-disk NN mapping")
+                print("Existing group: From on-disk NN mapping '{}'".format(self._grpanns[cid].description))
                 return self._strgrp.grp_exact(self._grpanns[cid].description)
             # Likely the result of a time-bounded window on the database
             print("New group: Found on-disk NN mapping")
