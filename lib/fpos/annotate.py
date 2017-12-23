@@ -119,6 +119,9 @@ class _Tagger(object):
         te = TaggedEntry(entry, category)
         self.grouper.insert(entry.description, te, group)
 
+    def dump(self):
+        return [ [ g.key(), [ i.value() for i in g ] ] for g in self.grouper ]
+
 def name():
     return __name__.split(".")[-1]
 
