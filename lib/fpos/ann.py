@@ -72,7 +72,7 @@ class PolarisationDetector(object):
         else:
             assert self.s == self.S7
             if not val:
-                self.enter(self.S0)
+                self.enter(self.S5)
 
     def reject(self, val):
         if self.s == self.S0:
@@ -95,15 +95,17 @@ class PolarisationDetector(object):
                 self.enter(self.S2)
         elif self.s == self.S6:
             if not val:
-                self.enter(self.S0)
+                self.enter(self.S4)
         else:
             assert self.s == self.S7
             if val:
                 self.enter(self.S3)
 
+    def reset(self):
+        self.count = 0
+
     def is_polarised(self):
-        r = (self.s in self.polarised and ((self.count % self.limit) == 0))
-        return r
+        return (self.s in self.polarised and (self.count == self.limit))
 
 def gen_id(description, salt):
     s = hashlib.sha1()
@@ -232,7 +234,7 @@ class SqlAnnCollection(AnnCollection):
         cdid = self.get_canonical(did)
         c.execute('SELECT ddid FROM assoc WHERE sdid = ?', (cdid, ))
         accepted = set(x[0] for x in c.fetchall())
-        return did, accept, reject, accepted
+        return did, bool(accept), bool(reject), accepted
 
     def store(self, did, ann):
         c = self.db.cursor()
@@ -370,7 +372,7 @@ class DescriptionAnn(object):
         self.backend = backend
 
         if None is polarised:
-            polarised = PolarisationDetector()
+            polarised = PolarisationDetector(limit=50)
         self.pd = polarised
 
         self.pd.accept(self.ready['accept'])
@@ -378,6 +380,9 @@ class DescriptionAnn(object):
 
     def is_trained(self):
         return self.ready['accept'] and self.ready['reject']
+
+    def reset_polarised(self):
+        self.pd.reset()
 
     def is_polarised(self):
         return self.pd.is_polarised() 
@@ -433,7 +438,7 @@ class CognitiveStrgrp(object):
     """ LOL """
     def __init__(self):
         self._collection = SqlAnnCollection()
-        self._strgrp = Strgrp()
+        self._strgrp = Strgrp(threshold=0.73)
         self._grpanns = dict()
         self._status = StatusLine()
 
@@ -452,29 +457,29 @@ class CognitiveStrgrp(object):
         need = True
 
         # None Of The Above
-        nota = len(haystack)
         print("Which description best matches '{}'?".format(description))
         print()
         for i, needle in enumerate(haystack):
             print("[{}]\t{}".format(i, needle.key()))
-        print("[{}]\tNone of the above".format(nota))
+        print("[n]\tNone of the above")
         print()
 
         while need:
             result = input("Select [0]: ")
             if len(result) == 0:
                 result = 0
+
+            if result == "n":
+                return None
+
             try:
                 index = int(result)
-                need = not (0 <= index <= nota)
+                need = not (0 <= index < len(haystack))
                 if need:
                     print("\nInvalid value: {}".format(index))
             except ValueError:
                 print("\nNot a number: '{}'".format(result))
                 need = True
-
-        if index == nota:
-            return None
 
         return haystack[index]
 
@@ -501,6 +506,7 @@ class CognitiveStrgrp(object):
         shuffle(reject)
 
         i = 0
+        ann.reset_polarised()
         while not (ann.accept(description) and ann.is_trained()):
             for (needle, straw) in zip(itertools.cycle(accept), reject):
                 score = ann.run(description)
@@ -515,11 +521,11 @@ class CognitiveStrgrp(object):
                 ann.accept(needle)
                 i += 1
 
-                if ann.is_polarised():
-                    break;
+                if ann.is_polarised() or i >= 1000:
+                    break
 
-            if ann.is_polarised():
-                break;
+            if ann.is_polarised() or i >= 1000:
+                break
 
         score = ann.run(description)
         if i > 0:
@@ -544,6 +550,8 @@ class CognitiveStrgrp(object):
         seq = itertools.cycle(zip(itertools.cycle(accept), reject))
         pred = lambda x: not (ann.is_trained() or ann.is_polarised())
         i = 0
+
+        ann.reset_polarised()
         while not (ann.reject(description) and ann.is_trained()):
             for (needle, straw) in itertools.takewhile(pred, seq):
                 score = ann.run(description)
@@ -555,8 +563,15 @@ class CognitiveStrgrp(object):
                 ann.reject(straw)
                 i += 1
 
-            if ann.is_polarised():
-                break;
+                if i >= 1000:
+                    break
+
+            if ann.is_polarised() or i >= 1000:
+                break
+
+        pred = lambda x: not ann.is_trained()
+        for desc in itertools.takewhile(pred, [ i.key() for i in grp]):
+            ann.accept(desc)
 
         score = ann.run(description)
         if i > 0:
@@ -623,21 +638,19 @@ class CognitiveStrgrp(object):
         n_passes = sum(passes)
         ready = [ ann.is_ready() for ann in anns ]
         hay_keys = [ grp.key() for grp in hay ]
-        if all(ready):
-            # if n_passes == 1 or (l_needles > 1 and n_passes == l_needles):
-            if n_passes == 1:
-                i = passes.index(True)
-                self.train(description, needles[i], needles, hay_keys)
-                print("Existing group: All NNs ready, one matched")
-                return needles[i]
-        elif all(ann.ready['reject'] for ann in anns):
-            if n_passes == 1:
-                print("One passing while all reject")
-                i = passes.index(True)
-                if anns[i].is_ready():
-                    self.train(description, needles[i], needles, hay_keys)
-                    print("Existing group: passing group is ready, under all-reject")
-                    return needles[i]
+        if n_passes == 1:
+                if all(ready):
+                        i = passes.index(True)
+                        self.train(description, needles[i], needles, hay_keys)
+                        print("Existing group: All NNs ready, one matched")
+                        return needles[i]
+                elif all(ann.ready['reject'] for ann in anns):
+                        print("One passing while all reject")
+                        i = passes.index(True)
+                        if anns[i].is_ready():
+                            self.train(description, needles[i], needles, hay_keys)
+                            print("Existing group: passing group is ready, under all-reject")
+                            return needles[i]
 
         print("scores: {}".format(scores))
         print("passes: {}".format(passes))
