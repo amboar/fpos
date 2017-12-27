@@ -507,6 +507,7 @@ class CognitiveStrgrp(object):
 
         i = 0
         ann.reset_polarised()
+        # while not (ann.accept(description) and ann.is_trained()):
         while not (ann.accept(description) and ann.is_trained()):
             for (needle, straw) in zip(itertools.cycle(accept), reject):
                 score = ann.run(description)
@@ -548,11 +549,11 @@ class CognitiveStrgrp(object):
         reject.insert(0, description)
 
         seq = itertools.cycle(zip(itertools.cycle(accept), reject))
-        pred = lambda x: not (ann.is_trained() or ann.is_polarised())
+        pred = lambda x: not ((ann.is_trained() if ann.meets_threshold() else ann.ready['reject']) or ann.is_polarised())
         i = 0
 
         ann.reset_polarised()
-        while not (ann.reject(description) and ann.is_trained()):
+        while not (ann.reject(description) and (ann.is_trained() if ann.meets_threshold() else True)):
             for (needle, straw) in itertools.takewhile(pred, seq):
                 score = ann.run(description)
                 line = "Negative training: ({}, {}, {}, {})".format(i, ann.ready,
@@ -569,10 +570,6 @@ class CognitiveStrgrp(object):
             if ann.is_polarised() or i >= 1000:
                 break
 
-        pred = lambda x: not ann.is_trained()
-        for desc in itertools.takewhile(pred, [ i.key() for i in grp]):
-            ann.accept(desc)
-
         score = ann.run(description)
         if i > 0:
             line = "Negative training: ({}, {}, {}, {})".format(i, ann.ready,
@@ -581,6 +578,10 @@ class CognitiveStrgrp(object):
 
         if ann.is_polarised():
             print("Observed {} polarisation events, not enough training material".format(ann.pd.limit))
+
+        pred = lambda x: not ann.is_trained()
+        for desc in itertools.takewhile(pred, [ i.key() for i in grp]):
+            ann.accept(desc)
 
     def train(self, description, pick, candidates, hay):
         shuffle(hay)
@@ -674,6 +675,10 @@ class CognitiveStrgrp(object):
             self.train(description, match, needles, [grp.key() for grp in hay])
             print("Existing group: User provided answer")
             return match
+        except Exception as e:
+            print(e)
+            input()
+            raise Exception(e)
         finally:
             print()
 

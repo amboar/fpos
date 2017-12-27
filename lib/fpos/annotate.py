@@ -136,6 +136,8 @@ def parse_args(subparser=None):
             help="Prompt for confirmation after each entry has been annotated with a category")
     return [ parser ] if subparser else parser.parse_args()
 
+import re
+
 def annotate(src, confirm=False):
     annotated = []
     with _Tagger() as t:
@@ -144,27 +146,30 @@ def annotate(src, confirm=False):
                 if 0 == len(row):
                     # Skip empty lines
                     continue
-                entry = Entry(*row[:3])
+                # Cook the description to make it easier on strgrp and the NNs.
+                # Mainly, reduce multiple spaces to one
+                cooked = Entry(row[0], row[1], re.sub(r"\s{2,}", " ", row[2]))
                 category = None
                 if 4 == len(row):
                     # Fourth column is category, check that it's known
                     try:
                         category = t.resolve_category(row[3])
-                        group = t.find_group(entry.description)
-                        t.insert(entry, category, group)
+                        group = t.find_group(cooked.description)
+                        t.insert(cooked, category, group)
                     except ValueError:
                         # Category isn't known, output remains empty to
                         # trigger user input
                         pass
                 if category is None:
                     # Haven't yet determined the category, require user input
-                    group = t.find_group(entry.description)
-                    category = t.categorize(entry, group, confirm)
+                    group = t.find_group(cooked.description)
+                    category = t.categorize(cooked, group, confirm)
                     assert None is not category
-                    t.insert(entry, category, group)
+                    t.insert(cooked, category, group)
                     print()
                 output = []
-                output.extend(entry)
+                # Retain the raw description string in the output
+                output.extend(row[:3])
                 output.append(category)
                 annotated.append(output)
         except EOFError:

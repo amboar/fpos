@@ -35,10 +35,12 @@ def parse_args(subparser=None):
             help="The IR document containing un-categorised transactions")
     return [ parser ] if subparser else parser.parse_args()
 
+import re
+
 def cdesc(reader):
     with CognitiveStrgrp() as grouper:
         for r in reader:
-            grouper.add(r[2], r)
+            grouper.add(re.sub(r"\s{2,}", " ", row[2]), r)
         return [ [ x.value() for x in g ] for g in grouper ]
 
 def main(args=None):
