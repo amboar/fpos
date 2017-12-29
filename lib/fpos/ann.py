@@ -367,6 +367,7 @@ class DescriptionAnn(object):
         vals = backend.load_metadata(self.id)
         self.ready['accept'] = vals[1]
         self.ready['reject'] = vals[2]
+        self.ready['ever'] = self.is_trained()
         self.accepted = vals[3]
         self.threshold = 3
         self.backend = backend
@@ -411,13 +412,18 @@ class DescriptionAnn(object):
         if self.id != did:
             self.backend.associate(self.id, did)
 
+    def _learning_rate(self):
+        if not self.ready['ever']:
+            self.ready['ever'] = self.is_ready()
+        return 0.5 if self.ready['ever'] else 3
+
     def accept(self, description, iters=300):
         # FIXME: 0.5
         accepted = self.ann.run(to_input(description))[0] >= 0.5
         self.pd.accept(accepted)
         self.ready['accept'] = accepted
         self.accepted.add(gen_id(description, salt))
-        self.ann.train(to_input(description), [1.0], 3, iters=iters)
+        self.ann.train(to_input(description), [1.0], self._learning_rate(), iters=iters)
         self.cache(description)
         return self.ready['accept']
 
@@ -426,13 +432,26 @@ class DescriptionAnn(object):
         rejected = self.ann.run(to_input(description))[0] < 0.5
         self.pd.reject(rejected)
         self.ready['reject'] = rejected
-        ret = self.ann.train(to_input(description), [0.0], 3, iters=iters)
+        ret = self.ann.train(to_input(description), [0.0], self._learning_rate(), iters=iters)
         if write and self.is_ready():
             self.write()
         return self.ready['reject']
 
     def run(self, description):
         return self.ann.run(to_input(description))[0]
+
+    def reset(self):
+        # See: https://stats.stackexchange.com/questions/181/how-to-choose-the-number-of-hidden-layers-and-nodes-in-a-feedforward-neural-netw
+        self.ann = pygenann.genann(100, 1, 50, 1)
+        self.ready['accept'] = False
+        self.ready['reject'] = False
+        self.pd.reset()
+        # Copy accepted as accept() updates it
+        fixup = set(self.accepted)
+        for desc in fixup:
+            self.accept(desc)
+        self.write()
+        self.write_metadata()
 
 class CognitiveStrgrp(object):
     """ LOL """
@@ -579,9 +598,13 @@ class CognitiveStrgrp(object):
         if ann.is_polarised():
             print("Observed {} polarisation events, not enough training material".format(ann.pd.limit))
 
-        pred = lambda x: not ann.is_trained()
-        for desc in itertools.takewhile(pred, [ i.key() for i in grp]):
-            ann.accept(desc)
+        # Lets try again, avoid long delays training nets into the ground
+        if i >= 1000:
+            ann.reset()
+        else:
+            pred = lambda x: not ann.is_trained()
+            for desc in itertools.takewhile(pred, [ i.key() for i in grp]):
+                ann.accept(desc)
 
     def train(self, description, pick, candidates, hay):
         shuffle(hay)
@@ -639,18 +662,18 @@ class CognitiveStrgrp(object):
         ready = [ ann.is_ready() for ann in anns ]
         hay_keys = [ grp.key() for grp in hay ]
         if n_passes == 1:
-                if all(ready):
-                        i = passes.index(True)
+            if all(ready):
+                    i = passes.index(True)
+                    self.train(description, needles[i], needles, hay_keys)
+                    print("Existing group: All NNs ready, one matched")
+                    return needles[i]
+            elif all(ann.ready['reject'] for ann in anns):
+                    print("One passing while all reject")
+                    i = passes.index(True)
+                    if anns[i].is_ready():
                         self.train(description, needles[i], needles, hay_keys)
-                        print("Existing group: All NNs ready, one matched")
+                        print("Existing group: passing group is ready, under all-reject")
                         return needles[i]
-                elif all(ann.ready['reject'] for ann in anns):
-                        print("One passing while all reject")
-                        i = passes.index(True)
-                        if anns[i].is_ready():
-                            self.train(description, needles[i], needles, hay_keys)
-                            print("Existing group: passing group is ready, under all-reject")
-                            return needles[i]
 
         print("scores: {}".format(scores))
         print("passes: {}".format(passes))
