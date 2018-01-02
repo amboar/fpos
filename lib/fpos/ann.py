@@ -454,23 +454,12 @@ class DescriptionAnn(object):
         self.write()
         self.write_metadata()
 
-class CognitiveStrgrp(object):
-    """ LOL """
-    def __init__(self):
-        self._collection = SqlAnnCollection()
-        self._strgrp = Strgrp(threshold=0.73)
-        self._grpanns = dict()
-        self._status = StatusLine()
-
-    def __iter__(self):
-        return iter(self._strgrp)
-
+class GroupProtocol(object):
     def __enter__(self):
-        self._collection.__enter__()
-        return self
+        raise NotImplementedError
 
-    def __exit__(self, exc_type, exc_value, traceback):
-        return self._collection.__exit__(exc_type, exc_value, traceback)
+    def __exit__(self):
+        raise NotImplementedError
 
     def _request_match(self, description, haystack):
         index = None
@@ -502,6 +491,152 @@ class CognitiveStrgrp(object):
                 need = True
 
         return haystack[index]
+
+    def find_group(self, description):
+        raise NotImplementedError
+
+    def insert(self, description, value, group):
+        raise NotImplementedError
+
+class BestGroup(GroupProtocol):
+    def __init__(self):
+        self._strgrp = Strgrp()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        pass
+
+    def find_group(self, description):
+        return self._strgrp.grp_for(description)
+
+    def insert(self, description, value, group=None):
+        if group:
+            group.add(self._strgrp, description, value)
+        else:
+            self._strgrp.add(description, value)
+
+class SqlGroupCollection(object):
+    def __init__(self, data_dir=None):
+        self.data_dir = data_dir if data_dir else str(xdg.BaseDirectory.save_data_path("fpos"))
+        self.db = None
+        path = self.get_db_path()
+        if not os.path.exists(path):
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            db = sqlite3.connect(path)
+            self.init_db(db)
+            db.commit()
+            db.close()
+
+    def get_db_path(self):
+        return os.path.join(self.data_dir, "descriptions.db")
+
+    def init_db(self, db):
+        c = db.cursor()
+        c.execute('''
+        CREATE TABLE assoc (
+            ddid        TEXT PRIMARY KEY,
+            sdid        TEXT NOT NULL,
+            FOREIGN KEY (sdid) REFERENCES nn(did)
+        )''')
+        c.execute('''
+        CREATE INDEX idx_assoc_sdid on assoc (sdid)
+        ''')
+
+    def __enter__(self):
+        self.db = sqlite3.connect(self.get_db_path())
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.db.commit()
+        self.db.close()
+
+    def have_association(self, did):
+        c = self.db.cursor()
+        c.execute('SELECT COUNT(*) FROM assoc WHERE ddid=?', (did, ))
+        res = c.fetchone()
+        val = int(res[0])
+        return val > 0
+
+    def get_canonical(self, did):
+        c = self.db.cursor()
+        c.execute('SELECT sdid FROM assoc WHERE ddid=?', (did, ))
+        return c.fetchone()[0]
+
+    def associate(self, cdid, adid):
+        c = self.db.cursor()
+        c.execute('INSERT INTO assoc (ddid, sdid) VALUES (?, ?)', (adid, cdid))
+
+class DynamicGroups(GroupProtocol):
+    def __init__(self):
+        self.backend = SqlGroupCollection()
+        self._strgrp = Strgrp()
+        self.min_size = 5
+        self.map = dict()
+
+    def __enter__(self):
+        self.backend.__enter__()
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.backend.__exit__(exc_type, exc_value, traceback)
+
+    def _split_heap(self, heap):
+        i = None
+
+        for i, grpbin in enumerate(heap):
+            if grpbin.size() < self.min_size:
+                meth = grpbin.is_acceptible
+            else:
+                meth = grpbin.is_acceptible_dynamic
+
+            if meth(self._strgrp):
+                break
+
+        return heap[:i], heap[i:]
+
+    def find_group(self, description):
+        grpbin = self._strgrp.grp_exact(description)
+        if grpbin is not None:
+            return grpbin
+
+        needles, haystack = self._split_heap(self._strgrp.grps_for(description))
+        if needles:
+            return grp[0]
+
+        return None
+
+    def insert(self, description, value, group=None):
+        did = gen_id(description, salt)
+        if group:
+            group.add(self._strgrp, description, value)
+        else:
+            self._strgrp.add(description, value)
+
+        if not self.backend.have_association(did):
+            key = gen_id(group.key(), salt)
+            cdid = self.backend.get_canonical(key)
+            self.backend.associate(cdid, did)
+
+
+class CognitiveGroups(GroupProtocol):
+    """ LOL """
+    def __init__(self):
+        self._collection = SqlAnnCollection()
+        self._strgrp = Strgrp(threshold=0.73)
+        self._grpanns = dict()
+        self._status = StatusLine()
+
+    def __iter__(self):
+        return iter(self._strgrp)
+
+    def __enter__(self):
+        self._collection.__enter__()
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        return self._collection.__exit__(exc_type, exc_value, traceback)
 
     def _split_heap(self, heap):
         i = None

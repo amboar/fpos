@@ -16,7 +16,7 @@
 #    You should have received a copy of the GNU General Public License
 #    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from .ann import CognitiveStrgrp
+from .ann import CognitiveGroups
 import csv
 import argparse
 
@@ -38,7 +38,7 @@ def parse_args(subparser=None):
 import re
 
 def cdesc(reader):
-    with CognitiveStrgrp() as grouper:
+    with CognitiveGroups() as grouper:
         for r in reader:
             grouper.add(re.sub(r"\s{2,}", " ", row[2]), r)
         return [ [ x.value() for x in g ] for g in grouper ]
