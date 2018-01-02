@@ -57,6 +57,10 @@ struct strgrp_grp {
     int32_t n_items;
     int16_t pop[CHAR_N_VALUES];
     double score;
+
+    /* Dynamic threshold bits */
+    double threshold;
+    double dirty;
 };
 
 struct strgrp_grp_iter {
@@ -204,6 +208,7 @@ add_item(struct strgrp_grp *const ctx, const char *const str,
     }
     darray_push(ctx->items, i);
     ctx->n_items++;
+    ctx->dirty = true;
     return true;
 }
 
@@ -369,6 +374,36 @@ bool
 strgrp_grp_is_acceptible(const struct strgrp *ctx,
                          const struct strgrp_grp *grp) {
     return grp->score >= ctx->threshold;
+}
+
+static void
+grp_update_threshold(struct strgrp_grp *grp) {
+    double low = 1.0;
+    int i;
+    for (i = 0; i < grp->n_items; i++) {
+        struct strgrp_item *a = darray_item(grp->items, i);
+	int j;
+	for (j = i + 1; j < grp->n_items; j++) {
+	    struct strgrp_item *b = darray_item(grp->items, j);
+	    double score;
+	    score = nlcs(a->key, b->key);
+	    low = low < score ? low : score;
+	}
+    }
+
+    grp->threshold = low - 0.05;
+}
+
+bool
+strgrp_grp_is_acceptible_dynamic(const struct strgrp *ctx,
+                                 struct strgrp_grp *grp) {
+    if (grp->dirty) {
+        grp_update_threshold(grp);
+	grp->dirty = false;
+    }
+
+    /* Tweak the dynamic threshold to allow slightly more difference */
+    return grp->score >= grp->threshold;
 }
 
 struct strgrp_grp *
