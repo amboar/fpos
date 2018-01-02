@@ -5,6 +5,7 @@ import xdg
 from pystrgrp import Strgrp
 import itertools
 from random import shuffle
+import random
 import sys
 import traceback
 from collections import namedtuple
@@ -220,7 +221,7 @@ class SqlAnnCollection(AnnCollection):
         # See: https://stats.stackexchange.com/questions/181/how-to-choose-the-number-of-hidden-layers-and-nodes-in-a-feedforward-neural-netw
         ann = pygenann.genann(100, 1, 50, 1)
         da = DescriptionAnn(description, did, ann, self)
-        da.accept(description)
+        # da.accept(description)
         return da
 
     def load_metadata(self, did):
@@ -314,7 +315,7 @@ class FsAnnCollection(AnnCollection):
         # See: https://stats.stackexchange.com/questions/181/how-to-choose-the-number-of-hidden-layers-and-nodes-in-a-feedforward-neural-netw
         ann = pygenann.genann(100, 1, 50, 1)
         da = DescriptionAnn(description, did, ann, self)
-        da.accept(description)
+        # da.accept(description)
         return da
 
     def load_metadata(self, did):
@@ -367,10 +368,10 @@ class DescriptionAnn(object):
         vals = backend.load_metadata(self.id)
         self.ready['accept'] = vals[1]
         self.ready['reject'] = vals[2]
-        self.ready['ever'] = self.is_trained()
         self.accepted = vals[3]
-        self.threshold = 3
+        self.threshold = 5
         self.backend = backend
+        self.ready['ever'] = self.is_ready()
 
         if None is polarised:
             polarised = PolarisationDetector(limit=50)
@@ -386,7 +387,7 @@ class DescriptionAnn(object):
         self.pd.reset()
 
     def is_polarised(self):
-        return self.pd.is_polarised() 
+        return self.pd.is_polarised()
 
     def meets_threshold(self):
         return len(self.accepted) > self.threshold
@@ -520,14 +521,21 @@ class CognitiveStrgrp(object):
         shuffle(accept)
         accept.insert(0, description)
 
-        reject = [ x.key() for x in candidates if x is not pick ]
-        reject.extend(hay[:max(7, len(accept) - len(reject))])
+        reject = [ i.key() for x in candidates if x is not pick for i in x ]
         shuffle(reject)
+        reject = reject[:max(4, len(accept) // 2)]
+        reject.extend(hay[:max(16, 3 * len(reject) // 4)])
+        shuffle(reject)
+
+        # Make sure we have something to reject against.
+        #
+        # XXX: What happens for these early cases?
+        if len(reject) < 4:
+            return
 
         i = 0
         ann.reset_polarised()
-        # while not (ann.accept(description) and ann.is_trained()):
-        while not (ann.accept(description) and ann.is_trained()):
+        while not (ann.accept(description) and ann.reject(random.choice(reject)) and ann.is_trained()):
             for (needle, straw) in zip(itertools.cycle(accept), reject):
                 score = ann.run(description)
                 line = "Positive training: ({}, {}, {}, {})".format(i, ann.ready,
@@ -560,12 +568,18 @@ class CognitiveStrgrp(object):
         ann = self._grpanns[gen_id(grp.key(), salt)]
         accept = list(item.key() for item in grp)
         shuffle(accept)
+        print(grp.key() + ":")
+        print(*(["\t"] + accept), sep="\n\t")
+        print()
 
-        reject = [ i.key() for x in candidates if x is not grp for i in grp ]
-        reject.extend(hay[:max(7, len(reject))])
+        reject = [ i.key() for x in candidates if x is not grp for i in x ]
         shuffle(reject)
-        reject = reject[:max(7, len(accept))]
+        reject = reject[:max(4, len(accept) // 2)]
+        reject.extend(hay[:max(16, 3 * len(reject) // 4)])
         reject.insert(0, description)
+        shuffle(reject)
+        print(*(["\t"] + reject), sep="\n\t")
+        print()
 
         seq = itertools.cycle(zip(itertools.cycle(accept), reject))
         pred = lambda x: not ((ann.is_trained() if ann.meets_threshold() else ann.ready['reject']) or ann.is_polarised())
@@ -578,7 +592,6 @@ class CognitiveStrgrp(object):
                 line = "Negative training: ({}, {}, {}, {})".format(i, ann.ready,
                             ann.pd.count, score)
                 self._status.write(line)
-                # Also train on the initial description
                 ann.accept(needle)
                 ann.reject(straw)
                 i += 1
@@ -645,6 +658,7 @@ class CognitiveStrgrp(object):
         # needles is the set of groups breaking the strgrp fuzz threshold.
         # These are the candidates groups for the current description.
         needles, hay = self._split_heap(self._strgrp.grps_for(description))
+        hay = [ random.choice(list(grp)).key() for grp in hay ]
         l_needles = len(needles)
         if l_needles == 0:
             print("New group: No needles in the haystack")
@@ -660,18 +674,17 @@ class CognitiveStrgrp(object):
         passes = [ x >= 0.5 for x in scores ]
         n_passes = sum(passes)
         ready = [ ann.is_ready() for ann in anns ]
-        hay_keys = [ grp.key() for grp in hay ]
         if n_passes == 1:
             if all(ready):
                     i = passes.index(True)
-                    self.train(description, needles[i], needles, hay_keys)
+                    self.train(description, needles[i], needles, hay)
                     print("Existing group: All NNs ready, one matched")
                     return needles[i]
             elif all(ann.ready['reject'] for ann in anns):
                     print("One passing while all reject")
                     i = passes.index(True)
                     if anns[i].is_ready():
-                        self.train(description, needles[i], needles, hay_keys)
+                        self.train(description, needles[i], needles, hay)
                         print("Existing group: passing group is ready, under all-reject")
                         return needles[i]
 
@@ -685,7 +698,7 @@ class CognitiveStrgrp(object):
         # None means no group was matched an a new one should be created
         try:
             if match is None:
-                self.train(description, None, needles, hay_keys)
+                self.train(description, None, needles, hay)
                 for ann in anns:
                     ann.write()
                 print("New group: User provided answer")
@@ -694,7 +707,7 @@ class CognitiveStrgrp(object):
             # Otherwise, if the user confirmed membership of the description to a
             # candidate group, if the NN correctly predicted the membership then
             # mark it as ready to use
-            self.train(description, match, needles, [grp.key() for grp in hay])
+            self.train(description, match, needles, hay)
             print("Existing group: User provided answer")
             return match
         except Exception as e:
@@ -707,9 +720,13 @@ class CognitiveStrgrp(object):
     def insert(self, description, data, grpbin):
         if grpbin is None:
             print("New group for description '{}'".format(description))
+            needles, hay = self._split_heap(self._strgrp.grps_for(description))
+            hay = [ random.choice(list(grp)).key() for grp in hay ]
             key = gen_id(description, salt)
             grpbin = self._strgrp.grp_new(description, data)
             self._grpanns[key] = self._collection.load(key, grpbin.key())
+            if key not in self._grpanns[key].accepted:
+                self._train_positive(description, grpbin, needles, hay)
         else:
             print("Adding to group of '{}'".format(grpbin.key()))
             assert gen_id(grpbin.key(), salt) in self._grpanns
