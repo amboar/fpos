@@ -54,6 +54,9 @@ bool
 strgrp_grp_is_acceptible_dynamic(const struct strgrp *ctx,
 			         struct strgrp_grp *grp);
 
+ssize_t
+strgrp_grp_size(const struct strgrp_grp *grp);
+
 bool
 strgrp_grp_add(struct strgrp *ctx, struct strgrp_grp *grp, const char *str,
                void *data);

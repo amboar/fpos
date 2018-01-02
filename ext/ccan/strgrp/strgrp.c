@@ -54,7 +54,7 @@ struct strgrp_grp {
     const char *key;
     size_t key_len;
     darray_item items;
-    int32_t n_items;
+    ssize_t n_items;
     int16_t pop[CHAR_N_VALUES];
     double score;
 
@@ -379,10 +379,10 @@ strgrp_grp_is_acceptible(const struct strgrp *ctx,
 static void
 grp_update_threshold(struct strgrp_grp *grp) {
     double low = 1.0;
-    int i;
+    ssize_t i;
     for (i = 0; i < grp->n_items; i++) {
         struct strgrp_item *a = darray_item(grp->items, i);
-	int j;
+	int32_t j;
 	for (j = i + 1; j < grp->n_items; j++) {
 	    struct strgrp_item *b = darray_item(grp->items, j);
 	    double score;
@@ -404,6 +404,11 @@ strgrp_grp_is_acceptible_dynamic(const struct strgrp *ctx,
 
     /* Tweak the dynamic threshold to allow slightly more difference */
     return grp->score >= grp->threshold;
+}
+
+ssize_t
+strgrp_grp_size(const struct strgrp_grp *grp) {
+    return grp->n_items;
 }
 
 struct strgrp_grp *
