@@ -135,6 +135,14 @@ Grp_key(GrpObject *self) {
 }
 
 static PyObject *
+Grp_size(GrpObject *self) {
+    const ssize_t size = strgrp_grp_size(self->grp);
+    PyObject *py_size = PyLong_FromSsize_t(size);
+    Py_XINCREF(py_size);
+    return py_size;
+}
+
+static PyObject *
 Grp_is_acceptible(GrpObject *self, PyObject *args);
 
 static PyObject *
@@ -146,6 +154,8 @@ Grp_add(GrpObject *self, PyObject *args, PyObject *kwds);
 static PyMethodDef Grp_methods[] = {
     { "key", (PyCFunction)Grp_key, METH_NOARGS,
         "Fetch the description stored in the item" },
+    { "size", (PyCFunction)Grp_size, METH_NOARGS,
+        "Query the size of the group" },
     { "is_acceptible", (PyCFunction)Grp_is_acceptible, METH_VARARGS,
         "Test whether the group passes the threshold for the query string" },
     { "is_acceptible_dynamic", (PyCFunction)Grp_is_acceptible_dynamic, METH_VARARGS,
