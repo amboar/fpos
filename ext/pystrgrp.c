@@ -138,13 +138,19 @@ static PyObject *
 Grp_is_acceptible(GrpObject *self, PyObject *args);
 
 static PyObject *
+Grp_is_acceptible_dynamic(GrpObject *self, PyObject *args);
+
+static PyObject *
 Grp_add(GrpObject *self, PyObject *args, PyObject *kwds);
 
 static PyMethodDef Grp_methods[] = {
     { "key", (PyCFunction)Grp_key, METH_NOARGS,
         "Fetch the description stored in the item" },
     { "is_acceptible", (PyCFunction)Grp_is_acceptible, METH_VARARGS,
-        "Fetch the current group score" },
+        "Test whether the group passes the threshold for the query string" },
+    { "is_acceptible_dynamic", (PyCFunction)Grp_is_acceptible_dynamic, METH_VARARGS,
+        "Test whether the group passes the group's dynamic threshold for the "
+	"query string" },
     { "add", (PyCFunction)Grp_add, (METH_VARARGS | METH_KEYWORDS),
         "Add a string and its associated data to a group" },
     {NULL}
@@ -214,6 +220,25 @@ Grp_is_acceptible(GrpObject *self, PyObject *args) {
     /* YOLO !? */
     ctx = ((StrgrpObject *)(py_ctx))->grp;
     acceptible = strgrp_grp_is_acceptible(ctx, self->grp);
+    PyObject *py_acceptible = PyBool_FromLong(acceptible);
+    Py_XINCREF(py_acceptible);
+
+    return py_acceptible;
+}
+
+static PyObject *
+Grp_is_acceptible_dynamic(GrpObject *self, PyObject *args) {
+    PyObject *py_ctx = NULL;
+    struct strgrp *ctx;
+    long acceptible;
+
+    if (!PyArg_ParseTuple(args, "O", &py_ctx)) {
+        return NULL;
+    }
+
+    /* YOLO !? */
+    ctx = ((StrgrpObject *)(py_ctx))->grp;
+    acceptible = strgrp_grp_is_acceptible_dynamic(ctx, self->grp);
     PyObject *py_acceptible = PyBool_FromLong(acceptible);
     Py_XINCREF(py_acceptible);
 
