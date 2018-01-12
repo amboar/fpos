@@ -555,9 +555,7 @@ class SqlGroupCollection(object):
     def have_association(self, did):
         c = self.db.cursor()
         c.execute('SELECT COUNT(*) FROM assoc WHERE ddid=?', (did, ))
-        res = c.fetchone()
-        val = int(res[0])
-        return val > 0
+        return int(c.fetchone()[0]) > 0
 
     def get_canonical(self, did):
         c = self.db.cursor()
@@ -569,10 +567,12 @@ class SqlGroupCollection(object):
         c.execute('INSERT INTO assoc (ddid, sdid) VALUES (?, ?)', (adid, cdid))
 
 class DynamicGroups(GroupProtocol):
-    def __init__(self):
-        self.backend = SqlGroupCollection()
+    def __init__(self, threshold=4, backend=None):
+        if backend is None:
+            backend = SqlGroupCollection()
+        self.backend = backend
         self._strgrp = Strgrp()
-        self.min_size = 5
+        self.threshold = threshold
         self.map = dict()
 
     def __enter__(self):
@@ -586,12 +586,12 @@ class DynamicGroups(GroupProtocol):
         i = None
 
         for i, grpbin in enumerate(heap):
-            if grpbin.size() < self.min_size:
+            if grpbin.size() < self.threshold:
                 meth = grpbin.is_acceptible
             else:
                 meth = grpbin.is_acceptible_dynamic
 
-            if meth(self._strgrp):
+            if not meth(self._strgrp):
                 break
 
         return heap[:i], heap[i:]
@@ -602,8 +602,10 @@ class DynamicGroups(GroupProtocol):
             return grpbin
 
         needles, haystack = self._split_heap(self._strgrp.grps_for(description))
+        print(needles)
+        print(haystack)
         if needles:
-            return grp[0]
+            return needles[0]
 
         return None
 
@@ -612,13 +614,12 @@ class DynamicGroups(GroupProtocol):
         if group:
             group.add(self._strgrp, description, value)
         else:
-            self._strgrp.add(description, value)
+            group = self._strgrp.add(description, value)
 
         if not self.backend.have_association(did):
-            key = gen_id(group.key(), salt)
-            cdid = self.backend.get_canonical(key)
-            self.backend.associate(cdid, did)
+            self.backend.associate(did, did)
 
+        return group
 
 class CognitiveGroups(GroupProtocol):
     """ LOL """

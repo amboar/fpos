@@ -934,7 +934,135 @@ class PsaveTest(unittest.TestCase):
 import tempfile
 import pygenann
 
-class FsAnnCollectionTest(unittest.TestCase):
+class SqlGroupCollectionTest(unittest.TestCase):
+    def contain(self, func):
+        with tempfile.TemporaryDirectory() as test_dir:
+            with ann.SqlGroupCollection(test_dir) as sgc:
+                func(self, sgc)
+
+    def test_associate_identity(self):
+        def test(tc, gc):
+            cdid = ann.gen_id("foo", ann.salt)
+            gc.associate(cdid, cdid)
+        self.contain(test)
+
+    def test_associate_distinct(self):
+        def test(tc, gc):
+            cdid = ann.gen_id("foo", ann.salt)
+            adid = ann.gen_id("bar", ann.salt)
+            gc.associate(cdid, adid)
+        self.contain(test)
+
+    def test_have_association_identity(self):
+        def test(tc, gc):
+            cdid = ann.gen_id("foo", ann.salt)
+            gc.associate(cdid, cdid)
+            self.assertTrue(gc.have_association(cdid))
+        self.contain(test)
+
+    def test_have_association_distinct(self):
+        def test(tc, gc):
+            cdid = ann.gen_id("foo", ann.salt)
+            adid = ann.gen_id("bar", ann.salt)
+            gc.associate(cdid, adid)
+            self.assertTrue(gc.have_association(adid))
+        self.contain(test)
+
+    def test_get_canonical_identity(self):
+        def test(tc, gc):
+            cdid = ann.gen_id("foo", ann.salt)
+            gc.associate(cdid, cdid)
+            self.assertEquals(cdid, gc.get_canonical(cdid))
+        self.contain(test)
+
+    def test_get_canonical_distinct(self):
+        def test(tc, gc):
+            cdid = ann.gen_id("foo", ann.salt)
+            adid = ann.gen_id("bar", ann.salt)
+            gc.associate(cdid, adid)
+            self.assertEquals(cdid, gc.get_canonical(adid))
+        self.contain(test)
+
+from pystrgrp import Strgrp
+
+class StrgrpTest(unittest.TestCase):
+    def test_is_acceptible_dynamic_one_group_true(tc):
+        s = Strgrp(threshold=0.75)
+        g = s.add("a" * 10, 'a')
+        g.add(s, "a" * 9 + "b", 'b')
+        gs = s.grps_for("a" * 9 + 'c')
+        tc.assertIsNotNone(gs)
+        gs = list(gs)
+        tc.assertEquals(1, len(gs))
+        tc.assertTrue(g.is_acceptible_dynamic(gs[0]))
+
+    def test_is_acceptible_dynamic_one_group_false(tc):
+        s = Strgrp(threshold=0.75)
+        g = s.add("a" * 10, 'a')
+        g.add(s, "a" * 9 + "b", 'b')
+        gs = s.grps_for("a" * 8 + "de")
+        tc.assertIsNotNone(gs)
+        gs = list(gs)
+        tc.assertEquals(1, len(gs))
+        tc.assertFalse(g.is_acceptible_dynamic(gs[0]))
+
+class DynamicGroupsTest(unittest.TestCase):
+    def contain(self, func, threshold=4):
+        with tempfile.TemporaryDirectory() as test_dir:
+            gc = ann.SqlGroupCollection(test_dir)
+            with ann.DynamicGroups(threshold, gc) as dg:
+                func(self, dg)
+
+    def test_find_group_empty(self):
+        def test(tc, dg):
+            self.assertIsNone(dg.find_group("foo"))
+        self.contain(test)
+
+    def test_insert_group_one(self):
+        def test(tc, dg):
+            dg.insert("a" * 10, 'a')
+        self.contain(test)
+
+    def test_find_group_static_exact(self):
+        def test(tc, dg):
+            inserted = dg.insert("a" * 10, 'a')
+            self.assertIsNotNone(inserted)
+            found = dg.find_group("a" * 10)
+            self.assertIsNotNone(found)
+            self.assertTrue(inserted == found)
+        self.contain(test)
+
+    def test_find_group_static_fuzzy(self):
+        def test(tc, dg):
+            inserted = dg.insert("a" * 10, 'a')
+            self.assertIsNotNone(inserted)
+            found = dg.find_group("a" * 9 + "b")
+            self.assertIsNotNone(found)
+            self.assertTrue(inserted == found)
+        self.contain(test)
+
+    def test_find_group_dynamic_exact(self):
+        def test(tc, dg):
+            inserted = dg.insert("a" * 10, 'a')
+            self.assertTrue(inserted == dg.insert("a" * 9 + "b", 'b', inserted))
+            found = dg.find_group("a" * 10)
+            self.assertIsNotNone(found)
+            self.assertEquals(inserted.key(), found.key())
+            self.assertTrue(inserted == found)
+        self.contain(test, threshold=2)
+
+    def test_find_group_dynamic_fuzzy(self):
+        def test(tc, dg):
+            inserted = dg.insert("a" * 10, 'a')
+            self.assertIsNotNone(inserted)
+            self.assertTrue(inserted == dg.insert("a" * 9 + "b", 'b', inserted))
+            found = dg.find_group("a" * 9 + "c")
+            self.assertIsNotNone(found)
+            self.assertEquals(inserted.key(), found.key())
+            self.assertTrue(inserted == found)
+        self.contain(test, threshold=2)
+
+class SqlAnnCollectionTest(unittest.TestCase):
     def contain(self, func):
         with tempfile.TemporaryDirectory() as test_dir:
             with ann.SqlAnnCollection(test_dir) as ac:
