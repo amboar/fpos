@@ -146,9 +146,6 @@ static PyObject *
 Grp_is_acceptible(GrpObject *self, PyObject *args);
 
 static PyObject *
-Grp_is_acceptible_dynamic(GrpObject *self, PyObject *args);
-
-static PyObject *
 Grp_add(GrpObject *self, PyObject *args, PyObject *kwds);
 
 static PyMethodDef Grp_methods[] = {
@@ -158,9 +155,6 @@ static PyMethodDef Grp_methods[] = {
         "Query the size of the group" },
     { "is_acceptible", (PyCFunction)Grp_is_acceptible, METH_VARARGS,
         "Test whether the group passes the threshold for the query string" },
-    { "is_acceptible_dynamic", (PyCFunction)Grp_is_acceptible_dynamic, METH_VARARGS,
-        "Test whether the group passes the group's dynamic threshold for the "
-	"query string" },
     { "add", (PyCFunction)Grp_add, (METH_VARARGS | METH_KEYWORDS),
         "Add a string and its associated data to a group" },
     {NULL}
@@ -237,25 +231,6 @@ Grp_is_acceptible(GrpObject *self, PyObject *args) {
 }
 
 static PyObject *
-Grp_is_acceptible_dynamic(GrpObject *self, PyObject *args) {
-    PyObject *py_ctx = NULL;
-    struct strgrp *ctx;
-    long acceptible;
-
-    if (!PyArg_ParseTuple(args, "O", &py_ctx)) {
-        return NULL;
-    }
-
-    /* YOLO !? */
-    ctx = ((StrgrpObject *)(py_ctx))->grp;
-    acceptible = strgrp_grp_is_acceptible_dynamic(ctx, self->grp);
-    PyObject *py_acceptible = PyBool_FromLong(acceptible);
-    Py_XINCREF(py_acceptible);
-
-    return py_acceptible;
-}
-
-static PyObject *
 Grp_add(GrpObject *self, PyObject *args, PyObject *kwds) {
     PyObject *py_ctx = NULL;
     PyObject *data = NULL;
@@ -295,12 +270,13 @@ Strgrp_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 
 static int
 Strgrp_init(StrgrpObject *self, PyObject *args, PyObject *kwds) {
+    int size = 0;
     double threshold = self->thresh;
-    static char *kwlist[] = {"threshold", NULL};
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|d", kwlist, &threshold)) {
+    static char *kwlist[] = {"threshold", "size", NULL};
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|dd", kwlist, &threshold, &size)) {
         return -1;
     }
-    self->grp = strgrp_new(threshold);
+    self->grp = strgrp_new_dynamic(threshold, size);
     if (!self->grp) {
         return -1;
     }
