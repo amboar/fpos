@@ -42,7 +42,6 @@ struct strgrp {
     stringmap_grp known;
     unsigned int n_grps;
     darray_grp grps;
-    int16_t pop[CHAR_N_VALUES];
 };
 
 struct strgrp_iter {
@@ -55,7 +54,6 @@ struct strgrp_grp {
     size_t key_len;
     darray_item items;
     ssize_t n_items;
-    int16_t pop[CHAR_N_VALUES];
     double score;
 
     /* Dynamic threshold bits */
@@ -73,51 +71,7 @@ struct strgrp_item {
     void *value;
 };
 
-
-/* String vector cosine similarity[1]
- *
- * [1] http://blog.nishtahir.com/2015/09/19/fuzzy-string-matching-using-cosine-similarity/
- */
-
-static inline void
-strpopcnt(const char *const str, int16_t pop[CHAR_N_VALUES]) {
-    const char *c;
-    memset(pop, 0, CHAR_N_VALUES * sizeof(*pop));
-    for(c = str; *c; c++) {
-        assert(*c >= 0);
-        pop[(unsigned char)*c]++;
-    }
-}
-
-static inline double
-strcossim(const int16_t ref[CHAR_N_VALUES], const int16_t key[CHAR_N_VALUES]) {
-    int32_t saibi = 0;
-    int32_t sai2 = 0;
-    int32_t sbi2 = 0;
-    size_t i;
-    for (i = 0; i < CHAR_N_VALUES; i++) {
-        saibi += ref[i] * key[i];
-        sai2 += ref[i] * ref[i];
-        sbi2 += key[i] * key[i];
-    }
-    return 1.0 - (2 * acos(saibi / sqrt(sai2 * sbi2)) / M_PI);
-}
-
 /* Low-cost filter functions */
-
-static inline double
-cossim_correction(const double s)
-{
-    return -((s - 0.5) * (s - 0.5)) + 0.33;
-}
-
-static inline bool
-should_grp_score_cos(const struct strgrp *const ctx,
-        struct strgrp_grp *const grp, const char *const str) {
-    const double s1 = strcossim(ctx->pop, grp->pop);
-    const double s2 = s1 + cossim_correction(s1);
-    return ctx->threshold <= s2;
-}
 
 static inline bool
 should_grp_score_len(const struct strgrp *const ctx,
@@ -241,7 +195,6 @@ add_grp(struct strgrp *const ctx, const char *const str,
     if (!b) {
         return NULL;
     }
-    memcpy(b->pop, ctx->pop, sizeof(ctx->pop));
     darray_push(ctx->grps, b);
     ctx->n_grps++;
     return b;
@@ -274,9 +227,7 @@ grps_score(struct strgrp *const ctx, const char *const str) {
         struct strgrp_grp *grp = darray_item(ctx->grps, i);
         grp->score = 0.0;
         if (should_grp_score_len(ctx, grp, str)) {
-            if (true /* should_grp_score_cos(ctx, grp, str) */) {
-                grp->score = grp_score(grp, str);
-            }
+            grp->score = grp_score(grp, str);
         }
     }
 }
@@ -285,10 +236,6 @@ static struct strgrp_grp *
 grp_for(struct strgrp *const ctx, const char *const str) {
     int i;
 
-    // Ensure ctx->pop is always populated. Returning null here indicates a new
-    // group should be created, at which point add_grp() copies ctx->pop into
-    // the new group's struct.
-    strpopcnt(str, ctx->pop);
     if (!ctx->n_grps) {
         return NULL;
     }
@@ -338,11 +285,6 @@ struct heap *
 strgrp_grps_for(struct strgrp *const ctx, const char *const str) {
     int i;
     struct heap *heap;
-
-    // Ensure ctx->pop is always populated. Returning null here indicates a new
-    // group should be created, at which point add_grp() copies ctx->pop into
-    // the new group's struct.
-    strpopcnt(str, ctx->pop);
 
     /* Sort descending */
     heap = heap_init(__score_gt);
@@ -436,9 +378,6 @@ struct strgrp_grp *
 strgrp_add(struct strgrp *const ctx, const char *const str,
         void *const data) {
     bool inserted = false;
-    // grp_for() populates the ctx->pop memory. add_grp() copies this memory
-    // into the strgrp_grp that it creates. It's assumed the ctx->pop memory
-    // has not been modified between the grp_for() and add_grp() calls.
     struct strgrp_grp *pick = grp_for(ctx, str);
     if (pick) {
         inserted = add_item(pick, str, data);
