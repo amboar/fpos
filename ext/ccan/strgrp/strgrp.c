@@ -42,6 +42,8 @@ struct strgrp {
     stringmap_grp known;
     unsigned int n_grps;
     darray_grp grps;
+    int size;
+    void (*score)(struct strgrp *const ctx, const char *const str);
 };
 
 struct strgrp_iter {
@@ -74,13 +76,13 @@ struct strgrp_item {
 /* Low-cost filter functions */
 
 static inline bool
-should_grp_score_len(const struct strgrp *const ctx,
+should_grp_score_len(const double threshold,
         const struct strgrp_grp *const grp, const char *const str) {
     const double lstr = (double) strlen(str);
     const double lkey = (double) grp->key_len;
     const double lmin = (lstr > lkey) ? lkey : lstr;
     const double s = sqrt((2 * lmin * lmin) / (1.0 * lstr * lstr + lkey * lkey));
-    return ctx->threshold <= s;
+    return threshold <= s;
 }
 
 /* Scoring - Longest Common Subsequence[2]
@@ -154,15 +156,15 @@ new_item(tal_t *const tctx, const char *const str, void *const data) {
 }
 
 static bool
-add_item(struct strgrp_grp *const ctx, const char *const str,
-        void *const data) {
-    struct strgrp_item *i = new_item(ctx, str, data);
+add_item(const struct strgrp *const ctx, struct strgrp_grp *const grp,
+        const char *const str, void *const data) {
+    struct strgrp_item *i = new_item(grp, str, data);
     if (!i) {
         return false;
     }
-    darray_push(ctx->items, i);
-    ctx->n_items++;
-    ctx->dirty = true;
+    darray_push(grp->items, i);
+    grp->n_items++;
+    grp->dirty = grp->n_items >= ctx->size;
     return true;
 }
 
@@ -172,17 +174,19 @@ free_grp(struct strgrp_grp *grp) {
 }
 
 static struct strgrp_grp *
-new_grp(tal_t *const tctx, const char *const str, void *const data) {
-    struct strgrp_grp *b = talz(tctx, struct strgrp_grp);
+new_grp(const struct strgrp *const ctx, const char *const str,
+        void *const data) {
+    struct strgrp_grp *b = talz(ctx, struct strgrp_grp);
     if (!b) {
         return NULL;
     }
     b->key = tal_strdup(b, str);
     b->key_len = strlen(str);
     b->n_items = 0;
+    b->threshold = ctx->threshold;
     darray_init(b->items);
     tal_add_destructor(b, free_grp);
-    if (!add_item(b, str, data)) {
+    if (!add_item(ctx, b, str, data)) {
         return tal_free(b);
     }
     return b;
@@ -198,16 +202,6 @@ add_grp(struct strgrp *const ctx, const char *const str,
     darray_push(ctx->grps, b);
     ctx->n_grps++;
     return b;
-}
-
-struct strgrp *
-strgrp_new(const double threshold) {
-    struct strgrp *ctx = talz(NULL, struct strgrp);
-    ctx->threshold = threshold;
-    stringmap_init(ctx->known, NULL);
-    // n threads compare strings
-    darray_init(ctx->grps);
-    return ctx;
 }
 
 static inline void
@@ -226,10 +220,65 @@ grps_score(struct strgrp *const ctx, const char *const str) {
     for (i = 0; i < ctx->n_grps; i++) {
         struct strgrp_grp *grp = darray_item(ctx->grps, i);
         grp->score = 0.0;
-        if (should_grp_score_len(ctx, grp, str)) {
-            grp->score = grp_score(grp, str);
+        if (should_grp_score_len(ctx->threshold, grp, str)) {
+            grp->score = grp_score(grp, str) - ctx->threshold;
         }
     }
+}
+
+static void
+grp_update_threshold(const struct strgrp *const ctx, struct strgrp_grp *grp) {
+    double low = 1.0;
+    ssize_t i;
+    for (i = 0; i < grp->n_items; i++) {
+        struct strgrp_item *a = darray_item(grp->items, i);
+	int32_t j;
+	for (j = i + 1; j < grp->n_items; j++) {
+	    struct strgrp_item *b = darray_item(grp->items, j);
+	    double score;
+	    score = nlcs(a->key, b->key);
+	    low = low < score ? low : score;
+	}
+    }
+
+    grp->threshold = low > ctx->threshold ? low : ctx->threshold;
+}
+
+static void
+grps_score_dynamic(struct strgrp *const ctx, const char *const str) {
+    int i;
+// Keep ccanlint happy in reduced feature mode
+#if HAVE_OPENMP
+    #pragma omp parallel for schedule(dynamic)
+#endif
+    for (i = 0; i < ctx->n_grps; i++) {
+        struct strgrp_grp *grp = darray_item(ctx->grps, i);
+        grp->score = 0.0;
+        if (grp->dirty) {
+            grp_update_threshold(ctx, grp);
+            grp->dirty = false;
+        }
+        if (should_grp_score_len(grp->threshold, grp, str)) {
+            grp->score = grp_score(grp, str) - grp->threshold;
+        }
+    }
+}
+
+struct strgrp *
+strgrp_new_dynamic(const double threshold, int size) {
+    struct strgrp *ctx = talz(NULL, struct strgrp);
+    ctx->threshold = threshold;
+    ctx->size = size;
+    ctx->score = size > 0 ? grps_score_dynamic : grps_score;
+    stringmap_init(ctx->known, NULL);
+    // n threads compare strings
+    darray_init(ctx->grps);
+    return ctx;
+}
+
+struct strgrp *
+strgrp_new(const double threshold) {
+    return strgrp_new_dynamic(threshold, 0);
 }
 
 static struct strgrp_grp *
@@ -246,7 +295,7 @@ grp_for(struct strgrp *const ctx, const char *const str) {
         }
     }
 
-    grps_score(ctx, str);
+    ctx->score(ctx, str);
 
     struct strgrp_grp *max = NULL;
     for (i = 0; i < ctx->n_grps; i++) {
@@ -256,7 +305,7 @@ grp_for(struct strgrp *const ctx, const char *const str) {
             max = curr;
         }
     }
-    return (max && max->score >= ctx->threshold) ? max : NULL;
+    return (max && max->score >= 0) ? max : NULL;
 }
 
 struct strgrp_grp *
@@ -297,7 +346,7 @@ strgrp_grps_for(struct strgrp *const ctx, const char *const str) {
         return heap;
     }
 
-    grps_score(ctx, str);
+    ctx->score(ctx, str);
 
     for (i = 0; i < ctx->n_grps; i++) {
         struct strgrp_grp *curr = darray_item(ctx->grps, i);
@@ -314,40 +363,13 @@ strgrp_grps_for(struct strgrp *const ctx, const char *const str) {
 
 bool
 strgrp_grp_is_acceptible(const struct strgrp *ctx,
-                         const struct strgrp_grp *grp) {
-    return grp->score >= ctx->threshold;
-}
-
-static void
-grp_update_threshold(struct strgrp_grp *grp) {
-    double low = 1.0;
-    ssize_t i;
-    for (i = 0; i < grp->n_items; i++) {
-        struct strgrp_item *a = darray_item(grp->items, i);
-	int32_t j;
-	for (j = i + 1; j < grp->n_items; j++) {
-	    struct strgrp_item *b = darray_item(grp->items, j);
-	    double score;
-	    score = nlcs(a->key, b->key);
-	    low = low < score ? low : score;
-	}
+                         struct strgrp_grp *grp) {
+    if (ctx->size > 0 && grp->dirty) {
+        grp_update_threshold(ctx, grp);
+        grp->dirty = false;
     }
 
-    /* Tweak the dynamic threshold to allow slightly more difference */
-    //grp->threshold = low - 0.05;
-    grp->threshold = low;
-    printf("%s:%lf\n", grp->key, grp->threshold);
-}
-
-bool
-strgrp_grp_is_acceptible_dynamic(const struct strgrp *ctx,
-                                 struct strgrp_grp *grp) {
-    if (grp->dirty) {
-        grp_update_threshold(grp);
-	grp->dirty = false;
-    }
-
-    return grp->score >= grp->threshold;
+    return grp->score >= 0;
 }
 
 ssize_t
@@ -368,7 +390,7 @@ bool
 strgrp_grp_add(struct strgrp *ctx, struct strgrp_grp *grp, const char *str,
                void *data)
 {
-    if (!add_item(grp, str, data))
+    if (!add_item(ctx, grp, str, data))
         return false;
 
     cache(ctx, grp, str);
@@ -376,13 +398,12 @@ strgrp_grp_add(struct strgrp *ctx, struct strgrp_grp *grp, const char *str,
     return true;
 }
 
-struct strgrp_grp *
-strgrp_add(struct strgrp *const ctx, const char *const str,
-        void *const data) {
+static struct strgrp_grp *
+add(struct strgrp *const ctx, const char *const str, void *const data) {
     bool inserted = false;
     struct strgrp_grp *pick = grp_for(ctx, str);
     if (pick) {
-        inserted = add_item(pick, str, data);
+        inserted = add_item(ctx, pick, str, data);
     } else {
         pick = add_grp(ctx, str, data);
         inserted = (NULL != pick);
@@ -392,6 +413,11 @@ strgrp_add(struct strgrp *const ctx, const char *const str,
         cache(ctx, pick, str);
     }
     return pick;
+}
+
+struct strgrp_grp *
+strgrp_add(struct strgrp *const ctx, const char *const str, void *const data) {
+    return add(ctx, str, data);
 }
 
 struct strgrp_iter *

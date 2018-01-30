@@ -24,6 +24,19 @@ struct strgrp *
 strgrp_new(double threshold);
 
 /**
+ * Constructs a new strgrp instance, with self-thresholding groups
+ * @threshold: A value in [0.0, 1.0] describing the desired similarity of
+ *     strings in a cluster
+ * @size: The minimum size of a group before self-thresholding is used
+ *
+ * @return A heap-allocated strgrp instance, or NULL if initialisation fails.
+ * Ownership of the pointer resides with the caller, which must be freed with
+ * strgrp_free.
+ */
+struct strgrp *
+strgrp_new_dynamic(double threshold, int size);
+
+/**
  * Find a group which best matches the provided string key.
  * @ctx: The strgrp instance to search
  * @str: The string key to cluster
@@ -48,11 +61,7 @@ strgrp_grps_for(struct strgrp *ctx, const char *str);
 
 bool
 strgrp_grp_is_acceptible(const struct strgrp *ctx,
-			 const struct strgrp_grp *grp);
-
-bool
-strgrp_grp_is_acceptible_dynamic(const struct strgrp *ctx,
-			         struct strgrp_grp *grp);
+			 struct strgrp_grp *grp);
 
 ssize_t
 strgrp_grp_size(const struct strgrp_grp *grp);
