@@ -648,7 +648,7 @@ class CognitiveGroups(GroupProtocol):
                     self._grpanns[key] = self._collection.load(key, grpbin.key())
             else:
                 break
-        return heap[:i], heap[i:]
+        return ([], heap) if i is None else (heap[:i + 1], heap[i + 1:])
 
     def _train_positive(self, description, pick, candidates, hay):
         ann = self._grpanns[gen_id(pick.key(), salt)]
