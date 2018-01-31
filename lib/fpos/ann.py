@@ -599,12 +599,15 @@ class DynamicGroups(GroupProtocol):
             return grpbin
 
         needles, haystack = self._split_heap(self._strgrp.grps_for(description))
-        print(needles)
-        print(haystack)
-        if needles:
-            return needles[0]
+        if len(needles) == 0:
+            return None
 
-        return None
+        dynamic = (n.is_dynamic(self._strgrp) for n in needles)
+        if sum(dynamic) == 1:
+            return needles[dynamic.index(True)]
+
+        # Otherwise get user input
+        return self._request_match(description, needles)
 
     def insert(self, description, value, group=None):
         did = gen_id(description, salt)

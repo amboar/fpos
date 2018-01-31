@@ -146,6 +146,9 @@ static PyObject *
 Grp_is_acceptible(GrpObject *self, PyObject *args);
 
 static PyObject *
+Grp_is_dynamic(GrpObject *self, PyObject *args);
+
+static PyObject *
 Grp_add(GrpObject *self, PyObject *args, PyObject *kwds);
 
 static PyMethodDef Grp_methods[] = {
@@ -155,6 +158,8 @@ static PyMethodDef Grp_methods[] = {
         "Query the size of the group" },
     { "is_acceptible", (PyCFunction)Grp_is_acceptible, METH_VARARGS,
         "Test whether the group passes the threshold for the query string" },
+    { "is_dynamic", (PyCFunction)Grp_is_dynamic, METH_VARARGS,
+        "Test whether the group uses a dynamic threshold for scoring" },
     { "add", (PyCFunction)Grp_add, (METH_VARARGS | METH_KEYWORDS),
         "Add a string and its associated data to a group" },
     {NULL}
@@ -228,6 +233,25 @@ Grp_is_acceptible(GrpObject *self, PyObject *args) {
     Py_XINCREF(py_acceptible);
 
     return py_acceptible;
+}
+
+static PyObject *
+Grp_is_dynamic(GrpObject *self, PyObject *args) {
+    PyObject *py_ctx = NULL;
+    struct strgrp *ctx;
+    long dynamic;
+
+    if (!PyArg_ParseTuple(args, "O", &py_ctx)) {
+        return NULL;
+    }
+
+    /* YOLO !? */
+    ctx = ((StrgrpObject *)(py_ctx))->grp;
+    dynamic = strgrp_grp_is_dynamic(ctx, self->grp);
+    PyObject *py_dynamic = PyBool_FromLong(dynamic);
+    Py_XINCREF(py_dynamic);
+
+    return py_dynamic;
 }
 
 static PyObject *
