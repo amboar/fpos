@@ -219,7 +219,7 @@ grps_score(struct strgrp *const ctx, const char *const str) {
 #endif
     for (i = 0; i < ctx->n_grps; i++) {
         struct strgrp_grp *grp = darray_item(ctx->grps, i);
-        grp->score = 0.0;
+        grp->score = -1.0;
         if (should_grp_score_len(ctx->threshold, grp, str)) {
             grp->score = grp_score(grp, str) - ctx->threshold;
         }
@@ -241,6 +241,8 @@ grp_update_threshold(const struct strgrp *const ctx, struct strgrp_grp *grp) {
 	}
     }
 
+    /* Adjust low to capture extra variation */
+    low -= 0.03;
     grp->threshold = low > ctx->threshold ? low : ctx->threshold;
 }
 
@@ -253,13 +255,16 @@ grps_score_dynamic(struct strgrp *const ctx, const char *const str) {
 #endif
     for (i = 0; i < ctx->n_grps; i++) {
         struct strgrp_grp *grp = darray_item(ctx->grps, i);
-        grp->score = 0.0;
+        grp->score = -2.0;
         if (grp->dirty) {
             grp_update_threshold(ctx, grp);
             grp->dirty = false;
         }
         if (should_grp_score_len(grp->threshold, grp, str)) {
-            grp->score = grp_score(grp, str) - grp->threshold;
+            const double score = grp_score(grp, str);
+            const double threshold = score >= grp->threshold ?
+                ctx->threshold : grp->threshold;
+            grp->score = score - threshold;
         }
     }
 }
