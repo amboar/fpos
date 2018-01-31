@@ -22,7 +22,7 @@ import collections
 import math
 from .core import categories
 from .core import money
-from .ann import CognitiveGroups
+from .ann import CognitiveGroups, DynamicGroups
 
 cmd_description = \
         """Annotates transactions in an IR document with category information.
@@ -38,7 +38,7 @@ TaggedEntry = collections.namedtuple("TaggedEntry", ("entry", "tag"))
 
 class _Tagger(object):
     def __init__(self):
-        self.grouper = CognitiveGroups()
+        self.grouper = DyanmicGroups()
 
     def __enter__(self):
         self.grouper.__enter__()

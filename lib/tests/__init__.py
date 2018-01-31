@@ -983,34 +983,11 @@ class SqlGroupCollectionTest(unittest.TestCase):
             self.assertEquals(cdid, gc.get_canonical(adid))
         self.contain(test)
 
-from pystrgrp import Strgrp
-
-class StrgrpTest(unittest.TestCase):
-    def test_is_acceptible_dynamic_one_group_true(tc):
-        s = Strgrp(threshold=0.75)
-        g = s.add("a" * 10, 'a')
-        g.add(s, "a" * 9 + "b", 'b')
-        gs = s.grps_for("a" * 9 + 'c')
-        tc.assertIsNotNone(gs)
-        gs = list(gs)
-        tc.assertEquals(1, len(gs))
-        tc.assertTrue(g.is_acceptible_dynamic(gs[0]))
-
-    def test_is_acceptible_dynamic_one_group_false(tc):
-        s = Strgrp(threshold=0.75)
-        g = s.add("a" * 10, 'a')
-        g.add(s, "a" * 9 + "b", 'b')
-        gs = s.grps_for("a" * 8 + "de")
-        tc.assertIsNotNone(gs)
-        gs = list(gs)
-        tc.assertEquals(1, len(gs))
-        tc.assertFalse(g.is_acceptible_dynamic(gs[0]))
-
 class DynamicGroupsTest(unittest.TestCase):
-    def contain(self, func, threshold=4):
+    def contain(self, func, threshold=0.85, size=4):
         with tempfile.TemporaryDirectory() as test_dir:
             gc = ann.SqlGroupCollection(test_dir)
-            with ann.DynamicGroups(threshold, gc) as dg:
+            with ann.DynamicGroups(threshold, size, gc) as dg:
                 func(self, dg)
 
     def test_find_group_empty(self):
@@ -1029,8 +1006,8 @@ class DynamicGroupsTest(unittest.TestCase):
             self.assertIsNotNone(inserted)
             found = dg.find_group("a" * 10)
             self.assertIsNotNone(found)
-            self.assertTrue(inserted == found)
-        self.contain(test)
+            self.assertEquals(inserted.key(), found.key())
+        self.contain(test, size=3)
 
     def test_find_group_static_fuzzy(self):
         def test(tc, dg):
@@ -1038,8 +1015,8 @@ class DynamicGroupsTest(unittest.TestCase):
             self.assertIsNotNone(inserted)
             found = dg.find_group("a" * 9 + "b")
             self.assertIsNotNone(found)
-            self.assertTrue(inserted == found)
-        self.contain(test)
+            self.assertEquals(inserted.key(), found.key())
+        self.contain(test, size=3)
 
     def test_find_group_dynamic_exact(self):
         def test(tc, dg):
@@ -1048,8 +1025,7 @@ class DynamicGroupsTest(unittest.TestCase):
             found = dg.find_group("a" * 10)
             self.assertIsNotNone(found)
             self.assertEquals(inserted.key(), found.key())
-            self.assertTrue(inserted == found)
-        self.contain(test, threshold=2)
+        self.contain(test, size=2)
 
     def test_find_group_dynamic_fuzzy(self):
         def test(tc, dg):
@@ -1059,8 +1035,7 @@ class DynamicGroupsTest(unittest.TestCase):
             found = dg.find_group("a" * 9 + "c")
             self.assertIsNotNone(found)
             self.assertEquals(inserted.key(), found.key())
-            self.assertTrue(inserted == found)
-        self.contain(test, threshold=2)
+        self.contain(test, size=2)
 
 class SqlAnnCollectionTest(unittest.TestCase):
     def contain(self, func):

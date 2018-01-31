@@ -567,11 +567,11 @@ class SqlGroupCollection(object):
         c.execute('INSERT INTO assoc (ddid, sdid) VALUES (?, ?)', (adid, cdid))
 
 class DynamicGroups(GroupProtocol):
-    def __init__(self, threshold=4, backend=None):
+    def __init__(self, threshold=0.85, size=4, backend=None):
         if backend is None:
             backend = SqlGroupCollection()
         self.backend = backend
-        self._strgrp = Strgrp()
+        self._strgrp = Strgrp(threshold=threshold, size=size)
         self.threshold = threshold
         self.map = dict()
 
@@ -586,15 +586,12 @@ class DynamicGroups(GroupProtocol):
         i = None
 
         for i, grpbin in enumerate(heap):
-            if grpbin.size() < self.threshold:
-                meth = grpbin.is_acceptible
-            else:
-                meth = grpbin.is_acceptible_dynamic
-
-            if not meth(self._strgrp):
+            acceptable = grpbin.is_acceptible(self._strgrp)
+            print("{}: {}".format(grpbin.key(), acceptable))
+            if not acceptable:
                 break
 
-        return heap[:i], heap[i:]
+        return ([], heap) if i is None else (heap[:i + 1], heap[i + 1:])
 
     def find_group(self, description):
         grpbin = self._strgrp.grp_exact(description)
