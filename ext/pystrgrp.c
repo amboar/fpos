@@ -273,7 +273,7 @@ Strgrp_init(StrgrpObject *self, PyObject *args, PyObject *kwds) {
     int size = 0;
     double threshold = self->thresh;
     static char *kwlist[] = {"threshold", "size", NULL};
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|dd", kwlist, &threshold, &size)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|di", kwlist, &threshold, &size)) {
         return -1;
     }
     self->grp = strgrp_new_dynamic(threshold, size);
