@@ -23,6 +23,7 @@ import math
 from .core import categories
 from .core import money
 from .ann import CognitiveGroups, DynamicGroups
+from pprint import pprint
 
 cmd_description = \
         """Annotates transactions in an IR document with category information.
@@ -38,7 +39,7 @@ TaggedEntry = collections.namedtuple("TaggedEntry", ("entry", "tag"))
 
 class _Tagger(object):
     def __init__(self):
-        self.grouper = DyanmicGroups()
+        self.grouper = DynamicGroups()
 
     def __enter__(self):
         self.grouper.__enter__()
@@ -148,7 +149,8 @@ def annotate(src, confirm=False):
                     continue
                 # Cook the description to make it easier on strgrp and the NNs.
                 # Mainly, reduce multiple spaces to one
-                cooked = Entry(row[0], row[1], re.sub(r"\s{2,}", " ", row[2]))
+                # cooked = Entry(row[0], row[1], re.sub(r"\s{2,}", " ", row[2]))
+                cooked = Entry(row[0], row[1], row[2])
                 category = None
                 if 4 == len(row):
                     # Fourth column is category, check that it's known
@@ -174,6 +176,7 @@ def annotate(src, confirm=False):
                 annotated.append(output)
         except EOFError:
             pass
+        pprint(t.dump())
     return annotated
 
 def main(args=None):

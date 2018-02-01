@@ -575,6 +575,9 @@ class DynamicGroups(GroupProtocol):
         self.threshold = threshold
         self.map = dict()
 
+    def __iter__(self):
+        return iter(self._strgrp)
+
     def __enter__(self):
         self.backend.__enter__()
         return self
@@ -591,18 +594,29 @@ class DynamicGroups(GroupProtocol):
             if not acceptable:
                 break
 
-        return ([], heap) if i is None else (heap[:i + 1], heap[i + 1:])
+        return ([], heap) if i is None else (heap[:i], heap[i:])
 
     def find_group(self, description):
         grpbin = self._strgrp.grp_exact(description)
         if grpbin is not None:
             return grpbin
 
+        did = gen_id(description, salt)
+        if self.backend.have_association(did):
+            cid = self.backend.get_canonical(did)
+            print("Found existing association for {}: {}".format(did, cid))
+            if cid in self.map:
+                print("Found {} in map: '{}'".format(cid, self.map[cid]))
+                return self._strgrp.grp_exact(self.map[cid])
+            print("{} unpopulated, creating new group for '{}'".format(cid, description))
+            return None
+
         needles, haystack = self._split_heap(self._strgrp.grps_for(description))
+        print(needles)
         if len(needles) == 0:
             return None
 
-        dynamic = (n.is_dynamic(self._strgrp) for n in needles)
+        dynamic = [n.is_dynamic(self._strgrp) for n in needles]
         if sum(dynamic) == 1:
             return needles[dynamic.index(True)]
 
@@ -613,11 +627,14 @@ class DynamicGroups(GroupProtocol):
         did = gen_id(description, salt)
         if group:
             group.add(self._strgrp, description, value)
+            if not self.backend.have_association(did):
+                cid = gen_id(group.key(), salt)
+                self.backend.associate(cid, did)
         else:
             group = self._strgrp.add(description, value)
-
-        if not self.backend.have_association(did):
-            self.backend.associate(did, did)
+            self.map[did] = description
+            if not self.backend.have_association(did):
+                self.backend.associate(did, did)
 
         return group
 
