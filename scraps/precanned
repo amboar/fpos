@@ -20,7 +20,7 @@ def main(args):
     child = pexpect.spawn(" ".join(args.command), encoding='utf-8')
     child.logfile=sys.stdout
     while True:
-        mode = child.expect(["Select \[0\]: ", "(Spent|Earnt) \$([0-9.]+) on ([0-9/]+): (.+)\nCategory \[.*\]: "])
+        mode = child.expect(["Select \[0\]: ", "(Spent|Earnt) \$([0-9.]+) on ([0-9/]+): (.+)\r\nCategory \[.*\]: "])
         if mode == 0:
             child.interact(escape_character=";", input_filter=iconvert, output_filter=oconvert) # Type ^ to return
             print("Exited interactive mode")
