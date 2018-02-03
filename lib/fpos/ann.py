@@ -597,11 +597,14 @@ class DynamicGroups(GroupProtocol):
         return ([], heap) if i is None else (heap[:i], heap[i:])
 
     def find_group(self, description):
+        print("Finding group for '{}'".format(description))
         grpbin = self._strgrp.grp_exact(description)
         if grpbin is not None:
+            print("Found exact match")
             return grpbin
 
         did = gen_id(description, salt)
+        print("Checking for associations of {}".format(did))
         if self.backend.have_association(did):
             cid = self.backend.get_canonical(did)
             print("Found existing association for {}: {}".format(did, cid))
@@ -611,13 +614,16 @@ class DynamicGroups(GroupProtocol):
             print("{} unpopulated, creating new group for '{}'".format(cid, description))
             return None
 
+        print("Found no association for {}".format(did))
         needles, haystack = self._split_heap(self._strgrp.grps_for(description))
         print(needles)
         if len(needles) == 0:
+            print("No needles, creating new group")
             return None
 
         dynamic = [n.is_dynamic(self._strgrp) for n in needles]
         if sum(dynamic) == 1:
+            print("Adding to one passing dynamic group")
             return needles[dynamic.index(True)]
 
         # Otherwise get user input
@@ -625,16 +631,23 @@ class DynamicGroups(GroupProtocol):
 
     def insert(self, description, value, group=None):
         did = gen_id(description, salt)
+        print("Inserting {} into {} group".format(did, "new" if not group else "existing"))
         if group:
             group.add(self._strgrp, description, value)
+            gid = gen_id(group.key(), salt)
+            cid = self.backend.get_canonical(gid);
             if not self.backend.have_association(did):
-                cid = gen_id(group.key(), salt)
+                print("Adding association for existing group: {}:{}".format(did, cid))
                 self.backend.associate(cid, did)
+            else:
+                print("Already have association: {}:{}".format(did, cid))
         else:
             group = self._strgrp.add(description, value)
             self.map[did] = description
             if not self.backend.have_association(did):
                 self.backend.associate(did, did)
+
+        assert self.backend.have_association(did)
 
         return group
 
