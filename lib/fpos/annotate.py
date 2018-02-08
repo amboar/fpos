@@ -155,8 +155,8 @@ def annotate(src, confirm=False):
                 if 4 == len(row):
                     # Fourth column is category, check that it's known
                     try:
-                        category = t.resolve_category(row[3])
                         group = t.find_group(cooked.description)
+                        category = t.resolve_category(row[3])
                         t.insert(cooked, category, group)
                     except ValueError:
                         # Category isn't known, output remains empty to

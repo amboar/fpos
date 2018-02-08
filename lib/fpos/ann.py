@@ -269,7 +269,6 @@ class FsAnnCollection(AnnCollection):
 
     def __init__(self, data_dir=None):
         super().__init__(self, data_dir)
-        print("FsAnnCollection")
         raise ValueError
 
     def __enter__(self):
@@ -590,7 +589,6 @@ class DynamicGroups(GroupProtocol):
 
         for i, grpbin in enumerate(heap):
             acceptable = grpbin.is_acceptible(self._strgrp)
-            print("{}: {}".format(grpbin.key(), acceptable))
             if not acceptable:
                 break
 
@@ -609,7 +607,6 @@ class DynamicGroups(GroupProtocol):
             return None
 
         needles, haystack = self._split_heap(self._strgrp.grps_for(description))
-        print(needles)
         if len(needles) == 0:
             return None
 
@@ -783,12 +780,10 @@ class CognitiveGroups(GroupProtocol):
                 self._train_negative(description, grp, candidates, hay)
 
     def find_group(self, description):
-        print("\nFinding group for '{}'".format(description))
         # Check for an exact match, don't need fuzzy behaviour if we have one
         grpbin = self._strgrp.grp_exact(description)
         if grpbin is not None:
             assert gen_id(grpbin.key(), salt) in self._grpanns
-            print("Existing group: Exact match")
             return grpbin
 
         # Check for an existing mapping on disk
@@ -798,10 +793,8 @@ class CognitiveGroups(GroupProtocol):
             cid = self._collection.get_canonical(did)
             if did in self._grpanns or cid in self._grpanns:
                 # Group is already loaded
-                print("Existing group: From on-disk NN mapping '{}'".format(self._grpanns[cid].description))
                 return self._strgrp.grp_exact(self._grpanns[cid].description)
             # Likely the result of a time-bounded window on the database
-            print("New group: Found on-disk NN mapping")
             return None
 
         # Use a binary output NN trained for each group to determine
@@ -814,7 +807,6 @@ class CognitiveGroups(GroupProtocol):
         hay = [ random.choice(list(grp)).key() for grp in hay ]
         l_needles = len(needles)
         if l_needles == 0:
-            print("New group: No needles in the haystack")
             return None
 
         # Score the description using each group's NN, to see if we find a
@@ -831,14 +823,11 @@ class CognitiveGroups(GroupProtocol):
             if all(ready):
                     i = passes.index(True)
                     self.train(description, needles[i], needles, hay)
-                    print("Existing group: All NNs ready, one matched")
                     return needles[i]
             elif all(ann.ready['reject'] for ann in anns):
-                    print("One passing while all reject")
                     i = passes.index(True)
                     if anns[i].is_ready():
                         self.train(description, needles[i], needles, hay)
-                        print("Existing group: passing group is ready, under all-reject")
                         return needles[i]
 
         print("scores: {}".format(scores))
@@ -854,14 +843,12 @@ class CognitiveGroups(GroupProtocol):
                 self.train(description, None, needles, hay)
                 for ann in anns:
                     ann.write()
-                print("New group: User provided answer")
                 return None
 
             # Otherwise, if the user confirmed membership of the description to a
             # candidate group, if the NN correctly predicted the membership then
             # mark it as ready to use
             self.train(description, match, needles, hay)
-            print("Existing group: User provided answer")
             return match
         except Exception as e:
             print(e)
@@ -872,7 +859,6 @@ class CognitiveGroups(GroupProtocol):
 
     def insert(self, description, data, grpbin):
         if grpbin is None:
-            print("New group for description '{}'".format(description))
             needles, hay = self._split_heap(self._strgrp.grps_for(description))
             hay = [ random.choice(list(grp)).key() for grp in hay ]
             key = gen_id(description, salt)
@@ -881,7 +867,6 @@ class CognitiveGroups(GroupProtocol):
             if key not in self._grpanns[key].accepted:
                 self._train_positive(description, grpbin, needles, hay)
         else:
-            print("Adding to group of '{}'".format(grpbin.key()))
             assert gen_id(grpbin.key(), salt) in self._grpanns
             grpbin.add(self._strgrp, description, data)
 
