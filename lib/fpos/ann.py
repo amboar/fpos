@@ -627,11 +627,12 @@ class DynamicGroups(GroupProtocol):
                 self.backend.associate(cid, did)
         else:
             group = self._strgrp.add(description, value)
-            self.map[did] = description
-            if not self.backend.have_association(did):
+            if self.backend.have_association(did):
+                cid = self.backend.get_canonical(did)
+                self.map[cid] = description
+            else:
+                self.map[did] = description
                 self.backend.associate(did, did)
-
-        assert self.backend.have_association(did)
 
         return group
 
