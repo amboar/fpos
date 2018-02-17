@@ -636,6 +636,9 @@ class DynamicGroups(GroupProtocol):
 
         return group
 
+    def add(self, description, value):
+        return self.insert(description, value, self.find_group(description))
+
 class CognitiveGroups(GroupProtocol):
     """ LOL """
     def __init__(self):

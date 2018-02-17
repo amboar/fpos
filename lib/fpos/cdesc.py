@@ -40,7 +40,7 @@ import re
 def cdesc(reader):
     with DynamicGroups() as grouper:
         for r in reader:
-            grouper.add(re.sub(r"\s{2,}", " ", row[2]), r)
+            grouper.add(r[2], r)
         return [ [ x.value() for x in g ] for g in grouper ]
 
 def main(args=None):
