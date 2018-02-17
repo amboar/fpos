@@ -23,7 +23,6 @@ import math
 from .core import categories
 from .core import money
 from .ann import CognitiveGroups, DynamicGroups
-from pprint import pprint
 
 cmd_description = \
         """Annotates transactions in an IR document with category information.
@@ -176,7 +175,6 @@ def annotate(src, confirm=False):
                 annotated.append(output)
         except EOFError:
             pass
-        pprint(t.dump())
     return annotated
 
 def main(args=None):
