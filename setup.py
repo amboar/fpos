@@ -37,16 +37,6 @@ pystrgrp = Extension('pystrgrp',
     optional = False
     )
 
-pygenann = Extension('pygenann',
-    include_dirs = ['ext'],
-    extra_compile_args = [ '-O3', '-fwrapv', '-Wall', '-Wstrict-prototypes', '-march=native', '-Dgenann_act=genann_act_sigmoid_cached' ],
-    sources = [
-        "ext/genann/genann.c",
-        "ext/pygenann.c"
-        ],
-    optional = False
-    )
-
 setup(name='fpos',
         version='0.2.2',
         description='Financial Position',
@@ -57,5 +47,5 @@ setup(name='fpos',
         package_dir={'' : 'lib'},
         package_data={'fpos' : [ 'propernames' ]},
         scripts=['bin/fpos'],
-        ext_modules = [ pystrgrp, pygenann ],
+        ext_modules = [ pystrgrp ],
         license='GPLv3')

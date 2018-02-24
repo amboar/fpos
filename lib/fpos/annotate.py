@@ -22,7 +22,7 @@ import collections
 import math
 from .core import categories
 from .core import money
-from .ann import CognitiveGroups, DynamicGroups
+from .ann import DynamicGroups
 
 cmd_description = \
         """Annotates transactions in an IR document with category information.
