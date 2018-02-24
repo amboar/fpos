@@ -3,6 +3,7 @@ PYTHON:=python3
 PIP:=pip3
 NOSETESTS_NAMES:=nosetests-3.5 nosetests-3.4 nosetests-3.3 nosetests3 nosetests
 NOSETESTS:=$(firstword $(foreach exec,$(NOSETESTS_NAMES),$(shell which $(exec) 2> /dev/null)))
+COVERAGE:=$(shell which coverage 2> /dev/null)
 VIRTUALENV:=virtualenv
 VE_NAME:=.venv
 
@@ -31,6 +32,11 @@ check:
 	$(if $(NOSETESTS),,$(error NOSETESTS is not defined, couldn\'t find any of $(NOSETESTS_NAMES)))
 	$(NOSETESTS)
 
+check-code-coverage:
+	$(if $(COVERAGE),,$(error COVERAGE is not defined))
+	$(COVERAGE) run --source=fpos lib/tests/__init__.py || true
+	$(COVERAGE) html
+
 upload:
 	$(PYTHON) setup.py $@ $(SETUP_FLAGS)
 
@@ -38,6 +44,7 @@ clean: SETUP_FLAGS+=--all
 clean:
 	$(RM) ext/config.h
 	$(PYTHON) setup.py $@ $(SETUP_FLAGS)
+	$(RM) -r .coverage htmlcov
 
 configure: ext/config.h
 
