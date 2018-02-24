@@ -26,7 +26,6 @@ import datetime
 import monthdelta
 
 from .visualise import PeriodGroup, extract_month, visualise
-from .cdesc import cdesc
 from .predict import group_deltas, group_delta_bins, icmf
 from .combine import combine
 
@@ -165,10 +164,16 @@ def generate_history(transactions):
             balances[d_month] = Balance(d_month, income, expenses)
     return History(last, balances)
 
+def basic_groups(transactions):
+    with DynamicGroups() as grouper:
+        for r in transactions:
+            if len(t) >= 4 and not t[3] == "Internal":
+                grouper.add(r[2], r)
+        return [ [ x.value() for x in g ] for g in grouper ]
+
 # glue function
 def generate_groups(transactions):
-    legacy = cdesc(t for t in transactions
-            if len(t) >= 4 and not t[3] == "Internal")
+    legacy = basic_groups(transactions)
     groups = []
     for g in legacy:
         if len(g) == 0:

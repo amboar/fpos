@@ -33,7 +33,6 @@ from .core import money
 from .core import date_fmt, month_fmt
 from .predict import forecast, graph_bar_cashflow, print_periodic_expenses, print_commitment_targets
 from .predict import print_forecast_expenses
-from .cdesc import cdesc
 
 cmd_description = \
         """Displays a number of graphs from an annotated IR document. The graphs include:
@@ -525,14 +524,20 @@ def graph_xy_progressive_mean(months, dailies, m_income, groups, dates):
     plt.xlim([min(xs) - 1, max(xs) + 1])
     plt.show()
 
+def basic_groups(transactions):
+    with DynamicGroups() as grouper:
+        for r in transactions:
+            if len(t) >= 4 and not t[3] == "Internal":
+                grouper.add(r[2], r)
+        return [ [ x.value() for x in g ] for g in grouper ]
+
 def visualise(table, current_date=False, graph=None, save=0, span=0):
     # Core data, used across multiple plots
     period_grouper = PeriodGroup(extract_month, extract_week, extract_day)
     for row in table:
         period_grouper.add(row)
     m_grouped, w_grouped, d_grouped = period_grouper.groups()
-    description_groups = cdesc(row for row in table
-            if len(row) >= 4 and not row[3] == "Internal")
+    description_groups = basic_groups(table)
 
     # m_summed: Looks like:
     #
