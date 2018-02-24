@@ -54,4 +54,4 @@ ext/config.h: ext/configurator
 ext/configurator: CFLAGS=-g3 -ggdb -Wall -Wstrict-prototypes -Wold-style-definition -Wmissing-prototypes -Wmissing-declarations -Wpointer-arith -Wwrite-strings -Wundef -DCCAN_STR_DEBUG=1
 ext/configurator: ext/configurator.o
 
-.PHONY: clean pip pip-$(VE_NAME) install install-user install-$(VE_NAME)
+.PHONY: clean pip pip-$(VE_NAME) install install-user install-$(VE_NAME) check check-code-coverage
