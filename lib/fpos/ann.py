@@ -16,43 +16,6 @@ def gen_id(description, salt):
     s.update(salt)
     return s.hexdigest()
 
-class AnnCollection(object):
-    def __init__(self, ann_id, data_dir=None):
-        self.data_dir = self.get_data_dir(data_dir)
-        self.ann_id = ann_id
-
-    def get_data_dir(self, data_dir=None):
-        if data_dir is None:
-            path = str(xdg.BaseDirectory.save_data_path("fpos"))
-        else:
-            path = data_dir
-        os.makedirs(path, exist_ok=True)
-        return path
-
-    def have_ann(self, did):
-        raise NotImplementedError
-
-    def is_canonical(self, did):
-        raise NotImplementedError
-
-    def get_canonical(self, did):
-        raise NotImplementedError
-
-    def load(self, did):
-        raise NotImplementedError
-
-    def load_metadata(self, did):
-        raise NotImplementedError
-
-    def store(self, did, ann):
-        raise NotImplementedError
-
-    def store_metadata(self, did, accept, reject, accepted):
-        raise NotImplementedError
-
-    def associate(self, cdid, adid):
-        raise NotImplementedError
-
 class GroupProtocol(object):
     def __enter__(self):
         raise NotImplementedError
