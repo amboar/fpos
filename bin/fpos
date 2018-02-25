@@ -27,7 +27,7 @@ from fpos import (annotate, combine, generate, transform, visualise, window,
         predict, db)
 
 _commands = (annotate, combine, generate, transform, visualise, window,
-        predict, cdesc, db)
+        predict, db)
 
 def parse_args():
     p = argparse.ArgumentParser()
