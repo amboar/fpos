@@ -171,6 +171,7 @@ class DynamicGroups(GroupProtocol):
 
         needles, haystack = self._split_heap(self._strgrp.grps_for(description))
         if len(needles) == 0:
+            print("No needles")
             return None
 
         dynamic = [n.is_dynamic(self._strgrp) for n in needles]

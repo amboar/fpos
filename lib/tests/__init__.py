@@ -1016,6 +1016,16 @@ class DynamicGroupsTest(unittest.TestCase):
             found = dg.find_group("a" * 9 + "b")
             self.assertIsNotNone(found)
             self.assertEquals(inserted.key(), found.key())
+        self.contain(test, size=1)
+
+    def test_find_group_static_fuzzy_old(self):
+        def test(tc, dg):
+            one = dg.insert("a" * 10, 'a')
+            self.assertIsNotNone(one)
+            two = dg.insert("a" * 9 + "b", 'b', one)
+            self.assertIsNotNone(two)
+            found = dg.find_group("a" * 9 + "b")
+            self.assertEquals(one.key(), found.key())
         self.contain(test, size=3)
 
     def test_find_group_dynamic_exact(self):
@@ -1036,6 +1046,19 @@ class DynamicGroupsTest(unittest.TestCase):
             self.assertIsNotNone(found)
             self.assertEquals(inserted.key(), found.key())
         self.contain(test, size=2)
+
+    def test_add_non_canonical_no_group(self):
+        def test(tc, dg):
+            inserted = dg.insert("a" * 10, 'a')
+            self.assertIsNotNone(inserted)
+            one = dg.insert("a" * 9 + "b", 'b', inserted)
+            self.assertIsNotNone(one)
+            two = dg.insert("a" * 9 + "b", 'b', None)
+            self.assertIsNotNone(two)
+            self.assertEquals(inserted.key(), one.key())
+            self.assertEquals(one.key(), two.key())
+            pass
+        self.contain(test, size=1)
 
 if __name__ == '__main__':
     unittest.main()
