@@ -33,6 +33,7 @@ from .core import money
 from .core import date_fmt, month_fmt
 from .predict import forecast, graph_bar_cashflow, print_periodic_expenses, print_commitment_targets
 from .predict import print_forecast_expenses
+from .ann import DynamicGroups
 
 cmd_description = \
         """Displays a number of graphs from an annotated IR document. The graphs include:
@@ -527,7 +528,7 @@ def graph_xy_progressive_mean(months, dailies, m_income, groups, dates):
 def basic_groups(transactions):
     with DynamicGroups() as grouper:
         for r in transactions:
-            if len(t) >= 4 and not t[3] == "Internal":
+            if len(r) >= 4 and not r[3] == "Internal":
                 grouper.add(r[2], r)
         return [ [ x.value() for x in g ] for g in grouper ]
 
