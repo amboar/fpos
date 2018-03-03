@@ -68,6 +68,8 @@ sense[(_DATE, _STRING, _NUMBER, _EMPTY, _NUMBER)] = "stgeorge"
 
 sense[(_DATE, _NUMBER, _NUMBER, _EMPTY, _STRING, _STRING, _NUMBER)] = "nab"
 sense[(_DATE, _NUMBER, _EMPTY, _EMPTY, _STRING, _EMPTY, _NUMBER)] = "nab"
+sense[(_DATE, _NUMBER, _EMPTY, _EMPTY, _STRING, _EMPTY, _NUMBER)] = "nab"
+sense[(_DATE, _NUMBER, _EMPTY, _EMPTY, _STRING, _STRING, _NUMBER)] = "nab"
 sense[(_DATE, _NUMBER, _NUMBER, _EMPTY, _STRING, _STRING, _NUMBER, _EMPTY)] = "nab"
 sense[(_DATE, _NUMBER, _EMPTY, _EMPTY, _STRING, _STRING, _NUMBER, _EMPTY)] = "nab"
 sense[(_DATE, _NUMBER, _EMPTY, _EMPTY, _STRING, _EMPTY, _NUMBER, _EMPTY)] = "nab"
