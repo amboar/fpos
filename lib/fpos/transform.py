@@ -174,6 +174,7 @@ def transform_stgeorge(csv, args=None):
     return _gen()
 
 _nab_date_fmt = "%d-%b-%y"
+_nab_2018_date_fmt = "%d %b %y"
 
 def transform_nab(csv, args=None):
     # NAB format:
@@ -183,14 +184,15 @@ def transform_nab(csv, args=None):
     def _gen():
         for l in csv:
             if l:
-                ir_date = datetime.strptime(l[0], _nab_date_fmt).strftime(date_fmt)
+                try:
+                    ir_date = datetime.strptime(l[0], _nab_date_fmt).strftime(date_fmt)
+                except ValueError:
+                    ir_date = datetime.strptime(l[0], _nab_2018_date_fmt).strftime(date_fmt)
                 ir_amount = money(float(l[1]))
                 ir_description = " ".join(e for e in l[4:6] if (e is not None and "" != e ))
                 yield [ ir_date, ir_amount, ir_description ]
     return _gen()
 
-
-_nab_2018_date_fmt = "%d %b %y"
 
 def transform_nab_2018(csv, args=None):
     # NAB 2018 format:
