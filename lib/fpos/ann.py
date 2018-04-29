@@ -155,7 +155,7 @@ class DynamicGroups(GroupProtocol):
             if not acceptable:
                 break
 
-        return ([], heap) if i is None else (heap[:i], heap[i:])
+        return ([], heap) if i is None else (heap[:(i + 1)], heap[(i + 1):])
 
     def find_group(self, description):
         grpbin = self._strgrp.grp_exact(description)
