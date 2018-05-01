@@ -46,6 +46,10 @@ strgrp_grp_exact(struct strgrp *ctx, const char *str);
 struct heap *
 strgrp_grps_for(struct strgrp *ctx, const char *str);
 
+bool
+strgrp_grp_is_acceptible(const struct strgrp *ctx,
+			 const struct strgrp_grp *grp);
+
 /* Implicitly accept()s */
 bool
 strgrp_grp_add(struct strgrp_grp *grp, const char *str, void *data);

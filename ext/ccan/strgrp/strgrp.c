@@ -366,6 +366,12 @@ strgrp_grps_for(struct strgrp *const ctx, const char *const str) {
 }
 
 bool
+strgrp_grp_is_acceptible(const struct strgrp *ctx,
+                         const struct strgrp_grp *grp) {
+    return grp->score >= ctx->threshold;
+}
+
+bool
 strgrp_grp_add(struct strgrp_grp *grp, const char *str, void *data)
 {
      if (!add_item(grp, str, data))
