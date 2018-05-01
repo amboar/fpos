@@ -377,6 +377,11 @@ strgrp_grp_is_acceptible(const struct strgrp *ctx,
     return grp->score >= 0;
 }
 
+bool
+strgrp_grp_is_dynamic(const struct strgrp *ctx, const struct strgrp_grp *grp) {
+    return ctx->size > 0 && grp->n_items >= ctx->size;
+}
+
 ssize_t
 strgrp_grp_size(const struct strgrp_grp *grp) {
     return grp->n_items;
