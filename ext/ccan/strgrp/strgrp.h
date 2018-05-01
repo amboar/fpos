@@ -50,9 +50,11 @@ bool
 strgrp_grp_is_acceptible(const struct strgrp *ctx,
 			 const struct strgrp_grp *grp);
 
-/* Implicitly accept()s */
 bool
 strgrp_grp_add(struct strgrp_grp *grp, const char *str, void *data);
+
+struct strgrp_grp *
+strgrp_grp_new(struct strgrp *ctx, const char *str, void *data);
 
 /**
  * Add a string key and arbitrary data value (together, an item) to the

@@ -371,13 +371,22 @@ strgrp_grp_is_acceptible(const struct strgrp *ctx,
     return grp->score >= ctx->threshold;
 }
 
+struct strgrp_grp *
+strgrp_grp_new(struct strgrp *ctx, const char *str, void *data) {
+    struct strgrp_grp *pick = add_grp(ctx, str, data);
+    if (pick) {
+        cache(ctx, pick, str);
+    }
+    return pick;
+}
+
 bool
 strgrp_grp_add(struct strgrp_grp *grp, const char *str, void *data)
 {
-     if (!add_item(grp, str, data))
-         return false;
+    if (!add_item(grp, str, data))
+        return false;
 
-     return true;
+    return true;
 }
 
 struct strgrp_grp *
