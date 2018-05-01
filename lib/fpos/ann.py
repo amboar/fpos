@@ -267,7 +267,7 @@ class CognitiveStrgrp(object):
             grpbin = self._strgrp.grp_new(description, data)
             self._grpanns[grpbin] = DescriptionAnn.load(grpbin.key())
         else:
-            group.add(description, data)
+            group.add(self._strgrp, description, data)
 
     def add(self, description, data):
         self.insert(description, data, self.find_group(description))

@@ -138,26 +138,7 @@ static PyObject *
 Grp_is_acceptible(GrpObject *self, PyObject *args);
 
 static PyObject *
-Grp_add(GrpObject *self, PyObject *args, PyObject *kwds) {
-    char *key;
-    PyObject *data = NULL;
-    static char *kwlist[] = { "key", "data", NULL };
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "sO", kwlist, &key, &data)) {
-        return NULL;
-    }
-
-    if (!data) {
-        return NULL;
-    }
-
-    const bool added = strgrp_grp_add(self->grp, key, data);
-    if (added) {
-        Py_INCREF(data);
-        Py_RETURN_TRUE;
-    }
-
-    Py_RETURN_FALSE;
-}
+Grp_add(GrpObject *self, PyObject *args, PyObject *kwds);
 
 static PyMethodDef Grp_methods[] = {
     { "key", (PyCFunction)Grp_key, METH_NOARGS,
@@ -237,6 +218,33 @@ Grp_is_acceptible(GrpObject *self, PyObject *args) {
     Py_XINCREF(py_acceptible);
 
     return py_acceptible;
+}
+
+static PyObject *
+Grp_add(GrpObject *self, PyObject *args, PyObject *kwds) {
+    PyObject *py_ctx = NULL;
+    PyObject *data = NULL;
+    struct strgrp *ctx;
+    char *key;
+
+    static char *kwlist[] = { "ctx", "key", "data", NULL };
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "OsO", kwlist, &py_ctx, &key, &data)) {
+        return NULL;
+    }
+
+    if (!data) {
+        return NULL;
+    }
+
+    ctx = ((StrgrpObject *)py_ctx)->grp;
+
+    const bool added = strgrp_grp_add(ctx, self->grp, key, data);
+    if (added) {
+        Py_INCREF(data);
+        Py_RETURN_TRUE;
+    }
+
+    Py_RETURN_FALSE;
 }
 
 static PyObject *
