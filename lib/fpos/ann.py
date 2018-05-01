@@ -590,9 +590,8 @@ class CognitiveStrgrp(object):
             self._train_positive(description, pick, candidates, hay)
 
         for grp in candidates:
-            if grp is pick:
-                continue
-            self._train_negative(description, grp, candidates, hay)
+            if grp is not pick:
+                self._train_negative(description, grp, candidates, hay)
 
     def find_group(self, description):
         print("\nFinding group for '{}'".format(description))
