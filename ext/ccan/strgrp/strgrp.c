@@ -381,10 +381,13 @@ strgrp_grp_new(struct strgrp *ctx, const char *str, void *data) {
 }
 
 bool
-strgrp_grp_add(struct strgrp_grp *grp, const char *str, void *data)
+strgrp_grp_add(struct strgrp *ctx, struct strgrp_grp *grp, const char *str,
+               void *data)
 {
     if (!add_item(grp, str, data))
         return false;
+
+    cache(ctx, grp, str);
 
     return true;
 }

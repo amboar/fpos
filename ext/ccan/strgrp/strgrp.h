@@ -51,7 +51,8 @@ strgrp_grp_is_acceptible(const struct strgrp *ctx,
 			 const struct strgrp_grp *grp);
 
 bool
-strgrp_grp_add(struct strgrp_grp *grp, const char *str, void *data);
+strgrp_grp_add(struct strgrp *ctx, struct strgrp_grp *grp, const char *str,
+               void *data);
 
 struct strgrp_grp *
 strgrp_grp_new(struct strgrp *ctx, const char *str, void *data);
