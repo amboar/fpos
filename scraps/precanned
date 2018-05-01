@@ -1,0 +1,46 @@
+#!/usr/bin/python3
+
+import pexpect
+import sys
+import subprocess
+import argparse
+import csv
+
+def oconvert(x):
+    return x.encode()
+
+def iconvert(x):
+    return x.decode()
+
+def main(args):
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-r", "--reference", dest='ref')
+    parser.add_argument("command", nargs="+")
+    args = parser.parse_args(args)
+    child = pexpect.spawn(" ".join(args.command), encoding='utf-8')
+    child.logfile=sys.stdout
+    while True:
+        mode = child.expect(["Select \[0\]: ", "(Spent|Earnt) \$([0-9.]+) on ([0-9/]+): (.+)\nCategory \[.*\]: "])
+        if mode == 0:
+            child.interact(escape_character=";", input_filter=iconvert, output_filter=oconvert) # Type ^ to return
+            print("Exited interactive mode")
+            child.sendline("")
+        else:
+            assert mode == 1
+            sign = -1 if child.match.group(1) == "Spent" else 1
+            amount = sign * float(child.match.group(2))
+            date = child.match.group(3).strip()
+            desc = child.match.group(4).strip()
+            desc = desc.replace("$", "\\$")
+            if ',' in desc:
+                desc = '\\"{}\\"'.format(desc)
+            spcmd = "fgrep \"{},{:.2f},{}\" '{}' | head -n 1".format(date, amount, desc, args.ref)
+            print(spcmd)
+            with subprocess.Popen(spcmd, shell=True, stdout=subprocess.PIPE) as proc:
+                l = proc.stdout.read().decode()
+                print("Line: {}".format(l))
+                r = csv.reader([l], dialect="excel")
+                child.sendline(next(r)[3])
+
+if __name__ == "__main__":
+    main(sys.argv[1:])
