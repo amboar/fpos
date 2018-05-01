@@ -224,16 +224,16 @@ static PyObject *
 Grp_is_acceptible(GrpObject *self, PyObject *args) {
     PyObject *py_ctx = NULL;
     struct strgrp *ctx;
-    bool acceptible;
+    long acceptible;
 
-    if (!PyArg_ParseTuple(args, "O", &ctx)) {
+    if (!PyArg_ParseTuple(args, "O", &py_ctx)) {
         return NULL;
     }
 
     /* YOLO !? */
-    ctx = ((StrgrpObject *)py_ctx)->grp;
+    ctx = ((StrgrpObject *)(py_ctx))->grp;
     acceptible = strgrp_grp_is_acceptible(ctx, self->grp);
-    PyObject *py_acceptible = Py_BuildValue("p", acceptible);
+    PyObject *py_acceptible = PyBool_FromLong(acceptible);
     Py_XINCREF(py_acceptible);
 
     return py_acceptible;
@@ -286,6 +286,30 @@ Strgrp_grp_for(StrgrpObject *self, PyObject *args, PyObject *kwds) {
     struct strgrp_grp * grp = strgrp_grp_for(self->grp, key);
     if (!grp) {
         Py_RETURN_NONE;
+    }
+    GrpObject * const grpobj = (GrpObject *)PyType_GenericNew(&GrpType, NULL, NULL);
+    if (!grpobj) {
+        return PyErr_NoMemory();
+    }
+    grpobj->grp = grp;
+    return (PyObject *)grpobj;
+}
+
+static PyObject *
+Strgrp_grp_new(StrgrpObject *self, PyObject *args, PyObject *kwds) {
+    char *key;
+    PyObject *data = NULL;
+    static char *kwlist[] = { "key", "data", NULL };
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "sO", kwlist, &key, &data)) {
+        return NULL;
+    }
+    if (!data) {
+        return NULL;
+    }
+    Py_INCREF(data);
+    struct strgrp_grp *grp = strgrp_grp_new(self->grp, key, data);
+    if (!grp) {
+        return PyErr_NoMemory();
     }
     GrpObject * const grpobj = (GrpObject *)PyType_GenericNew(&GrpType, NULL, NULL);
     if (!grpobj) {
@@ -388,7 +412,7 @@ Strgrp_grps_for(StrgrpObject *self, PyObject *args, PyObject *kwds) {
 
     struct strgrp_grp *grp;
     Py_ssize_t i;
-    for (i = 0; (grp = heap_pop(heap)); i++) {
+    for (i = 0; heap->len && (grp = heap_pop(heap)); i++) {
         GrpObject *const grpobj = (GrpObject *)PyType_GenericNew(&GrpType, NULL, NULL);
         if (!grpobj) {
             goto cleanup_tuple;
@@ -419,12 +443,14 @@ cleanup_heap:
 static PyMethodDef Strgrp_methods[] = {
     { "add", (PyCFunction)Strgrp_add, (METH_VARARGS | METH_KEYWORDS),
         "Cluster a string" },
+    { "grp_new", (PyCFunction)Strgrp_grp_new, (METH_VARARGS | METH_KEYWORDS),
+        "Cluster a string" },
     { "grp_for", (PyCFunction)Strgrp_grp_for, (METH_VARARGS | METH_KEYWORDS),
         "Find a cluster for a string, if one exists" },
     { "grp_exact", (PyCFunction)Strgrp_grp_exact,
         (METH_VARARGS | METH_KEYWORDS), "Find group by exact match" },
     { "grps_for", (PyCFunction)Strgrp_grps_for, (METH_VARARGS | METH_KEYWORDS),
-        "Provide a tuple of grouops ordered by match score descending" },
+        "Provide a tuple of groups ordered by match score descending" },
     {NULL}
 };
 
