@@ -333,7 +333,10 @@ grp_update_threshold(struct strgrp_grp *grp) {
 	}
     }
 
-    grp->threshold = low - 0.05;
+    /* Tweak the dynamic threshold to allow slightly more difference */
+    //grp->threshold = low - 0.05;
+    grp->threshold = low;
+    printf("%s:%lf\n", grp->key, grp->threshold);
 }
 
 bool
@@ -344,7 +347,6 @@ strgrp_grp_is_acceptible_dynamic(const struct strgrp *ctx,
 	grp->dirty = false;
     }
 
-    /* Tweak the dynamic threshold to allow slightly more difference */
     return grp->score >= grp->threshold;
 }
 
