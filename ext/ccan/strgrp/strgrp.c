@@ -269,7 +269,7 @@ grps_score(struct strgrp *const ctx, const char *const str) {
         struct strgrp_grp *grp = darray_item(ctx->grps, i);
         grp->score = 0.0;
         if (should_grp_score_len(ctx, grp, str)) {
-            if (should_grp_score_cos(ctx, grp, str)) {
+            if (true /* should_grp_score_cos(ctx, grp, str) */) {
                 grp->score = grp_score(grp, str);
             }
         }
