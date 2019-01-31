@@ -84,7 +84,7 @@ static PyTypeObject ItemType = {
 
 typedef struct {
     PyObject_HEAD;
-    const struct strgrp_grp *grp;
+    struct strgrp_grp *grp;
     struct strgrp_grp_iter *iter;
 } GrpObject;
 
@@ -134,9 +134,34 @@ Grp_key(GrpObject *self) {
     return py_key;
 }
 
+static PyObject *
+Grp_size(GrpObject *self) {
+    const ssize_t size = strgrp_grp_size(self->grp);
+    PyObject *py_size = PyLong_FromSsize_t(size);
+    Py_XINCREF(py_size);
+    return py_size;
+}
+
+static PyObject *
+Grp_is_acceptible(GrpObject *self, PyObject *args);
+
+static PyObject *
+Grp_is_dynamic(GrpObject *self, PyObject *args);
+
+static PyObject *
+Grp_add(GrpObject *self, PyObject *args, PyObject *kwds);
+
 static PyMethodDef Grp_methods[] = {
     { "key", (PyCFunction)Grp_key, METH_NOARGS,
         "Fetch the description stored in the item" },
+    { "size", (PyCFunction)Grp_size, METH_NOARGS,
+        "Query the size of the group" },
+    { "is_acceptible", (PyCFunction)Grp_is_acceptible, METH_VARARGS,
+        "Test whether the group passes the threshold for the query string" },
+    { "is_dynamic", (PyCFunction)Grp_is_dynamic, METH_VARARGS,
+        "Test whether the group uses a dynamic threshold for scoring" },
+    { "add", (PyCFunction)Grp_add, (METH_VARARGS | METH_KEYWORDS),
+        "Add a string and its associated data to a group" },
     {NULL}
 };
 
@@ -192,6 +217,71 @@ typedef struct {
 } StrgrpObject;
 
 static PyObject *
+Grp_is_acceptible(GrpObject *self, PyObject *args) {
+    PyObject *py_ctx = NULL;
+    struct strgrp *ctx;
+    long acceptible;
+
+    if (!PyArg_ParseTuple(args, "O", &py_ctx)) {
+        return NULL;
+    }
+
+    /* YOLO !? */
+    ctx = ((StrgrpObject *)(py_ctx))->grp;
+    acceptible = strgrp_grp_is_acceptible(ctx, self->grp);
+    PyObject *py_acceptible = PyBool_FromLong(acceptible);
+    Py_XINCREF(py_acceptible);
+
+    return py_acceptible;
+}
+
+static PyObject *
+Grp_is_dynamic(GrpObject *self, PyObject *args) {
+    PyObject *py_ctx = NULL;
+    struct strgrp *ctx;
+    long dynamic;
+
+    if (!PyArg_ParseTuple(args, "O", &py_ctx)) {
+        return NULL;
+    }
+
+    /* YOLO !? */
+    ctx = ((StrgrpObject *)(py_ctx))->grp;
+    dynamic = strgrp_grp_is_dynamic(ctx, self->grp);
+    PyObject *py_dynamic = PyBool_FromLong(dynamic);
+    Py_XINCREF(py_dynamic);
+
+    return py_dynamic;
+}
+
+static PyObject *
+Grp_add(GrpObject *self, PyObject *args, PyObject *kwds) {
+    PyObject *py_ctx = NULL;
+    PyObject *data = NULL;
+    struct strgrp *ctx;
+    char *key;
+
+    static char *kwlist[] = { "ctx", "key", "data", NULL };
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "OsO", kwlist, &py_ctx, &key, &data)) {
+        return NULL;
+    }
+
+    if (!data) {
+        return NULL;
+    }
+
+    ctx = ((StrgrpObject *)py_ctx)->grp;
+
+    const bool added = strgrp_grp_add(ctx, self->grp, key, data);
+    if (added) {
+        Py_INCREF(data);
+        Py_RETURN_TRUE;
+    }
+
+    Py_RETURN_FALSE;
+}
+
+static PyObject *
 Strgrp_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 {
     StrgrpObject *self = (StrgrpObject *)type->tp_alloc(type, 0);
@@ -204,12 +294,13 @@ Strgrp_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 
 static int
 Strgrp_init(StrgrpObject *self, PyObject *args, PyObject *kwds) {
+    int size = 0;
     double threshold = self->thresh;
-    static char *kwlist[] = {"threshold", NULL};
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|d", kwlist, &threshold)) {
+    static char *kwlist[] = {"threshold", "size", NULL};
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "|di", kwlist, &threshold, &size)) {
         return -1;
     }
-    self->grp = strgrp_new(threshold);
+    self->grp = strgrp_new_dynamic(threshold, size);
     if (!self->grp) {
         return -1;
     }
@@ -235,9 +326,33 @@ Strgrp_grp_for(StrgrpObject *self, PyObject *args, PyObject *kwds) {
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "s", kwlist, &key)) {
         return NULL;
     }
-    const struct strgrp_grp * grp = strgrp_grp_for(self->grp, key);
+    struct strgrp_grp * grp = strgrp_grp_for(self->grp, key);
     if (!grp) {
         Py_RETURN_NONE;
+    }
+    GrpObject * const grpobj = (GrpObject *)PyType_GenericNew(&GrpType, NULL, NULL);
+    if (!grpobj) {
+        return PyErr_NoMemory();
+    }
+    grpobj->grp = grp;
+    return (PyObject *)grpobj;
+}
+
+static PyObject *
+Strgrp_grp_new(StrgrpObject *self, PyObject *args, PyObject *kwds) {
+    char *key;
+    PyObject *data = NULL;
+    static char *kwlist[] = { "key", "data", NULL };
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "sO", kwlist, &key, &data)) {
+        return NULL;
+    }
+    if (!data) {
+        return NULL;
+    }
+    Py_INCREF(data);
+    struct strgrp_grp *grp = strgrp_grp_new(self->grp, key, data);
+    if (!grp) {
+        return PyErr_NoMemory();
     }
     GrpObject * const grpobj = (GrpObject *)PyType_GenericNew(&GrpType, NULL, NULL);
     if (!grpobj) {
@@ -259,7 +374,7 @@ Strgrp_add(StrgrpObject *self, PyObject *args, PyObject *kwds) {
         return NULL;
     }
     Py_INCREF(data);
-    const struct strgrp_grp * grp = strgrp_add(self->grp, key, data);
+    struct strgrp_grp * grp = strgrp_add(self->grp, key, data);
     if (!grp) {
         return PyErr_NoMemory();
     }
@@ -300,11 +415,85 @@ Strgrp_iternext(StrgrpObject *self) {
     return (PyObject *)grp;
 }
 
+static PyObject *
+Strgrp_grp_exact(StrgrpObject *self, PyObject *args, PyObject *kwds) {
+    char *key;
+    static char *kwlist[] = { "key", NULL };
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "s", kwlist, &key)) {
+        return NULL;
+    }
+    struct strgrp_grp * grp = strgrp_grp_exact(self->grp, key);
+    if (!grp) {
+        Py_RETURN_NONE;
+    }
+    GrpObject * const grpobj = (GrpObject *)PyType_GenericNew(&GrpType, NULL, NULL);
+    if (!grpobj) {
+        return PyErr_NoMemory();
+    }
+    grpobj->grp = grp;
+    return (PyObject *)grpobj;
+}
+
+static PyObject *
+Strgrp_grps_for(StrgrpObject *self, PyObject *args, PyObject *kwds) {
+    char *key;
+    static char *kwlist[] = { "key", NULL };
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "s", kwlist, &key)) {
+        return NULL;
+    }
+
+    struct heap *heap = strgrp_grps_for(self->grp, key);
+    if (!heap) {
+        Py_RETURN_NONE;
+    }
+
+    PyObject *tupleobj = PyTuple_New(heap->len);
+    if (!tupleobj) {
+        PyErr_NoMemory();
+        goto cleanup_heap;
+    }
+
+    struct strgrp_grp *grp;
+    Py_ssize_t i;
+    for (i = 0; heap->len && (grp = heap_pop(heap)); i++) {
+        GrpObject *const grpobj = (GrpObject *)PyType_GenericNew(&GrpType, NULL, NULL);
+        if (!grpobj) {
+            goto cleanup_tuple;
+        }
+        grpobj->grp = grp;
+        if (PyTuple_SetItem(tupleobj, i, (PyObject *)grpobj)) {
+            Py_XDECREF((PyObject *)grpobj);
+            goto cleanup_tuple;
+        };
+    }
+
+    heap_free(heap);
+
+    return (PyObject *)tupleobj;
+
+cleanup_tuple:
+    while (--i >= 0) {
+        Py_XDECREF((PyObject *)PyTuple_GetItem(tupleobj, i));
+    }
+    Py_XDECREF((PyObject *)tupleobj);
+
+cleanup_heap:
+    heap_free(heap);
+
+    return NULL;
+}
+
 static PyMethodDef Strgrp_methods[] = {
     { "add", (PyCFunction)Strgrp_add, (METH_VARARGS | METH_KEYWORDS),
         "Cluster a string" },
+    { "grp_new", (PyCFunction)Strgrp_grp_new, (METH_VARARGS | METH_KEYWORDS),
+        "Cluster a string" },
     { "grp_for", (PyCFunction)Strgrp_grp_for, (METH_VARARGS | METH_KEYWORDS),
         "Find a cluster for a string, if one exists" },
+    { "grp_exact", (PyCFunction)Strgrp_grp_exact,
+        (METH_VARARGS | METH_KEYWORDS), "Find group by exact match" },
+    { "grps_for", (PyCFunction)Strgrp_grps_for, (METH_VARARGS | METH_KEYWORDS),
+        "Provide a tuple of groups ordered by match score descending" },
     {NULL}
 };
 
