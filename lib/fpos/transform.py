@@ -24,8 +24,9 @@ import dateutil.parser as dp
 from .core import money
 from .core import date_fmt
 from itertools import chain
+import re
 
-transform_choices = sorted([ "auto", "anz", "commbank", "stgeorge", "nab", "bankwest", "woolworths" ])
+transform_choices = sorted([ "auto", "anz", "commbank", "stgeorge", "nab", "nab-2018", "bankwest", "woolworths" ])
 cmd_description = \
         """Not all bank CSV exports are equal. fpos defines an intermediate
         representation (IR) which each of the tools expect as input to eventually
@@ -66,9 +67,14 @@ sense[(_DATE, _STRING, _EMPTY, _NUMBER, _NUMBER)] = "stgeorge"
 sense[(_DATE, _STRING, _NUMBER, _EMPTY, _NUMBER)] = "stgeorge"
 
 sense[(_DATE, _NUMBER, _NUMBER, _EMPTY, _STRING, _STRING, _NUMBER)] = "nab"
+sense[(_DATE, _NUMBER, _EMPTY, _EMPTY, _STRING, _EMPTY, _NUMBER)] = "nab"
+sense[(_DATE, _NUMBER, _EMPTY, _EMPTY, _STRING, _EMPTY, _NUMBER)] = "nab"
+sense[(_DATE, _NUMBER, _EMPTY, _EMPTY, _STRING, _STRING, _NUMBER)] = "nab"
 sense[(_DATE, _NUMBER, _NUMBER, _EMPTY, _STRING, _STRING, _NUMBER, _EMPTY)] = "nab"
 sense[(_DATE, _NUMBER, _EMPTY, _EMPTY, _STRING, _STRING, _NUMBER, _EMPTY)] = "nab"
 sense[(_DATE, _NUMBER, _EMPTY, _EMPTY, _STRING, _EMPTY, _NUMBER, _EMPTY)] = "nab"
+
+sense[(_DATE, _STRING, _EMPTY, _EMPTY, _STRING, _STRING, _STRING)] = "nab-2018"
 
 sense[(_EMPTY, _NUMBER, _DATE, _STRING, _NUMBER, _EMPTY, _EMPTY, _NUMBER, _STRING)] = "bankwest"
 sense[(_EMPTY, _NUMBER, _DATE, _STRING, _EMPTY, _NUMBER, _EMPTY, _NUMBER, _STRING)] = "bankwest"
@@ -168,6 +174,7 @@ def transform_stgeorge(csv, args=None):
     return _gen()
 
 _nab_date_fmt = "%d-%b-%y"
+_nab_2018_date_fmt = "%d %b %y"
 
 def transform_nab(csv, args=None):
     # NAB format:
@@ -177,8 +184,33 @@ def transform_nab(csv, args=None):
     def _gen():
         for l in csv:
             if l:
-                ir_date = datetime.strptime(l[0], _nab_date_fmt).strftime(date_fmt)
+                try:
+                    ir_date = datetime.strptime(l[0], _nab_date_fmt).strftime(date_fmt)
+                except ValueError:
+                    ir_date = datetime.strptime(l[0], _nab_2018_date_fmt).strftime(date_fmt)
                 ir_amount = money(float(l[1]))
+                ir_description = " ".join(e for e in l[4:6] if (e is not None and "" != e ))
+                yield [ ir_date, ir_amount, ir_description ]
+    return _gen()
+
+
+def transform_nab_2018(csv, args=None):
+    # NAB 2018 format:
+    #
+    # Date, Amount,,,Transfer Type, Description, Remaining Balance
+    # "07 Feb 18","-12.00",,,"TRANSFER DEBIT","INTERNET TRANSFER   Lunch","+500.00"
+    #
+    # The date format is different to 2018, and there's one less column. Also
+    # flips the bird to data types, everything is a string. And now
+    # currency-style value formatting means locale-specific separators such as
+    # ',' get in the way of parsing the transaction value.
+    def _gen():
+        for l in csv:
+            if l:
+                ir_date = datetime.strptime(l[0], _nab_2018_date_fmt).strftime(date_fmt)
+                # Deal with currency-style strings by cutting out everything
+                # except the sign, digits the decimal point
+                ir_amount = money(float(re.sub(r'[^\d.+-]', '', l[1])))
                 ir_description = " ".join(e for e in l[4:6] if (e is not None and "" != e ))
                 yield [ ir_date, ir_amount, ir_description ]
     return _gen()
@@ -231,7 +263,7 @@ def parse_args(subparser=None):
 
 def transform(form, source, confirm=False):
     assert form in transform_choices, "form {} not in {}".format(form, transform_choices)
-    t = globals()["transform_{}".format(form)]
+    t = globals()["transform_{}".format(form.replace("-", "_"))]
     g = (e for e in source if len(e) > 0 and not e[0].startswith("#"))
     if "auto" == form:
         return t(g, confirm)
