@@ -1,0 +1,36 @@
+#!/usr/bin/python3
+
+import pexpect
+import sys
+import subprocess
+import argparse
+import csv
+
+def oconvert(x):
+    return x.encode()
+
+def iconvert(x):
+    return x.decode()
+
+def drive(ref, cmd):
+    child = pexpect.spawn(cmd, encoding='utf-8')
+    child.logfile=sys.stdout
+    while True:
+        mode = child.expect(["Select \[0\]: ", "Category \[.*\]: "])
+        if mode == 0:
+            child.interact(escape_character=";", input_filter=iconvert, output_filter=oconvert) # Type ^ to return
+            print("Exited interactive mode")
+            child.sendline("junk")
+        else:
+            child.sendline(next(ref)[3])
+
+def main(args):
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-r", "--reference", dest='ref')
+    parser.add_argument("command", nargs="+")
+    args = parser.parse_args(args)
+    with open(args.ref, 'r') as ref:
+        drive(csv.reader(ref, dialect="excel"), " ".join(args.command))
+
+if __name__ == "__main__":
+    main(sys.argv[1:])
