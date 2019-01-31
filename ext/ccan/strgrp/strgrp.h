@@ -3,6 +3,7 @@
 #ifndef STRGRP_H
 #define STRGRP_H
 #include <stdbool.h>
+#include "ccan/heap/heap.h"
 
 struct strgrp;
 struct strgrp_iter;
@@ -23,6 +24,19 @@ struct strgrp *
 strgrp_new(double threshold);
 
 /**
+ * Constructs a new strgrp instance, with self-thresholding groups
+ * @threshold: A value in [0.0, 1.0] describing the desired similarity of
+ *     strings in a cluster
+ * @size: The minimum size of a group before self-thresholding is used
+ *
+ * @return A heap-allocated strgrp instance, or NULL if initialisation fails.
+ * Ownership of the pointer resides with the caller, which must be freed with
+ * strgrp_free.
+ */
+struct strgrp *
+strgrp_new_dynamic(double threshold, int size);
+
+/**
  * Find a group which best matches the provided string key.
  * @ctx: The strgrp instance to search
  * @str: The string key to cluster
@@ -34,8 +48,34 @@ strgrp_new(double threshold);
  * of the returned pointer resides with the strgrp instance and it becomes
  * invalid if the strgrp instance is freed.
  */
-const struct strgrp_grp *
+struct strgrp_grp *
 strgrp_grp_for(struct strgrp *ctx, const char *str);
+
+/* If a group with a literal string match exist then return it, otherwise NULL */
+struct strgrp_grp *
+strgrp_grp_exact(struct strgrp *ctx, const char *str);
+
+/* Unconditionally score all groups, and provide a heap using the scores */
+struct heap *
+strgrp_grps_for(struct strgrp *ctx, const char *str);
+
+bool
+strgrp_grp_is_acceptible(const struct strgrp *ctx,
+			 struct strgrp_grp *grp);
+
+bool
+strgrp_grp_is_dynamic(const struct strgrp *ctx,
+	              const struct strgrp_grp *grp);
+
+ssize_t
+strgrp_grp_size(const struct strgrp_grp *grp);
+
+bool
+strgrp_grp_add(struct strgrp *ctx, struct strgrp_grp *grp, const char *str,
+               void *data);
+
+struct strgrp_grp *
+strgrp_grp_new(struct strgrp *ctx, const char *str, void *data);
 
 /**
  * Add a string key and arbitrary data value (together, an item) to the
@@ -52,7 +92,7 @@ strgrp_grp_for(struct strgrp *ctx, const char *str);
  * pointer resides with the strgrp instance and it becomes invalid if the
  * strgrp instance is freed.
  */
-const struct strgrp_grp *
+struct strgrp_grp *
 strgrp_add(struct strgrp *ctx, const char *str, void *data);
 
 /**
@@ -76,7 +116,7 @@ strgrp_iter_new(struct strgrp *ctx);
  * Ownership of the returned pointer resides with the strgrp instance and
  * becomes invalid if the strgrp instance is freed.
  */
-const struct strgrp_grp *
+struct strgrp_grp *
 strgrp_iter_next(struct strgrp_iter *iter);
 
 /**
