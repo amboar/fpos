@@ -3,6 +3,8 @@ PYTHON:=python3
 PIP:=pip3
 NOSETESTS_NAMES:=nosetests-3.5 nosetests-3.4 nosetests-3.3 nosetests3 nosetests
 NOSETESTS:=$(firstword $(foreach exec,$(NOSETESTS_NAMES),$(shell which $(exec) 2> /dev/null)))
+COVERAGE_NAMES:=python3-coverage python3.6-coverage python3.7-coverage coverage
+COVERAGE:=$(firstword $(foreach exec,$(COVERAGE_NAMES),$(shell which $(exec) 2> /dev/null)))
 VIRTUALENV:=virtualenv
 VE_NAME:=ve
 
@@ -31,6 +33,11 @@ check:
 	$(if $(NOSETESTS),,$(error NOSETESTS is not defined, couldn\'t find any of $(NOSETESTS_NAMES)))
 	$(NOSETESTS)
 
+check-code-coverage:
+	$(if $(COVERAGE),,$(error COVERAGE is not defined))
+	$(COVERAGE) run --source=fpos lib/tests/__init__.py || true
+	$(COVERAGE) html
+
 upload:
 	$(PYTHON) setup.py $@ $(SETUP_FLAGS)
 
@@ -38,6 +45,7 @@ clean: SETUP_FLAGS+=--all
 clean:
 	$(RM) ext/config.h
 	$(PYTHON) setup.py $@ $(SETUP_FLAGS)
+	$(RM) -r .coverage htmlcov
 
 configure: ext/config.h
 
@@ -47,4 +55,4 @@ ext/config.h: ext/configurator
 ext/configurator: CFLAGS=-g3 -ggdb -Wall -Wstrict-prototypes -Wold-style-definition -Wmissing-prototypes -Wmissing-declarations -Wpointer-arith -Wwrite-strings -Wundef -DCCAN_STR_DEBUG=1
 ext/configurator: ext/configurator.o
 
-.PHONY: clean pip pip-$(VE_NAME) install install-user install-$(VE_NAME)
+.PHONY: clean pip pip-$(VE_NAME) install install-user install-$(VE_NAME) check check-code-coverage
