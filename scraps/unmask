@@ -1,0 +1,36 @@
+#!/usr/bin/env python3
+
+import csv
+import hashlib
+import os
+import sqlite3
+import sys
+from xdg import BaseDirectory
+
+salt = "382a55c995b1e53f3ad0a3ed1c5ae735b9c7adc0".encode("UTF-8")
+
+def gen_id(description, salt):
+    s = hashlib.sha1()
+    s.update(str(description).encode("UTF-8"))
+    s.update(salt)
+    return s.hexdigest()
+
+unmask = dict()
+
+reader = csv.reader(sys.stdin, dialect='excel')
+for line in reader:
+    unmask[gen_id(line[2], salt)] = line[2]
+
+def get_db_path():
+    return os.path.join(str(BaseDirectory.save_data_path("fpos")), "descriptions.db")
+
+db = sqlite3.connect(get_db_path())
+c = db.cursor()
+c.execute('SELECT *, (SELECT COUNT(sdid) FROM assoc a2 WHERE a1.sdid = a2.sdid) AS count FROM assoc a1 ORDER BY count DESC, sdid')
+sdid = None
+for row in c:
+    if row[1] != sdid:
+        sdid = row[1]
+        print()
+        print("{}:".format(unmask[row[1]]))
+    print("\t{}".format(unmask[row[0]]))
