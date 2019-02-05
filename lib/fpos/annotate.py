@@ -36,9 +36,36 @@ cmd_help = \
 Entry = collections.namedtuple("Entry", ("date", "amount", "description"))
 TaggedEntry = collections.namedtuple("TaggedEntry", ("entry", "tag"))
 
+class TagIO(object):
+    def __init__(self, categories):
+        self.categories = categories
+
+    def banner(self, entry):
+        fmtargs = ("Spent" if 0 > float(entry.amount) else "Earnt",
+                money(abs(float(entry.amount))),
+                entry.date,
+                entry.description)
+        print("{} ${!s} on {!s}: {!s}".format(*fmtargs))
+
+    def resolve(self, guess):
+        prompt = "Category [{!s}]: ".format("?" if guess is None else guess)
+        return input(prompt).strip()
+
+    def confirm(self, category):
+        return input("Confirm {} [y/N]: ".format(category)).strip()
+
+    def help(self):
+        print()
+        print(*self.categories, sep='\n')
+        print()
+
+    def warn(self, message):
+        print(message)
+
 class _Tagger(object):
-    def __init__(self):
-        self.grouper = DynamicGroups()
+    def __init__(self, grouper=None, io=None):
+        self.grouper = DynamicGroups() if grouper is None else grouper
+        self.io = TagIO(categories) if io is None else io
 
     def __enter__(self):
         self.grouper.__enter__()
@@ -86,33 +113,24 @@ class _Tagger(object):
     def categorize(self, entry, group, confirm=False):
         need = True
         category = None
-        fmtargs = ("Spent" if 0 > float(entry.amount) else "Earnt",
-                money(abs(float(entry.amount))),
-                entry.date,
-                entry.description)
-        print("{} ${!s} on {!s}: {!s}".format(*fmtargs))
+        self.io.banner(entry)
         while need:
-            guess = None
             guess = self._tag_for(group)
-            prompt = "Category [{!s}]: ".format("?" if guess is None else guess)
-            raw = input(prompt).strip()
+            raw = self.io.resolve(guess)
             if "" == raw:
                 need = None is guess
                 category = guess
             elif "?" == raw:
-                print()
-                print(*categories, sep='\n')
-                print()
+                self.io.help()
             else:
                 try:
                     category = self.resolve_category(raw)
                     need = False
                 except ValueError:
-                    print("Couldn't determine category from {}".format(raw))
+                    self.io.warn("Couldn't determine category from {}".format(raw))
             if not need and confirm:
                 assert category is not None
-                confirmation = input("Confirm {} [y/N]: ".format(category)).strip()
-                need = "y" != confirmation.lower()
+                need = "y" != self.io.confirm(category).lower()
         return category
 
     def insert(self, entry, category, group=None):
@@ -138,35 +156,34 @@ def parse_args(subparser=None):
 
 import re
 
-def annotate(src, confirm=False):
+def annotate(src, confirm=False, tagger=None):
     annotated = []
-    with _Tagger() as t:
+    if tagger is None:
+        tagger = _Tagger()
+    with tagger:
         try:
             for row in src:
                 if 0 == len(row):
                     # Skip empty lines
                     continue
-                # Cook the description to make it easier on strgrp and the NNs.
-                # Mainly, reduce multiple spaces to one
-                # cooked = Entry(row[0], row[1], re.sub(r"\s{2,}", " ", row[2]))
                 cooked = Entry(row[0], row[1], row[2])
                 category = None
                 if 4 == len(row):
                     # Fourth column is category, check that it's known
                     try:
-                        group = t.find_group(cooked.description)
-                        category = t.resolve_category(row[3])
-                        t.insert(cooked, category, group)
+                        group = tagger.find_group(cooked.description)
+                        category = tagger.resolve_category(row[3])
+                        tagger.insert(cooked, category, group)
                     except ValueError:
                         # Category isn't known, output remains empty to
                         # trigger user input
                         pass
                 if category is None:
                     # Haven't yet determined the category, require user input
-                    group = t.find_group(cooked.description)
-                    category = t.categorize(cooked, group, confirm)
+                    group = tagger.find_group(cooked.description)
+                    category = tagger.categorize(cooked, group, confirm)
                     assert None is not category
-                    t.insert(cooked, category, group)
+                    tagger.insert(cooked, category, group)
                     print()
                 output = []
                 # Retain the raw description string in the output

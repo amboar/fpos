@@ -26,6 +26,26 @@ from fpos import annotate, combine, core, transform, visualise, window, predict,
 
 money = visualise.money
 
+class TagInjector(object):
+    def __init__(self, responses, confirms=None):
+        self.responses = iter(list(responses))
+        self.confirms = iter(list(confirms)) if confirms is not None else None
+
+    def banner(self, entry):
+        pass
+
+    def resolve(self, guess):
+        return next(self.responses)
+
+    def confirm(self, category):
+        return next(self.confirms) if self.confirms else "y"
+
+    def help(self):
+        pass
+
+    def warn(self, message):
+        pass
+
 class AnnotateTest(unittest.TestCase):
     def test_find_category_no_match(self):
         invalid = "foo"
@@ -55,6 +75,133 @@ class AnnotateTest(unittest.TestCase):
 
     def test_resolve_category_needle(self):
         self.assertEquals(annotate.categories[0], annotate._Tagger.resolve_category(annotate.categories[0]))
+
+    def test_categorize_no_group(self):
+        cc = annotate.categories[0]
+        with tempfile.TemporaryDirectory() as test_dir:
+            gc = groups.SqlGroupCollection(test_dir)
+            dg = groups.DynamicGroups(backend=gc)
+            with annotate._Tagger(grouper=dg, io=TagInjector([ cc ])) as t:
+                e = annotate.Entry("01/01/2019", "-12.34", "Test description")
+                c = t.categorize(e, None)
+                self.assertEqual(cc, c)
+
+    def test_categorize_group_single_entry(self):
+        cc = annotate.categories[0]
+        with tempfile.TemporaryDirectory() as test_dir:
+            gc = groups.SqlGroupCollection(test_dir)
+            dg = groups.DynamicGroups(backend=gc, size=0)
+            with annotate._Tagger(grouper=dg, io=TagInjector([ cc ])) as t:
+                e1 = annotate.Entry("01/01/2019", "-12.34", "Test description 0")
+                t.insert(e1, cc)
+                e2 = annotate.Entry("02/01/2019", "-56.78", "Test description 1")
+                g = t.find_group(e2.description)
+                c = t.categorize(e2, g)
+                self.assertEqual(cc, c)
+
+    def test_categorize_empty_response(self):
+        cc = annotate.categories[0]
+        with tempfile.TemporaryDirectory() as test_dir:
+            gc = groups.SqlGroupCollection(test_dir)
+            dg = groups.DynamicGroups(backend=gc)
+            with annotate._Tagger(grouper=dg, io=TagInjector([ "", cc ])) as t:
+                e = annotate.Entry("02/01/2019", "-56.78", "Test description 1")
+                c = t.categorize(e, None)
+                self.assertEqual(cc, c)
+
+    def test_categorize_help_response(self):
+        cc = annotate.categories[0]
+        with tempfile.TemporaryDirectory() as test_dir:
+            gc = groups.SqlGroupCollection(test_dir)
+            dg = groups.DynamicGroups(backend=gc)
+            with annotate._Tagger(grouper=dg, io=TagInjector([ "?", cc ])) as t:
+                e = annotate.Entry("02/01/2019", "-56.78", "Test description 1")
+                c = t.categorize(e, None)
+                self.assertEqual(cc, c)
+
+    def test_categorize_garbled_response(self):
+        cc = annotate.categories[0]
+        with tempfile.TemporaryDirectory() as test_dir:
+            gc = groups.SqlGroupCollection(test_dir)
+            dg = groups.DynamicGroups(backend=gc)
+            garbled = "".join(annotate.categories)
+            with annotate._Tagger(grouper=dg, io=TagInjector([ garbled, cc ])) as t:
+                e = annotate.Entry("02/01/2019", "-56.78", "Test description 1")
+                c = t.categorize(e, None)
+                self.assertEqual(cc, c)
+
+    def test_categorize_with_positive_confirm(self):
+        cc = annotate.categories[0]
+        with tempfile.TemporaryDirectory() as test_dir:
+            gc = groups.SqlGroupCollection(test_dir)
+            dg = groups.DynamicGroups(backend=gc)
+            with annotate._Tagger(grouper=dg, io=TagInjector([ cc ])) as t:
+                e = annotate.Entry("02/01/2019", "-56.78", "Test description 1")
+                c = t.categorize(e, None, True)
+                self.assertEqual(cc, c)
+
+    def test_categorize_with_negative_confirm(self):
+        bc = annotate.categories[1]
+        cc = annotate.categories[0]
+        with tempfile.TemporaryDirectory() as test_dir:
+            gc = groups.SqlGroupCollection(test_dir)
+            dg = groups.DynamicGroups(backend=gc)
+            with annotate._Tagger(grouper=dg, io=TagInjector([ bc, cc ], [ "n", "y" ])) as t:
+                e = annotate.Entry("02/01/2019", "-56.78", "Test description 1")
+                c = t.categorize(e, None, True)
+                self.assertEqual(cc, c)
+
+    def test_annotate_empty_source(self):
+        src = []
+        res = []
+        with tempfile.TemporaryDirectory() as test_dir:
+            gc = groups.SqlGroupCollection(test_dir)
+            dg = groups.DynamicGroups(backend=gc)
+            t = annotate._Tagger(grouper=dg, io=TagInjector([]))
+            self.assertEqual(res, annotate.annotate(src, False, t))
+
+    def test_annotate_empty_line(self):
+        src = [ [] ]
+        res = []
+        with tempfile.TemporaryDirectory() as test_dir:
+            gc = groups.SqlGroupCollection(test_dir)
+            dg = groups.DynamicGroups(backend=gc)
+            t = annotate._Tagger(grouper=dg, io=TagInjector([]))
+            self.assertEqual(res, annotate.annotate(src, False, t))
+
+    def test_annotate_one_no_category(self):
+        cc = annotate.categories[0]
+        row = [ "02/01/2019", "-56.78", "Test description 1" ]
+        src = [ row ]
+        res = [ [ row[0], row[1], row[2], cc ] ]
+        with tempfile.TemporaryDirectory() as test_dir:
+            gc = groups.SqlGroupCollection(test_dir)
+            dg = groups.DynamicGroups(backend=gc)
+            t = annotate._Tagger(grouper=dg, io=TagInjector([ cc ]))
+            self.assertEqual(res, annotate.annotate(src, False, t))
+
+    def test_annotate_one_with_valid_category(self):
+        cc = annotate.categories[0]
+        row = [ "02/01/2019", "-56.78", "Test description 1", cc ]
+        src = [ row ]
+        res = [ row ]
+        with tempfile.TemporaryDirectory() as test_dir:
+            gc = groups.SqlGroupCollection(test_dir)
+            dg = groups.DynamicGroups(backend=gc)
+            t = annotate._Tagger(grouper=dg, io=TagInjector([]))
+            self.assertEqual(res, annotate.annotate(src, False, t))
+
+    def test_annotate_one_with_invalid_category(self):
+        cc = annotate.categories[0]
+        garbled = "".join(annotate.categories)
+        row = [ "02/01/2019", "-56.78", "Test description 1", garbled ]
+        src = [ row ]
+        res = [ [ row[0], row[1], row[2], cc ] ]
+        with tempfile.TemporaryDirectory() as test_dir:
+            gc = groups.SqlGroupCollection(test_dir)
+            dg = groups.DynamicGroups(backend=gc)
+            t = annotate._Tagger(grouper=dg, io=TagInjector([ cc ]))
+            self.assertEqual(res, annotate.annotate(src, False, t))
 
 class TransformTest(unittest.TestCase):
     expected = [ [ "01/01/2014", "1.00", "Positive" ],
