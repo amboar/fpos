@@ -316,6 +316,9 @@ class TransformTest(unittest.TestCase):
     def test__sense_form_woolworths_credit(self):
         self.assertEquals("woolworths", transform._sense_form("01 Mar 2016,Avogadros number - space -,,60221409,NaN,Financial,BPAY Payments,".split(',')))
 
+    def test_transform_auto_empty(self):
+        self.assertEquals([], transform.transform_auto(iter([]), False))
+
 class WindowTest(unittest.TestCase):
     def test_gen_span_oracle_date_in_default(self):
         d = dt.strptime("01/01/2014", window.date_fmt)

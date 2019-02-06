@@ -148,9 +148,12 @@ def _acquire_form(row):
     return form
 
 def transform_auto(csv, confirm):
-    first = next(csv)
-    form = _acquire_form(first, confirm) if confirm else _sense_form(first)
-    return transform(form, chain([first], csv))
+    try:
+        first = next(csv)
+        form = _acquire_form(first, confirm) if confirm else _sense_form(first)
+        return transform(form, chain([first], csv))
+    except StopIteration:
+        return []
 
 def transform_commbank(csv, args=None):
     # Commbank format:
