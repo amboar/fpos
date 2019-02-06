@@ -66,9 +66,9 @@ def as_toml(path, mode="r"):
 def name():
     return __name__.split(".")[-1]
 
-def db_init(args):
+def db_init(args, config_dir=None):
     config = {}
-    config_file = find_config()
+    config_file = find_config(config_dir)
     if os.path.exists(config_file):
         config = as_toml(config_file)
     if args.nickname in config:
@@ -83,8 +83,8 @@ def db_init(args):
     if not os.path.exists(db_file):
         open(args.path, "w").close()
 
-def db_update(args):
-    config = as_toml(find_config())
+def db_update(args, config_dir=None, tagger=None):
+    config = as_toml(find_config(config_dir))
     if args.nickname not in config:
         fmt = "Unknown database '{}'"
         raise ValueError(fmt.format(args.nickname))
@@ -99,11 +99,8 @@ def db_update(args):
                 print("Discovered unsupported type tuple {} in {}".format(str(e), doc.name))
                 print()
                 print("Failed to transform CSV in {}, cannot complete update".format(doc.name))
-                sys.exit(1)
-        csv.writer(tf).writerows(
-                annotate(
-                    combine(
-                        chain(irdocs, [csv.reader(db)]))))
+                raise e
+        csv.writer(tf).writerows(annotate(combine(chain(irdocs, [csv.reader(db)])), tagger=tagger))
         tf.close()
     shutil.move(tf.name, db_path)
 

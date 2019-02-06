@@ -23,6 +23,7 @@ from datetime import timedelta as td
 from itertools import islice, cycle
 import unittest
 from fpos import annotate, combine, core, transform, visualise, window, predict, db, psave, groups
+import types
 
 money = visualise.money
 
@@ -842,6 +843,104 @@ class AsTomlTest(unittest.TestCase):
         os.remove(tf.name)
         self.assertRaises(TypeError, db.as_toml, [ tf.name ])
         tf.close()
+
+class DbTest(unittest.TestCase):
+    def test_db_init_absent(self):
+        with tempfile.TemporaryDirectory() as test_dir:
+            with tempfile.NamedTemporaryFile("r+") as dbf:
+                args = types.SimpleNamespace()
+                setattr(args, "nickname", "test")
+                setattr(args, "path", dbf.name)
+                db.db_init(args, test_dir)
+
+    def test_db_init_present(self):
+        with tempfile.TemporaryDirectory() as test_dir:
+            with tempfile.NamedTemporaryFile("r+") as dbf1:
+                test1 = types.SimpleNamespace()
+                setattr(test1, "nickname", "test1")
+                setattr(test1, "path", dbf1.name)
+                db.db_init(test1, test_dir)
+            with tempfile.NamedTemporaryFile("r+") as dbf2:
+                test2 = types.SimpleNamespace()
+                setattr(test2, "nickname", "test2")
+                setattr(test2, "path", dbf2.name)
+                db.db_init(test2, test_dir)
+
+    def test_db_init_db_exists(self):
+        with tempfile.TemporaryDirectory() as test_dir:
+            with tempfile.NamedTemporaryFile("r+") as dbf:
+                args = types.SimpleNamespace()
+                setattr(args, "nickname", "test")
+                setattr(args, "path", dbf.name)
+                db.db_init(args, test_dir)
+                with self.assertRaises(ValueError):
+                    db.db_init(args, test_dir)
+
+    def test_db_update_one_empty(self):
+        with tempfile.TemporaryDirectory() as test_dir:
+            with tempfile.NamedTemporaryFile("r+") as dbf:
+                with tempfile.NamedTemporaryFile("r") as data:
+                    args = types.SimpleNamespace()
+                    setattr(args, "nickname", "test")
+                    setattr(args, "path", dbf.name)
+                    db.db_init(args, test_dir)
+                    setattr(args, "updates", [ data ])
+                    db.db_update(args, test_dir)
+                    data.seek(0)
+                    self.assertEqual([ ], data.readlines())
+
+    def test_db_update_one_known(self):
+        with tempfile.TemporaryDirectory() as test_dir:
+            with tempfile.NamedTemporaryFile("r+", delete=False) as dbf:
+                with tempfile.NamedTemporaryFile("r+") as data:
+                    try:
+                        cc = annotate.categories[0]
+                        record = "01/01/2019,-12.34,Test Description\n"
+                        data.write(record)
+                        data.flush()
+                        data.seek(0)
+                        args = types.SimpleNamespace()
+                        setattr(args, "nickname", "test")
+                        setattr(args, "path", dbf.name)
+                        db.db_init(args, test_dir)
+                        setattr(args, "updates", [ data ])
+                        t = annotate._Tagger(io=TagInjector([ cc ]))
+                        db.db_update(args, test_dir, tagger=t)
+                        with open(dbf.name, "r") as newdbf:
+                            self.assertEqual([ record[:-1] + "," + cc + "\n" ],
+                                             newdbf.readlines())
+                    finally:
+                        os.remove(dbf.name)
+
+
+    def test_db_update_one_unknown(self):
+        with tempfile.TemporaryDirectory() as test_dir:
+            with tempfile.NamedTemporaryFile("r+") as dbf:
+                with tempfile.NamedTemporaryFile("r+") as data:
+                    data.write(",,\n")
+                    data.flush()
+                    data.seek(0)
+                    args = types.SimpleNamespace()
+                    setattr(args, "nickname", "test")
+                    setattr(args, "path", dbf.name)
+                    db.db_init(args, test_dir)
+                    setattr(args, "updates", [ data ])
+                    t = annotate._Tagger(io=TagInjector([annotate.categories[0]]))
+                    with self.assertRaises(KeyError):
+                        db.db_update(args, test_dir, tagger=t)
+
+    def test_db_update_unknown_db(self):
+        with tempfile.TemporaryDirectory() as test_dir:
+            with tempfile.NamedTemporaryFile("r+") as dbf:
+                with tempfile.NamedTemporaryFile("r+") as data:
+                    args = types.SimpleNamespace()
+                    setattr(args, "nickname", "test")
+                    setattr(args, "path", dbf.name)
+                    db.db_init(args, test_dir)
+                    setattr(args, "nickname", "test1")
+                    setattr(args, "updates", [ data ])
+                    with self.assertRaises(ValueError):
+                        db.db_update(args, test_dir)
 
 class PsaveTest(unittest.TestCase):
     def test_save_from_month_one_month(self):
