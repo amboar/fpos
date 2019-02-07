@@ -64,18 +64,18 @@ class AnnotateTest(unittest.TestCase):
         test = "Income"
         self.assertTrue(test in annotate.categories)
         needle = "inc"
-        self.assertEquals(test, annotate._Tagger.find_category(needle, annotate.categories))
+        self.assertEqual(test, annotate._Tagger.find_category(needle, annotate.categories))
 
     def test_category_list(self):
         expected = set([ "Cash", "Commitment", "Dining", "Education", "Entertainment",
             "Health", "Home", "Income", "Internal", "Shopping", "Transport", "Utilities" ])
-        self.assertEquals(expected, set(annotate.categories))
+        self.assertEqual(expected, set(annotate.categories))
 
     def test_resolve_category_index(self):
-        self.assertEquals(annotate.categories[0], annotate._Tagger.resolve_category(0))
+        self.assertEqual(annotate.categories[0], annotate._Tagger.resolve_category(0))
 
     def test_resolve_category_needle(self):
-        self.assertEquals(annotate.categories[0], annotate._Tagger.resolve_category(annotate.categories[0]))
+        self.assertEqual(annotate.categories[0], annotate._Tagger.resolve_category(annotate.categories[0]))
 
     def test_categorize_no_group(self):
         cc = annotate.categories[0]
@@ -211,29 +211,29 @@ class TransformTest(unittest.TestCase):
     def test_transform_commbank(self):
         commbank = [ [ "01/01/2014", "1.0", "Positive", "1.0" ],
                 [ "01/01/2014", "-1.0", "Negative", "0.0" ] ]
-        self.assertEquals(self.expected, list(transform.transform("commbank", commbank)))
+        self.assertEqual(self.expected, list(transform.transform("commbank", commbank)))
 
     def test_transform_anz(self):
         anz = self.expected
-        self.assertEquals(self.expected, list(transform.transform("anz", anz)))
+        self.assertEqual(self.expected, list(transform.transform("anz", anz)))
 
     def test_transform_stgeorge(self):
         stgeorge = iter([ [ "#Date", "Description", "Debit", "Credit", "Balance" ],
                 [ "01/01/2014", "Positive", None, "1.0", "1.0" ],
                 [ "01/01/2014", "Negative", "1.0", None, "0.0" ] ])
-        self.assertEquals(self.expected, list(transform.transform("stgeorge", stgeorge)))
+        self.assertEqual(self.expected, list(transform.transform("stgeorge", stgeorge)))
 
     def test_transform_nab(self):
         nab = iter([ [ "01-Jan-14", "1.00", "1", None, None, "Positive", "1.00", None ],
             [ "01-Jan-14", "-1.00", "2", None, None, "Negative", "0.00", None ] ])
-        self.assertEquals(self.expected, list(transform.transform("nab", nab)))
+        self.assertEqual(self.expected, list(transform.transform("nab", nab)))
 
     def test_transform_woolworths(self):
         woolies = iter([
             ["01 Jan 2014", "Positive", "", "1.00", "NaN", "String", "String", None],
             ["01 Jan 2014", "Negative", "1.00", "", "NaN", "String", "String", None],
             ])
-        self.assertEquals(self.expected, list(transform.transform("woolworths", woolies)))
+        self.assertEqual(self.expected, list(transform.transform("woolworths", woolies)))
 
 
     def test__is_empty_None(self):
@@ -264,61 +264,61 @@ class TransformTest(unittest.TestCase):
         self.assertFalse(transform._is_number("not a number"))
 
     def test__compute_cell_type__EMPTY(self):
-        self.assertEquals(transform._EMPTY, transform._compute_cell_type(None))
+        self.assertEqual(transform._EMPTY, transform._compute_cell_type(None))
 
     def test__compute_cell_type__DATE(self):
-        self.assertEquals(transform._DATE, transform._compute_cell_type("01/01/2014"))
+        self.assertEqual(transform._DATE, transform._compute_cell_type("01/01/2014"))
 
     def test__compute_cell_type__NUMBER(self):
-        self.assertEquals(transform._NUMBER, transform._compute_cell_type("-12.34"))
+        self.assertEqual(transform._NUMBER, transform._compute_cell_type("-12.34"))
 
     def test__compute_cell_type__STRING(self):
-        self.assertEquals(transform._STRING, transform._compute_cell_type("neither"))
+        self.assertEqual(transform._STRING, transform._compute_cell_type("neither"))
 
     def test__sense_form_commbank(self):
-        self.assertEquals("commbank", transform._sense_form(["01/01/2014", "-1.0", "description", "-1.0"]))
+        self.assertEqual("commbank", transform._sense_form(["01/01/2014", "-1.0", "description", "-1.0"]))
 
     def test__sense_form_anz(self):
-        self.assertEquals("anz", transform._sense_form(["01/01/2014", "-1.0", "description"]))
+        self.assertEqual("anz", transform._sense_form(["01/01/2014", "-1.0", "description"]))
 
     def test__sense_form_stgeorge_debit(self):
-        self.assertEquals("stgeorge", transform._sense_form(["01/01/2014",  "description", "1.0", "", "-1.0"]))
+        self.assertEqual("stgeorge", transform._sense_form(["01/01/2014",  "description", "1.0", "", "-1.0"]))
 
     def test__sense_form_stgeorge_credit(self):
-        self.assertEquals("stgeorge", transform._sense_form(["01/01/2014",  "description", "", "1.0", "1.0"]))
+        self.assertEqual("stgeorge", transform._sense_form(["01/01/2014",  "description", "", "1.0", "1.0"]))
 
     def test__sense_form_nab(self):
-        self.assertEquals("nab", transform._sense_form(["01/01/2014", "-1.0", "12345", "", "description", "my merchant", "1.0"]))
+        self.assertEqual("nab", transform._sense_form(["01/01/2014", "-1.0", "12345", "", "description", "my merchant", "1.0"]))
 
     def test__sense_form_nab_gh_issue23_0(self):
-        self.assertEquals("nab", transform._sense_form("01-May-16,-70.33,071555684686,,CREDIT CARD PURCHASE,FREWVILLE FOODLAND       FREWVILLE,-131.26,".split(',')))
+        self.assertEqual("nab", transform._sense_form("01-May-16,-70.33,071555684686,,CREDIT CARD PURCHASE,FREWVILLE FOODLAND       FREWVILLE,-131.26,".split(',')))
 
     def test__sense_form_nab_gh_issue23_1(self):
-        self.assertEquals("nab", transform._sense_form("29-Mar-16,5.30,000125555398,,MISCELLANEOUS CREDIT,CASHBACK,-60.93,".split(',')))
+        self.assertEqual("nab", transform._sense_form("29-Mar-16,5.30,000125555398,,MISCELLANEOUS CREDIT,CASHBACK,-60.93,".split(',')))
 
     def test__sense_form_nab_gh_issue23_2(self):
-        self.assertEquals("nab", transform._sense_form("20-Mar-16,-66.23,,,CREDIT CARD PURCHASE,PASADENA FOODLAND,-66.23,".split(',')))
+        self.assertEqual("nab", transform._sense_form("20-Mar-16,-66.23,,,CREDIT CARD PURCHASE,PASADENA FOODLAND,-66.23,".split(',')))
 
     def test__sense_form_bankwest_cheque(self):
-        self.assertEquals("bankwest", transform._sense_form(["", 12345, "01/01/2014", "description", "-1.0", "", "", "-1.0", "cheque"]))
+        self.assertEqual("bankwest", transform._sense_form(["", 12345, "01/01/2014", "description", "-1.0", "", "", "-1.0", "cheque"]))
 
     def test__sense_form_bankwest_debit(self):
-        self.assertEquals("bankwest", transform._sense_form(["", 12345, "01/01/2014", "description", "", "1.0", "", "1.0", "debit"]))
+        self.assertEqual("bankwest", transform._sense_form(["", 12345, "01/01/2014", "description", "", "1.0", "", "1.0", "debit"]))
 
     def test__sense_form_bankwest_credit(self):
-        self.assertEquals("bankwest", transform._sense_form(["", 12345, "01/01/2014", "description", "", "", "-1.0", "-1.0", "credit"]))
+        self.assertEqual("bankwest", transform._sense_form(["", 12345, "01/01/2014", "description", "", "", "-1.0", "-1.0", "credit"]))
 
     def test__sense_form_woolworths_debit(self):
-        self.assertEquals("woolworths", transform._sense_form("20 Mar 2016,Pie,3.14,,,Food & Drink,Groceries,".split(',')))
+        self.assertEqual("woolworths", transform._sense_form("20 Mar 2016,Pie,3.14,,,Food & Drink,Groceries,".split(',')))
 
     def test__sense_form_woolworths_debit_nan(self):
-        self.assertEquals("woolworths", transform._sense_form("19 Mar 2016,Natural log,2.71,,NaN,Food & Drink,Groceries,".split(',')))
+        self.assertEqual("woolworths", transform._sense_form("19 Mar 2016,Natural log,2.71,,NaN,Food & Drink,Groceries,".split(',')))
 
     def test__sense_form_woolworths_credit(self):
-        self.assertEquals("woolworths", transform._sense_form("01 Mar 2016,Avogadros number - space -,,60221409,NaN,Financial,BPAY Payments,".split(',')))
+        self.assertEqual("woolworths", transform._sense_form("01 Mar 2016,Avogadros number - space -,,60221409,NaN,Financial,BPAY Payments,".split(',')))
 
     def test_transform_auto_empty(self):
-        self.assertEquals([], transform.transform_auto(iter([]), False))
+        self.assertEqual([], transform.transform_auto(iter([]), False))
 
 class WindowTest(unittest.TestCase):
     def test_gen_span_oracle_date_in_default(self):
@@ -344,44 +344,44 @@ class WindowTest(unittest.TestCase):
     def test_unbounded_start_unbounded_end(self):
         ir =  [ [ "01/01/2014", "-1.00", "Description" ],
                 [ "01/02/2014", "-1.00", "Description" ] ]
-        self.assertEquals(ir, list(window.window(ir, None, None)))
+        self.assertEqual(ir, list(window.window(ir, None, None)))
 
     def test_bounded_start_unbounded_end(self):
         ir =  [ [ "01/01/2014", "-1.00", "Description" ],
                 [ "01/02/2014", "-1.00", "Description" ] ]
         expected = [ ir[1] ]
-        self.assertEquals(expected, list(window.window(ir, "02/2014", None)))
+        self.assertEqual(expected, list(window.window(ir, "02/2014", None)))
 
     def test_unbounded_start_bounded_end(self):
         ir =  [ [ "01/01/2014", "-1.00", "Description" ],
                 [ "01/02/2014", "-1.00", "Description" ] ]
         expected = [ ir[0] ]
-        self.assertEquals(expected, list(window.window(ir, None, "02/2014")))
+        self.assertEqual(expected, list(window.window(ir, None, "02/2014")))
 
     def test_bounded_start_bounded_end(self):
         ir =  [ [ "31/12/2013", "-1.00", "Description" ],
                 [ "31/01/2014", "-1.00", "Description" ],
                 [ "01/02/2014", "-1.00", "Description" ] ]
         expected = [ ir[1] ]
-        self.assertEquals(expected, list(window.window(ir, "01/2014", "02/2014")))
+        self.assertEqual(expected, list(window.window(ir, "01/2014", "02/2014")))
 
     def test_span_1(self):
         ir =  [ [ "01/01/2014", "-1.00", "Description" ],
                 [ "01/02/2014", "-1.00", "Description" ] ]
         expected = [ ir[1] ]
-        self.assertEquals(expected, list(window.window(ir, relspan=1)))
+        self.assertEqual(expected, list(window.window(ir, relspan=1)))
 
     def test_span_2(self):
         ir =  [ [ "31/12/2013", "-1.00", "Description" ],
                 [ "31/01/2014", "-1.00", "Description" ],
                 [ "01/02/2014", "-1.00", "Description" ] ]
         expected = ir[1:]
-        self.assertEquals(expected, list(window.window(ir, relspan=2)))
+        self.assertEqual(expected, list(window.window(ir, relspan=2)))
 
 class VisualiseTest(unittest.TestCase):
     def test_group_period_empty(self):
         pg = visualise.PeriodGroup()
-        self.assertEquals([], pg.groups())
+        self.assertEqual([], pg.groups())
 
     def test_group_period_extract_month(self):
         first = [ "01/01/2014", "-1.00", "Foo" ]
@@ -391,8 +391,8 @@ class VisualiseTest(unittest.TestCase):
         pg = visualise.PeriodGroup(visualise.extract_month)
         pg.add_all(months)
         result = pg.groups()
-        self.assertEquals(1, len(result))
-        self.assertEquals(expected, result[0])
+        self.assertEqual(1, len(result))
+        self.assertEqual(expected, result[0])
 
     def test_group_period_extract_week(self):
         first = [ "01/01/2014", "-1.00", "Foo" ]
@@ -402,8 +402,8 @@ class VisualiseTest(unittest.TestCase):
         pg = visualise.PeriodGroup(visualise.extract_week)
         pg.add_all(weeks)
         result = pg.groups()
-        self.assertEquals(1, len(result))
-        self.assertEquals(expected, result[0])
+        self.assertEqual(1, len(result))
+        self.assertEqual(expected, result[0])
 
     def test_group_period_extract_both(self):
         first = [ "01/01/2014", "-1.00", "Foo" ]
@@ -413,8 +413,8 @@ class VisualiseTest(unittest.TestCase):
         pg = visualise.PeriodGroup(visualise.extract_month, visualise.extract_week)
         pg.add_all(transactions)
         result = pg.groups()
-        self.assertEquals(2, len(result))
-        self.assertEquals(expected, result)
+        self.assertEqual(2, len(result))
+        self.assertEqual(expected, result)
 
     def test_sum_categories_single_spend_multiple_categories(self):
         spent = -1.00
@@ -424,13 +424,13 @@ class VisualiseTest(unittest.TestCase):
             data.append([ "01/01/2014", sspent, entry, entry ])
         sc = visualise.sum_categories(data)
         for entry in visualise.whitelist:
-            self.assertEquals(sc[entry], spent)
+            self.assertEqual(sc[entry], spent)
 
     def test_sum_categories_multiple_spend_single_category(self):
         cat = visualise.whitelist[0]
         spent = -1.00
         data = [ [ "01/01/2014", money(spent), "Foo", cat ] ] * 2
-        self.assertEquals(len(data) * spent, visualise.sum_categories(data)[cat])
+        self.assertEqual(len(data) * spent, visualise.sum_categories(data)[cat])
 
     def test_income_only_two_months(self):
         month = [ "01/2014", "02/2014" ]
@@ -438,14 +438,14 @@ class VisualiseTest(unittest.TestCase):
         data = { month[0] : { "Income" : amount },
                  month[1] : { "Income" : amount } }
         expected = { month[0] : amount, month[1] : amount }
-        self.assertEquals(expected, visualise.income(data))
+        self.assertEqual(expected, visualise.income(data))
 
     def test_income_mix(self):
         month = "01/2014"
         amount = 1.00
         data = { month : { visualise.whitelist[0] : "0.00", "Income" : amount } }
         expected = { month : amount }
-        self.assertEquals(expected, visualise.income(data))
+        self.assertEqual(expected, visualise.income(data))
 
     def test_invert_multiple_categories(self):
         month = "01/2014"
@@ -457,7 +457,7 @@ class VisualiseTest(unittest.TestCase):
             if entry not in expected:
                 expected[entry] = {}
             expected[entry][month] = amount
-        self.assertEquals(expected, visualise.invert(data, visualise.whitelist))
+        self.assertEqual(expected, visualise.invert(data, visualise.whitelist))
 
     def test_invert_single_category(self):
         """Ensures unlisted categories are initialised to zero"""
@@ -467,7 +467,7 @@ class VisualiseTest(unittest.TestCase):
         data = { month : { single : amount } }
         expected = dict((entry, { month : 0 }) for entry in visualise.whitelist)
         expected[single][month] = amount;
-        self.assertEquals(expected, visualise.invert(data, visualise.whitelist))
+        self.assertEqual(expected, visualise.invert(data, visualise.whitelist))
 
 
     def test_category_sum_matrix(self):
@@ -478,7 +478,7 @@ class VisualiseTest(unittest.TestCase):
         inverted = visualise.invert(summed, visualise.whitelist)
         expected = [ [ amount, amount ] ]
         expected.extend([ [ 0 ] * 2 ] * (len(visualise.whitelist) - 1))
-        self.assertEquals(expected, visualise.category_sum_matrix(inverted))
+        self.assertEqual(expected, visualise.category_sum_matrix(inverted))
 
     def test_ignore_one(self):
         month = "01/2014"
@@ -486,7 +486,7 @@ class VisualiseTest(unittest.TestCase):
         single = "Cash"
         data = { month : { single : amount } }
         expected = { month : {} }
-        self.assertEquals(expected, visualise.ignore(data, single))
+        self.assertEqual(expected, visualise.ignore(data, single))
 
     def test_ignore_several(self):
         month = "01/2014"
@@ -494,108 +494,108 @@ class VisualiseTest(unittest.TestCase):
         ignore = [ "Cash", "Dining" ]
         data = { month : dict((i, amount) for i in ignore) }
         expected = { month : {} }
-        self.assertEquals(expected, visualise.ignore(data, *ignore))
+        self.assertEqual(expected, visualise.ignore(data, *ignore))
 
     def test_surplus(self):
         month = "01/2014"
         amount = -1.00
         expenses = { month : { "Cash" : amount } }
         income = { month : amount * amount }
-        self.assertEquals(0.0, visualise.surplus(expenses, income)[month])
+        self.assertEqual(0.0, visualise.surplus(expenses, income)[month])
 
     def test_money_zero(self):
-        self.assertEquals("0.00", visualise.money(0.0))
+        self.assertEqual("0.00", visualise.money(0.0))
 
     def test_money_one(self):
-        self.assertEquals("1.00", visualise.money(1.0))
+        self.assertEqual("1.00", visualise.money(1.0))
 
     def test_money_neg_one(self):
-        self.assertEquals("-1.00", visualise.money(-1.0))
+        self.assertEqual("-1.00", visualise.money(-1.0))
 
     def test_money_one_and_a_bit(self):
-        self.assertEquals("-1.00", visualise.money(-1.001))
+        self.assertEqual("-1.00", visualise.money(-1.001))
 
 class CombineTest(unittest.TestCase):
     def test_combine_one_empty(self):
-        self.assertEquals([], list(combine.combine([ [] ])))
+        self.assertEqual([], list(combine.combine([ [] ])))
 
     def test_combine_invalid_ir(self):
         # Missing the (required) description
         sources = [ [ [ "01/01/2014", -1.00 ] ] ]
-        self.assertEquals([], list(combine.combine(sources)))
+        self.assertEqual([], list(combine.combine(sources)))
 
     def test_combine_3tuple(self):
         sources = [ [ [ "01/01/2014", -1.00, "Description" ] ] ]
         expected = sources[0]
-        self.assertEquals(expected, list(combine.combine(sources)))
+        self.assertEqual(expected, list(combine.combine(sources)))
 
     def test_combine_4tuple(self):
         sources = [ [ [ "01/01/2014", -1.00, "Description", "Cash" ] ] ]
         expected = sources[0]
-        self.assertEquals(expected, list(combine.combine(sources)))
+        self.assertEqual(expected, list(combine.combine(sources)))
 
     def test_combine_two_first_empty(self):
         sources = [ [],
                     [ [ "01/01/2014", -1.00, "Description" ] ] ]
         expected = sources[1]
-        self.assertEquals(expected, list(combine.combine(sources)))
+        self.assertEqual(expected, list(combine.combine(sources)))
 
     def test_combine_two_distinct(self):
         sources = [ [ [ "01/01/2014", -1.00, "Description" ] ],
                     [ [ "02/01/2014", -1.00, "Description" ] ] ]
         expected = [ sources[0][0], sources[1][0] ]
-        self.assertEquals(expected, list(combine.combine(sources)))
+        self.assertEqual(expected, list(combine.combine(sources)))
 
     def test_combine_two_equal(self):
         sources = [ [ [ "01/01/2014", -1.00, "Description" ] ],
                     [ [ "01/01/2014", -1.00, "Description" ] ] ]
         expected = sources[0]
-        self.assertEquals(expected, list(combine.combine(sources)))
+        self.assertEqual(expected, list(combine.combine(sources)))
 
     def test_combine_two_superset(self):
         sources = [ [ [ "01/01/2014", -1.00, "Description" ],
                       [ "02/01/2014", -1.00, "Description" ] ],
                     [ [ "02/01/2014", -1.00, "Description" ] ] ]
         expected = [ sources[0][0], sources[1][0] ]
-        self.assertEquals(expected, list(combine.combine(sources)))
+        self.assertEqual(expected, list(combine.combine(sources)))
 
     def test_combine_prefer_last(self):
         sources = [ [ [ "01/01/2014", -1.00, "Description" ],
                       [ "02/01/2014", -1.00, "Description" ] ],
                     [ [ "02/01/2014", -1.00, "Description", "Cash" ] ] ]
         expected = [ sources[0][0], sources[1][0] ]
-        self.assertEquals(expected, list(combine.combine(sources)))
+        self.assertEqual(expected, list(combine.combine(sources)))
 
 class CoreTest(unittest.TestCase):
     def test_lcs_empty(self):
-        self.assertEquals(0, core.lcs("", ""))
+        self.assertEqual(0, core.lcs("", ""))
 
     def test_lcs_a_empty(self):
-        self.assertEquals(0, core.lcs("", "a"))
+        self.assertEqual(0, core.lcs("", "a"))
 
     def test_lcs_b_empty(self):
-        self.assertEquals(0, core.lcs("a", ""))
+        self.assertEqual(0, core.lcs("a", ""))
 
     def test_lcs_equal_single(self):
-        self.assertEquals(1, core.lcs("a", "a"))
+        self.assertEqual(1, core.lcs("a", "a"))
 
     def test_lcs_different_single(self):
-        self.assertEquals(0, core.lcs("a", "b"))
+        self.assertEqual(0, core.lcs("a", "b"))
 
     def test_lcs_equal_double(self):
-        self.assertEquals(2, core.lcs("ab", "ab"))
+        self.assertEqual(2, core.lcs("ab", "ab"))
 
     def test_lcs_different_double(self):
-        self.assertEquals(1, core.lcs("ab", "ba"))
+        self.assertEqual(1, core.lcs("ab", "ba"))
 
     def test_lcs_different_lengths_a_short(self):
-        self.assertEquals(1, core.lcs("abc", "dcba"))
+        self.assertEqual(1, core.lcs("abc", "dcba"))
 
     def test_lcs_different_lengths_b_short(self):
-        self.assertEquals(1, core.lcs("dcba", "abc"))
+        self.assertEqual(1, core.lcs("dcba", "abc"))
 
     def test_lcs_similar(self):
-        self.assertEquals(1, core.lcs("abbb", "aaaa"))
+        self.assertEqual(1, core.lcs("abbb", "aaaa"))
 
 class PredictTest(unittest.TestCase):
     def test_group_deltas_empty(self):
@@ -632,13 +632,13 @@ class PredictTest(unittest.TestCase):
         self.assertRaises(ValueError, predict.period, [])
 
     def test_period_single(self):
-        self.assertEquals(1, predict.period([1]))
+        self.assertEqual(1, predict.period([1]))
 
     def test_period_spurious(self):
-        self.assertEquals(1, predict.period([1, 0]))
+        self.assertEqual(1, predict.period([1, 0]))
 
     def test_period_multiple(self):
-        self.assertEquals(2, predict.period([1, 1]))
+        self.assertEqual(2, predict.period([1, 1]))
 
     def test_pmf_empty(self):
         self.assertSequenceEqual([], predict.pmf([]))
@@ -673,19 +673,19 @@ class PredictTest(unittest.TestCase):
     def test_probable_spend_sum_is_mean(self):
         mean = 2.0
         mf = [ 0.25, 0.75 ]
-        self.assertEquals(mean, sum(predict.probable_spend(mf, mean)))
+        self.assertEqual(mean, sum(predict.probable_spend(mf, mean)))
 
     def test_last_empty(self):
         self.assertRaises(ValueError, predict.last, [])
 
     def test_last_one(self):
         ds = "01/01/2015"
-        self.assertEquals(dt.strptime(ds, "%d/%m/%Y"), predict.last([[ds]]))
+        self.assertEqual(dt.strptime(ds, "%d/%m/%Y"), predict.last([[ds]]))
 
     def test_last_two(self):
         first = "01/01/2015"
         last = "02/01/2015"
-        self.assertEquals(dt.strptime(last, "%d/%m/%Y"), predict.last([[first], [last]]))
+        self.assertEqual(dt.strptime(last, "%d/%m/%Y"), predict.last([[first], [last]]))
 
     def test_align_zero_delta(self):
         bins = [ 0.5, 0.5 ]
@@ -958,7 +958,7 @@ class PsaveTest(unittest.TestCase):
         now = dt.strptime("01/08/2016", core.date_fmt).date()
         h = psave.History(now, { b.month : b } )
 
-        self.assertEquals(100,
+        self.assertEqual(100,
                 psave.save_from_month(h, {}, then, 100))
 
     def test_save_from_month_one_month_zero_balance(self):
@@ -967,7 +967,7 @@ class PsaveTest(unittest.TestCase):
         now = dt.strptime("01/08/2016", core.date_fmt).date()
         h = psave.History(now, { b.month : b } )
 
-        self.assertEquals(0,
+        self.assertEqual(0,
                 psave.save_from_month(h, {}, then, 100))
 
     def test_save_from_month_one_month_negative_balance(self):
@@ -976,7 +976,7 @@ class PsaveTest(unittest.TestCase):
         now = dt.strptime("01/08/2016", core.date_fmt).date()
         h = psave.History(now, { b.month : b } )
 
-        self.assertEquals(0,
+        self.assertEqual(0,
                 psave.save_from_month(h, {}, then, 100))
 
     def test_save_from_month_overspent_one_commitment(self):
@@ -985,7 +985,7 @@ class PsaveTest(unittest.TestCase):
         now = dt.strptime("01/08/2016", core.date_fmt).date()
         h = psave.History(now, { b.month : b } )
 
-        self.assertEquals(50,
+        self.assertEqual(50,
                 psave.save_from_month(h, {}, then, 100))
 
     def test_save_from_month_overspent_two_commitments(self):
@@ -994,9 +994,9 @@ class PsaveTest(unittest.TestCase):
         now = dt.strptime("01/08/2016", core.date_fmt).date()
         h = psave.History(now, { b.month : b } )
         s = {}
-        self.assertEquals(100,
+        self.assertEqual(100,
                 psave.save_from_month(h, s, then, 100))
-        self.assertEquals(50,
+        self.assertEqual(50,
                 psave.save_from_month(h, s, then, 100))
 
     def test_save_from_month_two_months(self):
@@ -1008,9 +1008,9 @@ class PsaveTest(unittest.TestCase):
         h = psave.History(now, { b1.month : b1, b2.month : b2 } )
 
         s = {}
-        self.assertEquals(50,
+        self.assertEqual(50,
                 psave.save_from_month(h, s, then1, 50))
-        self.assertEquals(50,
+        self.assertEqual(50,
                 psave.save_from_month(h, s, then2, 50))
 
     def test_calculate_position_exact(self):
@@ -1030,7 +1030,7 @@ class PsaveTest(unittest.TestCase):
                 g.transactions[-1].date, td(62, 0, 0))
         ta = psave.Target(c, c.last + c.period)
         s = {}
-        self.assertEquals(50,
+        self.assertEqual(50,
                 psave.calculate_position(h, ta, s).saved)
 
     def test_calculate_position_overspent(self):
@@ -1050,7 +1050,7 @@ class PsaveTest(unittest.TestCase):
                 g.transactions[-1].date, td(62, 0, 0))
         ta = psave.Target(c, c.last + c.period)
         s = {}
-        self.assertEquals(49,
+        self.assertEqual(49,
                 psave.calculate_position(h, ta, s).saved)
 
     def test_calculate_position_underspent(self):
@@ -1070,7 +1070,7 @@ class PsaveTest(unittest.TestCase):
                 g.transactions[-1].date, td(62, 0, 0))
         ta = psave.Target(c, c.last + c.period)
         s = {}
-        self.assertEquals(50,
+        self.assertEqual(50,
                 psave.calculate_position(h, ta, s).saved)
 
     def test_calculate_positions_exact(self):
@@ -1090,8 +1090,8 @@ class PsaveTest(unittest.TestCase):
                 g.transactions[-1].date, td(62, 0, 0))
         ta = psave.Target(c, c.last + c.period)
         p1, p2 = list(psave.calculate_positions(h, [ ta, ta ]))
-        self.assertEquals(50, p1[0].saved)
-        self.assertEquals(50, p1[1].saved)
+        self.assertEqual(50, p1[0].saved)
+        self.assertEqual(50, p1[1].saved)
 
     def test_calculate_positions_overspent(self):
         then1 = dt.strptime("01/07/2016", core.date_fmt).date()
@@ -1110,8 +1110,8 @@ class PsaveTest(unittest.TestCase):
                 g.transactions[-1].date, td(62, 0, 0))
         ta = psave.Target(c, c.last + c.period)
         p1, p2 = list(psave.calculate_positions(h, [ ta, ta ]))
-        self.assertEquals(50, p1[0].saved)
-        self.assertEquals(49, p1[1].saved)
+        self.assertEqual(50, p1[0].saved)
+        self.assertEqual(49, p1[1].saved)
 
     def test_calculate_positions_underspent(self):
         then1 = dt.strptime("01/07/2016", core.date_fmt).date()
@@ -1130,17 +1130,17 @@ class PsaveTest(unittest.TestCase):
                 g.transactions[-1].date, td(62, 0, 0))
         ta = psave.Target(c, c.last + c.period)
         p1, p2 = list(psave.calculate_positions(h, [ ta, ta ]))
-        self.assertEquals(50, p1[0].saved)
-        self.assertEquals(50, p1[1].saved)
+        self.assertEqual(50, p1[0].saved)
+        self.assertEqual(50, p1[1].saved)
 
     def test_balance_history_none(self):
-        self.assertEquals({},
+        self.assertEqual({},
                 psave.balance_history(None, td(1, 0, 0)))
 
     def test_balance_history_empty(self):
         now = dt.strptime("01/08/2016", core.date_fmt).date()
         h = psave.History(now, {})
-        self.assertEquals({},
+        self.assertEqual({},
                 psave.balance_history(h, td(1, 0, 0)))
 
     def test_balance_history_one_positive(self):
@@ -1150,7 +1150,7 @@ class PsaveTest(unittest.TestCase):
         h = psave.History(now, { b1.month : b1 })
         state = psave.balance_history(h, td(1, 0, 0))
         expected = { }
-        self.assertEquals(expected, state)
+        self.assertEqual(expected, state)
 
     def test_balance_history_one_negative(self):
         then1 = dt.strptime("01/07/2016", core.date_fmt).date()
@@ -1172,7 +1172,7 @@ class PsaveTest(unittest.TestCase):
         state = psave.balance_history(h, td(31, 0, 0))
         expected = { then1 : psave.Balance(then1, 0, -1),
                 then2 : psave.Balance(then2, 1, 0)}
-        self.assertEquals(expected, state)
+        self.assertEqual(expected, state)
 
     def test_balance_history_three(self):
         then1 = dt.strptime("01/07/2016", core.date_fmt).date()
@@ -1187,7 +1187,7 @@ class PsaveTest(unittest.TestCase):
         expected = { then1 : psave.Balance(then1, 0, -2),
                 then2 : psave.Balance(then2, 1, 0),
                 then3 : psave.Balance(then3, 1, 0)}
-        self.assertEquals(expected, state)
+        self.assertEqual(expected, state)
 
 import tempfile
 
@@ -1229,7 +1229,7 @@ class SqlGroupCollectionTest(unittest.TestCase):
         def test(tc, gc):
             cdid = groups.gen_id("foo", groups.salt)
             gc.associate(cdid, cdid)
-            self.assertEquals(cdid, gc.get_canonical(cdid))
+            self.assertEqual(cdid, gc.get_canonical(cdid))
         self.contain(test)
 
     def test_get_canonical_distinct(self):
@@ -1237,7 +1237,7 @@ class SqlGroupCollectionTest(unittest.TestCase):
             cdid = groups.gen_id("foo", groups.salt)
             adid = groups.gen_id("bar", groups.salt)
             gc.associate(cdid, adid)
-            self.assertEquals(cdid, gc.get_canonical(adid))
+            self.assertEqual(cdid, gc.get_canonical(adid))
         self.contain(test)
 
 class DynamicGroupsTest(unittest.TestCase):
@@ -1268,7 +1268,7 @@ class DynamicGroupsTest(unittest.TestCase):
             self.assertIsNotNone(inserted)
             found = dg.find_group("a" * 10)
             self.assertIsNotNone(found)
-            self.assertEquals(inserted.key(), found.key())
+            self.assertEqual(inserted.key(), found.key())
         self.contain(test, size=3)
 
     def test_find_group_static_fuzzy(self):
@@ -1277,7 +1277,7 @@ class DynamicGroupsTest(unittest.TestCase):
             self.assertIsNotNone(inserted)
             found = dg.find_group("a" * 9 + "b")
             self.assertIsNotNone(found)
-            self.assertEquals(inserted.key(), found.key())
+            self.assertEqual(inserted.key(), found.key())
         self.contain(test, size=0)
 
     def test_find_group_static_fuzzy_old(self):
@@ -1287,7 +1287,7 @@ class DynamicGroupsTest(unittest.TestCase):
             two = dg.insert("a" * 9 + "b", 'b', one)
             self.assertIsNotNone(two)
             found = dg.find_group("a" * 9 + "b")
-            self.assertEquals(one.key(), found.key())
+            self.assertEqual(one.key(), found.key())
         self.contain(test, size=3)
 
     def test_find_group_dynamic_exact(self):
@@ -1296,7 +1296,7 @@ class DynamicGroupsTest(unittest.TestCase):
             self.assertTrue(inserted == dg.insert("a" * 9 + "b", 'b', inserted))
             found = dg.find_group("a" * 10)
             self.assertIsNotNone(found)
-            self.assertEquals(inserted.key(), found.key())
+            self.assertEqual(inserted.key(), found.key())
         self.contain(test, size=2)
 
     def test_find_group_dynamic_fuzzy(self):
@@ -1306,7 +1306,7 @@ class DynamicGroupsTest(unittest.TestCase):
             self.assertTrue(inserted == dg.insert("a" * 9 + "b", 'b', inserted))
             found = dg.find_group("a" * 9 + "c")
             self.assertIsNotNone(found)
-            self.assertEquals(inserted.key(), found.key())
+            self.assertEqual(inserted.key(), found.key())
         self.contain(test, size=2)
 
     def test_find_group_dynamic_fuzzy_multi(self):
@@ -1318,7 +1318,7 @@ class DynamicGroupsTest(unittest.TestCase):
             self.assertTrue(inserted == dg.insert("a" * 9 + "b", 'b', inserted))
             found = dg.find_group("a" * 9 + "c")
             self.assertIsNotNone(found)
-            self.assertEquals(inserted.key(), found.key())
+            self.assertEqual(inserted.key(), found.key())
         self.contain(test, size=2)
 
     def test_add_non_canonical_no_group(self):
@@ -1329,8 +1329,8 @@ class DynamicGroupsTest(unittest.TestCase):
             self.assertIsNotNone(one)
             two = dg.insert("a" * 9 + "b", 'b', None)
             self.assertIsNotNone(two)
-            self.assertEquals(inserted.key(), one.key())
-            self.assertEquals(one.key(), two.key())
+            self.assertEqual(inserted.key(), one.key())
+            self.assertEqual(one.key(), two.key())
             pass
         self.contain(test, size=1)
 
