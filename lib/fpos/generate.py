@@ -35,8 +35,10 @@ def name():
     return __name__.split('.')[-1]
 
 def parse_args(subparser=None):
-    parser_init = subparser.add_parser if subparser else argparse.ArgumentParser
-    parser = parser_init(name(), description=cmd_description, help=cmd_description)
+    if subparser is None:
+        parser = argparse.ArgumentParser(name(), description=cmd_description)
+    else:
+        parser = subparser.add_parser(name(), description=cmd_description, help=cmd_description)
     aa = parser.add_argument
     aa("--cash-mean", default=60, type=float)
     aa("--cash-noise", default=10, type=float)
@@ -161,7 +163,8 @@ def get_words(n, r_src=None):
     if r_src is None:
         r_src = random.Random()
     stream = pkg_resources.resource_stream(__name__, 'propernames')
-    words = io.TextIOWrapper(stream).readlines()
+    with io.TextIOWrapper(stream) as wordio:
+        words = wordio.readlines()
     r_src.shuffle(words)
     selected = words[:n]
     stripped = list(x.strip() for x in selected)

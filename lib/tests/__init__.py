@@ -22,7 +22,7 @@ from datetime import datetime as dt
 from datetime import timedelta as td
 from itertools import islice, cycle
 import unittest
-from fpos import annotate, combine, core, transform, visualise, window, predict, db, psave, groups
+from fpos import annotate, combine, core, transform, visualise, window, predict, db, psave, groups, generate
 import types
 
 money = visualise.money
@@ -941,6 +941,15 @@ class DbTest(unittest.TestCase):
                     setattr(args, "updates", [ data ])
                     with self.assertRaises(ValueError):
                         db.db_update(args, test_dir)
+
+class GenerateTest(unittest.TestCase):
+    def test_generate(self):
+        args = generate.parse_args()
+        raw = generate.create_document(args)
+        # Check that the document is valid
+        cooked = list(combine.combine([ raw ]))
+        self.assertEqual(len(raw), len(cooked))
+        self.assertTrue(all(x in raw for x in cooked))
 
 class PsaveTest(unittest.TestCase):
     def test_save_from_month_one_month(self):
