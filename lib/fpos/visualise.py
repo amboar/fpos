@@ -347,6 +347,7 @@ def graph_xy_categories(months, categorized, remaining):
         p.set_title(k)
         p.set_xticks(range(len(monthns)))
         p.set_xticklabels(monthns, rotation=33)
+        p.set_ylim(top=0)
         p.grid(axis="y")
 
 def graph_xy_weekly(weekly):
