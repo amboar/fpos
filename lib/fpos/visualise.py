@@ -364,6 +364,7 @@ def graph_xy_weekly(weekly):
     plt.xlabel("Record Week (Arbitrary)")
     plt.ylabel("Expenditure ($)")
     plt.grid(axis="both")
+    plt.tick_params(labelright=True)
 
 def graph_bar_targets(months, monthlies, expenses, m_income, remaining, want_save):
     if 1 == len(months):
